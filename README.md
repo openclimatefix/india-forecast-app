@@ -26,6 +26,14 @@ make format
 make test
 ```
 
+## Running the app locally
+Replace `{DB_URL}` with a postgres DB connection string
+This example invokes app.py and passes the help flag
+```
+DB_URL={DB_URL} poetry run app --help
+```
+
+
 ## Building and running in [Docker](https://www.docker.com/)
 
 Build the Docker image

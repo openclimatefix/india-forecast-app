@@ -5,10 +5,11 @@ from uuid import UUID
 
 import click
 from pvsite_datamodel import DatabaseConnection
+from pvsite_datamodel.read import get_sites_by_country
 
 from .model import DummyModel
 
-# from pvsite_datamodel.write.forecast import insert_forecast_values
+# from pvsite_datamodel.write import insert_forecast_values
 
 
 log = logging.getLogger(__name__)
@@ -26,11 +27,8 @@ def _get_site_ids() -> list[str]:
     """
 
     # TODO query real sites from DB
-    # return get_sites_by_country("india")
-    return [
-        "b0579f31-70d9-4682-962e-4e2b30fa1e85",
-        "d0146492-90d2-41bf-9e44-153032492bad",
-    ]
+    sites = get_sites_by_country("india")
+    return [s.site_uuid for s in sites]
 
 
 def _get_model():
