@@ -16,6 +16,7 @@ pytest-cov = "^4.1.0"
 black = "^23.12.1"
 isort = "^5.13.2"
 ruff = "^0.1.11"
+testcontainers = "^3.7.1"
 
 [tool.poetry.scripts]
 app = "india_forecast_app.app:app"

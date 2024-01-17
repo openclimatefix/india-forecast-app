@@ -3,10 +3,15 @@ import logging
 
 import click
 
+from pvsite_datamodel import DatabaseConnection
+from pvsite_datamodel.read.site import get_sites_by_country
+# from pvsite_datamodel.write.forecast import insert_forecast_values
+
 from .model import DummyModel
 
 log = logging.getLogger(__name__)
 
+db_conn = DatabaseConnection(url, echo=False)
 
 def _get_site_ids() -> list[str]:
     """
@@ -15,7 +20,9 @@ def _get_site_ids() -> list[str]:
     Returns:
             A list of site_ids
     """
-
+    
+    # TODO query real sites from DB
+    # return get_sites_by_country("india")
     return [
         "b0579f31-70d9-4682-962e-4e2b30fa1e85",
         "d0146492-90d2-41bf-9e44-153032492bad",
@@ -74,7 +81,11 @@ def _save_forecast(site_id: str, timestamp: dt.datetime, forecast, write_to_db: 
     """
 
     if write_to_db:
-        pass
+        with db_conn.get_session() as session:
+            site_uuid = UUID(site_id)
+            # TODO insert forecast values
+            # insert_forecast_values()
+            
     else:
         log.info(
             f"site_id={site_id}, timestamp={timestamp}, forecast values={forecast}"
