@@ -22,7 +22,7 @@ testcontainers = "^3.7.1"
 app = "india_forecast_app.app:app"
 
 [tool.coverage.run]
-omit = "tests/*"
+omit = ["tests/*"]
 
 [build-system]
 requires = ["poetry-core==1.7.1"]
