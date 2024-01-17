@@ -1,17 +1,21 @@
 import datetime as dt
 import logging
+import os
+from uuid import UUID
 
 import click
-
 from pvsite_datamodel import DatabaseConnection
-from pvsite_datamodel.read.site import get_sites_by_country
-# from pvsite_datamodel.write.forecast import insert_forecast_values
 
 from .model import DummyModel
 
+# from pvsite_datamodel.write.forecast import insert_forecast_values
+
+
 log = logging.getLogger(__name__)
 
+url = os.environ["DB_URL"]
 db_conn = DatabaseConnection(url, echo=False)
+
 
 def _get_site_ids() -> list[str]:
     """
@@ -20,7 +24,7 @@ def _get_site_ids() -> list[str]:
     Returns:
             A list of site_ids
     """
-    
+
     # TODO query real sites from DB
     # return get_sites_by_country("india")
     return [
@@ -73,7 +77,8 @@ def _save_forecast(site_id: str, timestamp: dt.datetime, forecast, write_to_db: 
     Args:
             site_id: A specific site ID
             timestamp: timestamp to run a forecast for
-            forecast: a forecast containing predicted generation values for the given site
+            forecast: a forecast containing predicted generation
+            values for the given site
             write_to_db: If true, forecast values are written to db, otherwise to stdout
 
     Raises:
@@ -81,11 +86,11 @@ def _save_forecast(site_id: str, timestamp: dt.datetime, forecast, write_to_db: 
     """
 
     if write_to_db:
-        with db_conn.get_session() as session:
-            site_uuid = UUID(site_id)
+        with db_conn.get_session():
+            UUID(site_id)
             # TODO insert forecast values
             # insert_forecast_values()
-            
+
     else:
         log.info(
             f"site_id={site_id}, timestamp={timestamp}, forecast values={forecast}"

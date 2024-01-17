@@ -2,13 +2,11 @@
 Fixtures for testing
 """
 
-import os
 
 import pytest
-from testcontainers.postgres import PostgresContainer
-
 from pvsite_datamodel.connection import DatabaseConnection
 from pvsite_datamodel.sqlmodels import Base, SiteSQL
+from testcontainers.postgres import PostgresContainer
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -45,9 +43,7 @@ def db_data(db_conn):
     """Seed some initial data into DB."""
 
     with db_conn.get_session() as session:
-
         n_sites = 3
-        n_generations = 100
 
         # Sites
         for i in range(n_sites):
