@@ -7,43 +7,34 @@ step: dt.timedelta = dt.timedelta(minutes=15)
 
 
 class DummyModel:
+    @property
+    def version(self):
+        return "0.0.0"
+
     def __init__(self):
         pass
 
     def predict(self, site_id: str, timestamp: dt.datetime):
-        return self._generate_dummy_forecast()
+        return self._generate_dummy_forecast(timestamp)
 
-    def _generate_dummy_forecast(self):
-        # Get the window
-        start, end = _getWindow()
+    def _generate_dummy_forecast(self, timestamp: dt.datetime):
+        start = timestamp
+        end = timestamp + dt.timedelta(days=2)
         numSteps = int((end - start) / step)
         values: list[dict] = []
 
         for i in range(numSteps):
             time = start + i * step
             _yield = _basicSolarYieldFunc(int(time.timestamp()))
-            values.append({"time": time, "power_kw": int(_yield)})
+            values.append(
+                {
+                    "start_utc": time,
+                    "end_utc": time + step,
+                    "forecast_power_kw": int(_yield),
+                }
+            )
 
         return values
-
-
-def _getWindow() -> tuple[dt.datetime, dt.datetime]:
-    """Returns the start and end of the window for timeseries data."""
-    # Window start is the beginning of the day two days ago
-    start = (dt.datetime.now(tz=dt.UTC) - dt.timedelta(days=2)).replace(
-        hour=0,
-        minute=0,
-        second=0,
-        microsecond=0,
-    )
-    # Window end is the beginning of the day two days ahead
-    end = (dt.datetime.now(tz=dt.UTC) + dt.timedelta(days=2)).replace(
-        hour=0,
-        minute=0,
-        second=0,
-        microsecond=0,
-    )
-    return (start, end)
 
 
 def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:

@@ -1,16 +1,14 @@
 import datetime as dt
 import logging
 import os
-from uuid import UUID
 
 import click
+import pandas as pd
 from pvsite_datamodel import DatabaseConnection
 from pvsite_datamodel.read import get_sites_by_country
+from pvsite_datamodel.write import insert_forecast_values
 
 from .model import DummyModel
-
-# from pvsite_datamodel.write import insert_forecast_values
-
 
 log = logging.getLogger(__name__)
 
@@ -26,9 +24,10 @@ def _get_site_ids() -> list[str]:
             A list of site_ids
     """
 
-    # TODO query real sites from DB
-    sites = get_sites_by_country("india")
-    return [s.site_uuid for s in sites]
+    with db_conn.get_session() as session:
+        sites = get_sites_by_country(session, country="india")
+
+        return [s.site_uuid for s in sites]
 
 
 def _get_model():
@@ -68,7 +67,7 @@ def _run_model(model, site_id: str, timestamp: dt.datetime):
     return forecast
 
 
-def _save_forecast(site_id: str, timestamp: dt.datetime, forecast, write_to_db: bool):
+def _save_forecast(forecast, write_to_db: bool):
     """
     Saves a forecast for a given site & timestamp
 
@@ -83,15 +82,27 @@ def _save_forecast(site_id: str, timestamp: dt.datetime, forecast, write_to_db: 
             IOError: An error if database save fails
     """
 
+    forecast_meta = {
+        "site_uuid": forecast["meta"]["site_id"],
+        "timestamp_utc": forecast["meta"]["timestamp"],
+        "forecast_version": forecast["meta"]["version"],
+    }
+    forecast_values_df = pd.DataFrame(forecast["values"])
+    forecast_values_df["horizon_minutes"] = (
+        (forecast_values_df["start_utc"] - forecast_meta["timestamp_utc"])
+        / pd.Timedelta("60s")
+    ).astype("int")
+
     if write_to_db:
-        with db_conn.get_session():
-            UUID(site_id)
-            # TODO insert forecast values
-            # insert_forecast_values()
+        with db_conn.get_session() as session:
+            insert_forecast_values(session, forecast_meta, forecast_values_df)
 
     else:
         log.info(
-            f"site_id={site_id}, timestamp={timestamp}, forecast values={forecast}"
+            f'site_id={forecast_meta["site_uuid"]}, \
+            timestamp={forecast_meta["timestamp_utc"]}, \
+            version={forecast_meta["forecast_version"]}, \
+            forecast values={forecast_values_df.to_string()}'
         )
 
 
@@ -102,7 +113,7 @@ def _save_forecast(site_id: str, timestamp: dt.datetime, forecast, write_to_db: 
     "timestamp",
     type=click.DateTime(formats=["%Y-%m-%d-%H-%M"]),
     default=None,
-    help='Date-time (UTC) at which we make the prediction. Defaults to "now".',
+    help='Date-time (UTC) at which we make the prediction Format should be YYYY-MM-DD-HH-mm. Defaults to "now".',
 )
 @click.option(
     "--write-to-db",
@@ -123,8 +134,11 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     logging.basicConfig(level=getattr(logging, log_level.upper()))
 
     if timestamp is None:
-        timestamp = dt.datetime.utcnow()
+        timestamp = dt.datetime.now(tz=dt.UTC)
         log.info('Timestamp omitted - will generate forecasts for "now"')
+    else:
+        # Ensure timestamp is UTC
+        timestamp.replace(tzinfo=dt.UTC)
 
     # 1. Get sites
     log.info("Getting sites")
@@ -135,16 +149,22 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     model = _get_model()
 
     # 3. Run model for each site
-    log.info("Running model for each site")
     for site_id in site_ids:
-        forecast = _run_model(model=model, site_id=site_id, timestamp=timestamp)
+        log.info(f"Running model for site={site_id}")
+        forecast_values = _run_model(model=model, site_id=site_id, timestamp=timestamp)
 
-        if forecast is not None:
+        if forecast_values is not None:
             # 4. Write forecast to DB or stdout
             log.info(f"Writing forecast for site_id={site_id}")
+            forecast = {
+                "meta": {
+                    "site_id": site_id,
+                    "version": model.version,
+                    "timestamp": timestamp,
+                },
+                "values": forecast_values,
+            }
             _save_forecast(
-                site_id=site_id,
-                timestamp=timestamp,
                 forecast=forecast,
                 write_to_db=write_to_db,
             )
