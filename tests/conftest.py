@@ -53,6 +53,7 @@ def db_data(db_conn):
                 longitude=3,
                 capacity_kw=4,
                 ml_id=i,
+                country="india"
             )
             session.add(site)
 

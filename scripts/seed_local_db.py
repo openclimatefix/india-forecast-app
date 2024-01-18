@@ -32,7 +32,7 @@ def seed_db():
     """
     Drops existing tables and recreated schema before seeding some dummy data
     """
-    url = os.environ["DB_URL"]
+    url = os.getenv("DB_URL")
     db_conn = DatabaseConnection(url=url, echo=False)
 
     # 1. Create tables
