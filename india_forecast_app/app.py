@@ -1,3 +1,7 @@
+"""
+Main forecast app entrypoint
+"""
+
 import datetime as dt
 import logging
 import os
@@ -113,7 +117,8 @@ def _save_forecast(forecast, write_to_db: bool):
     "timestamp",
     type=click.DateTime(formats=["%Y-%m-%d-%H-%M"]),
     default=None,
-    help='Date-time (UTC) at which we make the prediction Format should be YYYY-MM-DD-HH-mm. Defaults to "now".',
+    help='Date-time (UTC) at which we make the prediction. \
+Format should be YYYY-MM-DD-HH-mm. Defaults to "now".',
 )
 @click.option(
     "--write-to-db",

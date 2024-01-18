@@ -1,25 +1,35 @@
+"""
+Model classes (currently just allows for loading a dummy model)
+"""
+
 import datetime as dt
 import math
 import random
 
-# step defines the time interval between each data point
-step: dt.timedelta = dt.timedelta(minutes=15)
-
 
 class DummyModel:
+    """
+    Dummy model that emulates the capabilities expected by a real model
+    """
+    
     @property
     def version(self):
+        """Version number"""
         return "0.0.0"
 
     def __init__(self):
+        """Initialiser for the model"""
         pass
 
     def predict(self, site_id: str, timestamp: dt.datetime):
+        """Make a prediction for the model"""
         return self._generate_dummy_forecast(timestamp)
 
     def _generate_dummy_forecast(self, timestamp: dt.datetime):
+        """Generates a fake 2-day forecast (15 minute intervals"""
         start = timestamp
         end = timestamp + dt.timedelta(days=2)
+        step = dt.timedelta(minutes=15)
         numSteps = int((end - start) / step)
         values: list[dict] = []
 

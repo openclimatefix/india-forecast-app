@@ -6,16 +6,22 @@ import os
 
 from pvsite_datamodel.connection import DatabaseConnection
 from pvsite_datamodel.sqlmodels import Base
-from pvsite_datamodel.write.user_and_site import (add_site_to_site_group,
-                                                  create_site,
-                                                  create_site_group,
-                                                  create_user)
+from pvsite_datamodel.write.user_and_site import (
+    add_site_to_site_group,
+    create_site,
+    create_site_group,
+    create_user,
+)
 
 
-def _confirm_action():
+def _confirm_action() -> bool:
+    """
+    Provides opportunity for user to decide whether to proceed with code execution
+    """
     while True:
         confirm = input(
-            "!! This script will drop all tables and recreate them before seeding !! Are you sure you wish to proceed? [y]Yes or [n]No: "
+            "!! This script will drop all tables and \
+recreate them before seeding. Are you sure you wish to proceed? [y]Yes or [n]No: "
         )
         if confirm.strip().lower() in ("y", "n"):
             return confirm == "y"
@@ -23,6 +29,9 @@ def _confirm_action():
 
 
 def seed_db():
+    """
+    Drops existing tables and recreated schema before seeding some dummy data
+    """
     url = os.environ["DB_URL"]
     db_conn = DatabaseConnection(url=url, echo=False)
 
