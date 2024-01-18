@@ -1,7 +1,7 @@
 #
 # This mostly contains shortcut for multi-command steps.
 #
-SRC = india_forecast_app tests
+SRC = india_forecast_app scripts tests
 
 .PHONY: lint
 lint:

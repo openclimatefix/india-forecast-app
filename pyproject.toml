@@ -20,9 +20,10 @@ testcontainers = "^3.7.1"
 
 [tool.poetry.scripts]
 app = "india_forecast_app.app:app"
+seeder = "scripts.seed_local_db:seed_db"
 
 [tool.coverage.run]
-omit = ["tests/*"]
+omit = ["tests/*", "scripts/*"]
 
 [build-system]
 requires = ["poetry-core==1.7.1"]
