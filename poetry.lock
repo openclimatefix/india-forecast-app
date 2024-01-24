@@ -655,23 +655,21 @@ files = [
 
 [[package]]
 name = "pvsite-datamodel"
-version = "1.0.8"
+version = "1.0.10"
 description = "SDK for interacting with the PVSite database"
 optional = false
-python-versions = "^3.11"
-files = []
-develop = true
+python-versions = ">=3.11,<4.0"
+files = [
+    {file = "pvsite_datamodel-1.0.10-py3-none-any.whl", hash = "sha256:eae12f023301692bc6b19b1ec9f145dca60b937f15939fecbcdb386a7e391195"},
+    {file = "pvsite_datamodel-1.0.10.tar.gz", hash = "sha256:8f3f89df7da20840a5416ad414e3545f916bc60d6924e7647f3a3606184795a9"},
+]
 
 [package.dependencies]
-geopandas = "^0.14.2"
-pandas = "^1.5.3"
-psycopg2-binary = "^2.9.5"
-pydantic = "^2.3.0"
+geopandas = ">=0.14.2,<0.15.0"
+pandas = ">=1.5.3,<2.0.0"
+psycopg2-binary = ">=2.9.5,<3.0.0"
+pydantic = ">=2.3.0,<3.0.0"
 sqlalchemy = "1.4.46"
-
-[package.source]
-type = "directory"
-url = "../pv-site-datamodel"
 
 [[package]]
 name = "pydantic"
@@ -1281,4 +1279,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "4f448a3f204227076d2ecfaa8eb4375c91a1a230a0cf15ae50f8d6109812423e"
+content-hash = "51011b8b39bb44352244c774498c96be14f9d5626357a09e04aa81e2a2d9ba0d"

@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 click = "^8.1.7"
-pvsite-datamodel = {path = "../pv-site-datamodel", develop = true}
+pvsite-datamodel = "^1.0.10"
 pandas = "1.5.3"
 
 [tool.poetry.group.dev.dependencies]
