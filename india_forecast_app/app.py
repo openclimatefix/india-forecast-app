@@ -150,19 +150,23 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     with db_conn.get_session() as session:
 
         # 1. Get sites
-        log.info("Getting sites")
+        log.info("Getting sites...")
         site_ids = get_site_ids(session)
+        log.info(f"Found {len(site_ids)} sites")
     
         # 2. Load model
-        log.info("Loading model")
+        log.info("Loading model...")
         model = get_model()
+        log.info("Loaded model")
     
         # 3. Run model for each site
         for site_id in site_ids:
-            log.info(f"Running model for site={site_id}")
+            log.info(f"Running model for site={site_id}...")
             forecast_values = run_model(model=model, site_id=site_id, timestamp=timestamp)
-    
-            if forecast_values is not None:
+
+            if forecast_values is None:
+                log.info(f"No forecast values for site_id={site_id}")
+            else:
                 # 4. Write forecast to DB or stdout
                 log.info(f"Writing forecast for site_id={site_id}")
                 forecast = {
