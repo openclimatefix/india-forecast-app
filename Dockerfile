@@ -34,4 +34,4 @@ COPY --from=builder /venv /venv
 COPY --from=builder /app/dist .
 RUN . /venv/bin/activate && pip install *.whl
 
-ENTRYPOINT ["app"]
+ENTRYPOINT ["app", "--write-to-db"]
