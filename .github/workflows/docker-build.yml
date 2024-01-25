@@ -5,4 +5,4 @@ on: push
 jobs:
 
   DockerBuild:
-    uses: openclimatefix/.github/.github/workflows/build-docker.yml@v1.8.1
+    uses: openclimatefix/.github/.github/workflows/build-docker.yml@main
