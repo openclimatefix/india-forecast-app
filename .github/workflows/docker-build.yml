@@ -1,0 +1,8 @@
+name: Docker Build
+
+on: push
+
+jobs:
+
+  docker build:
+    uses: openclimatefix/.github/.github/workflows/build-docker.yml@v1.8.1
