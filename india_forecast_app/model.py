@@ -18,7 +18,7 @@ class DummyModel:
         return "0.0.0"
 
     def __init__(self):
-        """Initialiser for the model"""
+        """Initializer for the model"""
         pass
 
     def predict(self, site_id: str, timestamp: dt.datetime):

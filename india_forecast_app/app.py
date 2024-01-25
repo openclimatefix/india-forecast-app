@@ -5,6 +5,7 @@ Main forecast app entrypoint
 import datetime as dt
 import logging
 import os
+import sys
 
 import click
 import pandas as pd
@@ -132,7 +133,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     """
     Main function for running forecasts for sites in India
     """
-    logging.basicConfig(level=getattr(logging, log_level.upper()))
+    logging.basicConfig(stream=sys.stdout, level=getattr(logging, log_level.upper()))
 
     if timestamp is None:
         timestamp = dt.datetime.now(tz=dt.UTC)
@@ -142,7 +143,8 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
         timestamp.replace(tzinfo=dt.UTC)
         
     # 0. Initialise DB connection
-    url = os.getenv("DB_URL")
+    url = os.environ["DB_URL"]
+
     db_conn = DatabaseConnection(url, echo=False)
     
     with db_conn.get_session() as session:
