@@ -54,19 +54,30 @@ def db_data(engine):
 
     with engine.connect() as connection:
         with Session(bind=connection) as session:
-            n_sites = 3
 
-            # Sites
-            for i in range(n_sites):
-                site = SiteSQL(
-                    client_site_id=i + 1,
-                    latitude=51,
-                    longitude=3,
-                    capacity_kw=4,
-                    ml_id=i,
-                    country="india"
-                )
-                session.add(site)
+            # PV site
+            site = SiteSQL(
+                client_site_id=1,
+                latitude=20.59,
+                longitude=78.96,
+                capacity_kw=4,
+                ml_id=1,
+                asset_type="pv",
+                country="india"
+            )
+            session.add(site)
+
+            # Wind site
+            site = SiteSQL(
+                client_site_id=2,
+                latitude=20.59,
+                longitude=78.96,
+                capacity_kw=4,
+                ml_id=2,
+                asset_type="wind",
+                country="india"
+            )
+            session.add(site)
 
             session.commit()
 

@@ -7,10 +7,7 @@ import os
 from pvsite_datamodel.connection import DatabaseConnection
 from pvsite_datamodel.sqlmodels import Base
 from pvsite_datamodel.write.user_and_site import (
-    add_site_to_site_group,
     create_site,
-    create_site_group,
-    create_user,
 )
 
 
@@ -45,29 +42,28 @@ def seed_db():
     Base.metadata.create_all(engine)
 
     with db_conn.get_session() as session:
-        dummy_user = "dummy@openclimatefix.org"
 
         print("Seeding database")
-        site_group = create_site_group(session, site_group_name="dummy_site_group")
-
-        _ = create_user(
-            session, email=dummy_user, site_group_name=site_group.site_group_name
+        site, _ = create_site(
+            session,
+            client_site_id=1,
+            client_site_name="dummy_site_1",
+            latitude=0.0,
+            longitude=0.0,
+            capacity_kw=10.0,
+            asset_type="pv",
+            country="india",
         )
 
         site, _ = create_site(
             session,
-            client_site_id=1234,
-            client_site_name="dummy_site",
+            client_site_id=2,
+            client_site_name="dummy_site_2",
             latitude=0.0,
             longitude=0.0,
             capacity_kw=10.0,
+            asset_type="wind",
             country="india",
-        )
-
-        add_site_to_site_group(
-            session,
-            site_uuid=site.site_uuid,
-            site_group_name=site_group.site_group_name,
         )
 
         print("Database successfully seeded")

@@ -6,43 +6,45 @@ import uuid
 
 import pytest
 from pvsite_datamodel.read import get_all_sites
-from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, SiteSQL
+from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL
 
-from india_forecast_app.app import app, get_model, get_site_ids, run_model, save_forecast
+from india_forecast_app.app import app, get_model, get_sites, run_model, save_forecast
 from india_forecast_app.model import DummyModel
 
 from ._utils import run_click_script
 
 
-def test_get_site_ids(db_session):
+def test_get_sites(db_session):
     """Test for correct site ids"""
 
-    site_ids = get_site_ids(db_session)
+    sites = get_sites(db_session)
+    sites = sorted(sites, key=lambda s: s.client_site_id)
     
-    assert len(site_ids) == 3
-    for site_id in site_ids:
-        assert isinstance(site_id, uuid.UUID)
+    assert len(sites) == 2
+    for site in sites:
+        assert isinstance(site.site_uuid, uuid.UUID)
+        assert sites[0].asset_type.name == "pv"
+        assert sites[1].asset_type.name == "wind"
 
 
-def test_get_model():
+@pytest.mark.parametrize("asset_type", ["pv", "wind"])
+def test_get_model(asset_type):
     """Test for getting valid model"""
 
-    model = get_model()
+    model = get_model(asset_type)
     
     assert hasattr(model, 'version')
     assert isinstance(model.version, str)
     assert hasattr(model, 'predict')
 
 
-def test_run_model(db_session):
-    """Test for running model"""
-
-    site = db_session.query(SiteSQL).first()
-    model = DummyModel()
+@pytest.mark.parametrize("asset_type", ["pv", "wind"])
+def test_run_model(db_session, asset_type):
+    """Test for running PV and wind models"""
     
     forecast = run_model(
-        model=model, 
-        site_id=site.site_uuid, 
+        model=DummyModel(asset_type),
+        site_id=str(uuid.uuid4()),
         timestamp=dt.datetime.now(tz=dt.UTC)
     )
 
@@ -88,8 +90,8 @@ def test_app(write_to_db, db_session):
     assert result.exit_code == 0
 
     if write_to_db:
-        assert db_session.query(ForecastSQL).count() == init_n_forecasts + 3
-        assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (3 * 192)
+        assert db_session.query(ForecastSQL).count() == init_n_forecasts + 2
+        assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (2 * 192)
     else:
         assert db_session.query(ForecastSQL).count() == init_n_forecasts
         assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values

@@ -11,15 +11,15 @@ class DummyModel:
     """
     Dummy model that emulates the capabilities expected by a real model
     """
-    
+
     @property
     def version(self):
         """Version number"""
         return "0.0.0"
 
-    def __init__(self):
+    def __init__(self, asset_type: str):
         """Initializer for the model"""
-        pass
+        self.asset_type = asset_type
 
     def predict(self, site_id: str, timestamp: dt.datetime):
         """Make a prediction for the model"""
@@ -35,7 +35,9 @@ class DummyModel:
 
         for i in range(numSteps):
             time = start + i * step
-            _yield = _basicSolarYieldFunc(int(time.timestamp()))
+            gen_func = _basicSolarYieldFunc if self.asset_type == "pv" else _basicWindYieldFunc
+            _yield = gen_func(int(time.timestamp()))
+
             values.append(
                 {
                     "start_utc": time,
@@ -99,6 +101,6 @@ def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
 
 def _basicWindYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
     """Gets a fake wind yield for the input time."""
-    output = min(scaleFactor, scaleFactor * 10 * random.random())
+    output = min(scaleFactor, scaleFactor * random.random())
 
     return output
