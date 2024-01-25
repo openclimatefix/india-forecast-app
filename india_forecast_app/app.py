@@ -11,6 +11,7 @@ import click
 import pandas as pd
 from pvsite_datamodel import DatabaseConnection
 from pvsite_datamodel.read import get_sites_by_country
+from pvsite_datamodel.sqlmodels import SiteSQL
 from pvsite_datamodel.write import insert_forecast_values
 from sqlalchemy.orm import Session
 
@@ -19,31 +20,33 @@ from .model import DummyModel
 log = logging.getLogger(__name__)
 
 
-def get_site_ids(db_session: Session) -> list[str]:
+def get_sites(db_session: Session) -> list[SiteSQL]:
     """
-    Gets all avaiable site_ids in India
+    Gets all available sites in India
     
     Args:
             db_session: A SQLAlchemy session
 
     Returns:
-            A list of site_ids
+            A list of SiteSQL objects
     """
     
     sites = get_sites_by_country(db_session, country="india")
+    return sites
 
-    return [s.site_uuid for s in sites]
 
-
-def get_model():
+def get_model(asset_type: str):
     """
     Instantiates and returns the forecast model ready for running inference
+
+    Args:
+            asset_type: One or "pv" or "wind"
 
     Returns:
             A forecasting model
     """
 
-    model = DummyModel()
+    model = DummyModel(asset_type)
     return model
 
 
@@ -151,17 +154,22 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
 
         # 1. Get sites
         log.info("Getting sites...")
-        site_ids = get_site_ids(session)
-        log.info(f"Found {len(site_ids)} sites")
-    
-        # 2. Load model
-        log.info("Loading model...")
-        model = get_model()
-        log.info("Loaded model")
-    
-        # 3. Run model for each site
-        for site_id in site_ids:
-            log.info(f"Running model for site={site_id}...")
+        sites = get_sites(session)
+        log.info(f"Found {len(sites)} sites")
+
+        # 2. Load models
+        log.info("Loading models...")
+        pv_model = get_model("pv")
+        log.info("Loaded PV model")
+        wind_model = get_model("wind")
+        log.info("Loaded wind model")
+
+        for site in sites:
+            # 3. Run model for each site
+            site_id = site.site_uuid
+            asset_type = site.asset_type.name
+            log.info(f"Running {asset_type} model for site={site_id}...")
+            model = wind_model if asset_type == "wind" else pv_model
             forecast_values = run_model(model=model, site_id=site_id, timestamp=timestamp)
 
             if forecast_values is None:
