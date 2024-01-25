@@ -1,4 +1,4 @@
-name: CI Pipeline for SDK - Python
+name: CI pipeline for India Forecast App
 
 on: push
 
@@ -8,16 +8,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
-
+        uses: actions/checkout@v4
+        
       - name: Install poetry
         run: pipx install poetry==1.7.1
-
+        
       - name: Install python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
-          cache: poetry
+          python-version: '3.11'
+          cache: 'poetry'
 
       - name: Install python dependencies
         run: poetry install
@@ -34,7 +34,7 @@ jobs:
   release:
     needs: [lint_and_test]
     if: github.ref_name == 'main'
-    uses: openclimatefix/.github/.github/workflows/docker-release.yml@v1.2.0
+    uses: openclimatefix/.github/.github/workflows/docker-release.yml@v1.8.1
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

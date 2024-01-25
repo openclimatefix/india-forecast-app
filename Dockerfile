@@ -1,4 +1,4 @@
-FROM python:3.9-slim as base
+FROM python:3.11-slim as base
 
 ENV PYTHONFAULTHANDLER=1 \
 	PYTHONHASHSEED=random \
@@ -7,6 +7,9 @@ ENV PYTHONFAULTHANDLER=1 \
 WORKDIR /app
 
 FROM base as builder
+
+RUN apt-get update
+RUN apt-get install -y gdal-bin libgdal-dev g++
 
 ENV PIP_DEFAULT_TIMEOUT=100 \
 	PIP_DISABLE_PIP_VERSION_CHECK=1 \
