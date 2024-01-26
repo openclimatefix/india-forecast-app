@@ -3,33 +3,11 @@ name: CI pipeline for India Forecast App
 on: push
 
 jobs:
-  lint_and_test:
-    name: Lint the code and run the tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-        
-      - name: Install poetry
-        run: pipx install poetry==1.7.1
-        
-      - name: Install python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'poetry'
 
-      - name: Install python dependencies
-        run: poetry install
-
-      - name: Lint
-        run: make lint
-
-      - name: Run the tests
-        run: poetry run pytest --cov=india_forecast_app --cov-report=xml
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+  poetry-python-test:
+    uses: openclimatefix/.github/.github/workflows/poetry-python-test.yml
+    with:
+      pytest_cov_dir: india_forecast_app
 
   release:
     needs: [lint_and_test]
