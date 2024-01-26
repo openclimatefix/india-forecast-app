@@ -4,7 +4,7 @@ on: push
 
 jobs:
 
-  poetry-python-test:
+  lint_and_test:
     uses: openclimatefix/.github/.github/workflows/poetry-python-test.yml@main
     with:
       pytest_cov_dir: india_forecast_app
