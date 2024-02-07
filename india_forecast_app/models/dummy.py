@@ -1,5 +1,5 @@
 """
-Model classes (currently just allows for loading a dummy model)
+Dummy Model class (generate a dummy forecast)
 """
 
 import datetime as dt
@@ -17,9 +17,10 @@ class DummyModel:
         """Version number"""
         return "0.0.0"
 
-    def __init__(self, asset_type: str):
+    def __init__(self, asset_type: str, timestamp: dt.datetime):
         """Initializer for the model"""
         self.asset_type = asset_type
+        self.to = timestamp
 
     def predict(self, site_id: str, timestamp: dt.datetime):
         """Make a prediction for the model"""

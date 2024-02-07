@@ -15,7 +15,7 @@ from pvsite_datamodel.sqlmodels import SiteSQL
 from pvsite_datamodel.write import insert_forecast_values
 from sqlalchemy.orm import Session
 
-from .model import DummyModel
+from .models import DummyModel, PVNetModel
 
 log = logging.getLogger(__name__)
 
@@ -35,18 +35,24 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
     return sites
 
 
-def get_model(asset_type: str):
+def get_model(asset_type: str, timestamp: dt.datetime) -> PVNetModel:
     """
     Instantiates and returns the forecast model ready for running inference
 
     Args:
             asset_type: One or "pv" or "wind"
+            timestamp: Datetime at which the forecast will be made
 
     Returns:
             A forecasting model
     """
 
-    model = DummyModel(asset_type)
+    # Only windnet is ready, so if asset_type is PV, continue using dummy model
+    if asset_type == "wind":
+        model = PVNetModel(asset_type, timestamp)
+    else:
+        model = DummyModel(asset_type, timestamp)
+
     return model
 
 

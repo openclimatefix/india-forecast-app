@@ -4,13 +4,20 @@ Fixtures for testing
 
 
 import datetime as dt
+import logging
 import os
+import tempfile
 
+import numpy as np
+import pandas as pd
 import pytest
+import xarray as xr
 from pvsite_datamodel.sqlmodels import Base, SiteSQL
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from testcontainers.postgres import PostgresContainer
+
+log = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="session")
@@ -99,3 +106,54 @@ def forecast_values():
     }
 
     return forecast_values
+
+
+@pytest.fixture(scope="session")
+def nwp_data():
+    """Dummy NWP data"""
+
+    # Load dataset which only contains coordinates, but no data
+    ds = xr.open_zarr(
+        f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp_india.zarr"
+    )
+
+    # Last init time was at least 2 hours ago and floor to 3-hour interval
+    t0_datetime_utc = ((pd.Timestamp.now(tz=None) - dt.timedelta(hours=2))
+                       .floor(dt.timedelta(hours=3)))
+    ds.init_time.values[:] = pd.date_range(
+        t0_datetime_utc - dt.timedelta(hours=3 * (len(ds.init_time) - 1)),
+        t0_datetime_utc,
+        freq=dt.timedelta(hours=3),
+    )
+
+    # This is important to avoid saving errors
+    for v in list(ds.coords.keys()):
+        if ds.coords[v].dtype == object:
+            ds[v].encoding.clear()
+
+    for v in list(ds.variables.keys()):
+        if ds[v].dtype == object:
+            ds[v].encoding.clear()
+
+    # Add data to dataset
+    ds["ecmwf"] = xr.DataArray(
+        np.zeros([len(ds[c]) for c in ds.xindexes]),
+        coords=[ds[c] for c in ds.xindexes],
+    )
+
+    # log.error(ds.attrs)
+
+    # TODO ds.attrs["_data_attrs"] isn't defined, check this isn't a problem
+    # Add stored attributes to DataArray
+    # ds.ecmwf.attrs = ds.attrs["_data_attrs"]
+    # del ds.attrs["_data_attrs"]
+
+    with tempfile.TemporaryDirectory() as tmp_dirname:
+        # AS NWP data is loaded from environment variable - save out data
+        # and set paths as environmental variables
+        temp_nwp_path = f"{tmp_dirname}/nwp.zarr"
+        os.environ["NWP_ZARR_PATH"] = temp_nwp_path
+        ds.to_zarr(temp_nwp_path)
+
+        yield ds
+
