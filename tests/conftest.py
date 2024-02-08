@@ -109,7 +109,18 @@ def forecast_values():
 
 
 @pytest.fixture(scope="session")
-def nwp_data(tmp_path_factory):
+def time_before_present():
+    """Returns a fixed time in the past with specified offset"""
+
+    now = pd.Timestamp.now(tz=None)
+
+    def _time_before_present(dt: dt.timedelta):
+        return now - dt
+
+    return _time_before_present
+
+@pytest.fixture(scope="session")
+def nwp_data(tmp_path_factory, time_before_present):
     """Dummy NWP data"""
 
     # Load dataset which only contains coordinates, but no data
@@ -117,8 +128,8 @@ def nwp_data(tmp_path_factory):
         f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp.zarr"
     )
 
-    # Last init time was at least 2 hours ago and floor to 3-hour interval
-    t0_datetime_utc = ((pd.Timestamp.now(tz=None) - dt.timedelta(hours=2))
+    # Last t0 to at least 2 hours ago and floor to 3-hour interval
+    t0_datetime_utc = (time_before_present(dt.timedelta(hours=2))
                        .floor(dt.timedelta(hours=3)))
     ds.init_time.values[:] = pd.date_range(
         t0_datetime_utc - dt.timedelta(hours=3 * (len(ds.init_time) - 1)),
@@ -156,7 +167,7 @@ def nwp_data(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
-def wind_data(tmp_path_factory):
+def wind_data(tmp_path_factory, time_before_present):
     """Dummy wind data"""
 
     # AS wind data is loaded by the app from environment variable,
@@ -168,8 +179,33 @@ def wind_data(tmp_path_factory):
     netcdf_source_path = f"{root_source_path}/test_data/wind/wind_data.nc"
     temp_netcdf_path = f"{root_path}/wind_data.nc"
     os.environ["WIND_NETCDF_PATH"] = temp_netcdf_path
-    fs = fsspec.open(netcdf_source_path).fs
-    fs.copy(netcdf_source_path, temp_netcdf_path)
+    ds = xr.open_dataset(netcdf_source_path)
+
+    # Set t0 to at least 2 hours ago and floor to 15-min interval
+    t0_datetime_utc = (time_before_present(dt.timedelta(hours=2))
+                       .floor(dt.timedelta(minutes=15)))
+    ds.time_utc.values[:] = pd.date_range(
+        t0_datetime_utc - dt.timedelta(minutes=15 * (len(ds.time_utc) - 1)),
+        t0_datetime_utc,
+        freq=dt.timedelta(minutes=15),
+    )
+
+    # This is important to avoid saving errors
+    for v in list(ds.coords.keys()):
+        if ds.coords[v].dtype == object:
+            ds[v].encoding.clear()
+
+    for v in list(ds.variables.keys()):
+        if ds[v].dtype == object:
+            ds[v].encoding.clear()
+
+    # Add data to dataset
+    # ds["wind"] = xr.DataArray(
+    #     np.zeros([len(ds[c]) for c in ds.xindexes]),
+    #     coords=[ds[c] for c in ds.xindexes],
+    # )
+
+    ds.to_netcdf(temp_netcdf_path, engine="h5netcdf")
 
     metadata_source_path = f"{root_source_path}/test_data/wind/wind_metadata.csv"
     temp_metadata_path = f"{root_path}/wind_metadata.csv"

@@ -162,7 +162,7 @@ class PVNetModel:
         populate_data_config_sources(data_config_filename, populated_data_config_filename)
 
         # Location and time datapipes
-        # TODO not sure what to use here for the location pipe - site uuid/location?
+        # TODO not sure if this is the correct way to set these up...
         location_pipe = IterableWrapper([Location(coordinate_system="lon_lat", x=72.6399, y=26.4499)])
         t0_datapipe = IterableWrapper([self.t0])
         # t0_datapipe = IterableWrapper([self.t0]).repeat(len(location_pipe))
@@ -179,7 +179,11 @@ class PVNetModel:
                     t0_datapipe=t0_datapipe
                 )
             )
-            log.error(base_datapipe_dict)
+            log.info(next(iter(base_datapipe_dict["nwp"]["ecmwf"])))
+
+            # TODO figure out why this is an empty dataset
+            log.info(next(iter(base_datapipe_dict["wind"])).to_pandas())
+
             base_datapipe = DictDatasetIterDataPipe(
                 {k: v for k, v in base_datapipe_dict.items() if k != "config"},
             ).map(combine_to_single_dataset)

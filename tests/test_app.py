@@ -29,11 +29,10 @@ def test_get_sites(db_session):
 
 
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_get_model(asset_type, nwp_data, wind_data, caplog):
+def test_get_model(asset_type, nwp_data, wind_data):
     """Test for getting valid model"""
 
-    caplog.set_level('INFO')
-    model = get_model(asset_type, timestamp=dt.datetime.now(tz=dt.UTC))
+    model = get_model(asset_type, timestamp=dt.datetime.now(tz=None))
     
     assert hasattr(model, 'version')
     assert isinstance(model.version, str)
@@ -42,8 +41,10 @@ def test_get_model(asset_type, nwp_data, wind_data, caplog):
 
 # @pytest.mark.skip(reason="Temporarily disabled while integrating Windnet")
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_run_model(db_session, asset_type, nwp_data, wind_data):
+def test_run_model(db_session, asset_type, nwp_data, wind_data, caplog):
     """Test for running PV and wind models"""
+
+    caplog.set_level('INFO')
 
     model = PVNetModel if asset_type == "wind" else DummyModel
 
