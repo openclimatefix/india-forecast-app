@@ -4,46 +4,6 @@
         ".zgroup": {
             "zarr_format": 2
         },
-        "ECMWF_NW-INDIA/.zarray": {
-            "chunks": [
-                17,
-                1,
-                85,
-                110,
-                110
-            ],
-            "compressor": {
-                "clevel": 5,
-                "cname": "zstd",
-                "id": "blosc2"
-            },
-            "dtype": "<f4",
-            "fill_value": "NaN",
-            "filters": null,
-            "order": "C",
-            "shape": [
-                17,
-                1,
-                85,
-                221,
-                221
-            ],
-            "zarr_format": 2
-        },
-        "ECMWF_NW-INDIA/.zattrs": {
-            "Conventions": "CF-1.7",
-            "GRIB_centre": "ecmf",
-            "GRIB_centreDescription": "European Centre for Medium-Range Weather Forecasts",
-            "GRIB_subCentre": 0,
-            "_ARRAY_DIMENSIONS": [
-                "variable",
-                "init_time",
-                "step",
-                "latitude",
-                "longitude"
-            ],
-            "institution": "European Centre for Medium-Range Weather Forecasts"
-        },
         "init_time/.zarray": {
             "chunks": [
                 1

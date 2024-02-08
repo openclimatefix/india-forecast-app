@@ -28,11 +28,11 @@ def test_get_sites(db_session):
         assert sites[1].asset_type.name == "wind"
 
 
-@pytest.mark.skip(reason="Temporarily disabled while integrating Windnet")
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_get_model(asset_type, nwp_data):
+def test_get_model(asset_type, nwp_data, caplog):
     """Test for getting valid model"""
 
+    caplog.set_level('INFO')
     model = get_model(asset_type, timestamp=dt.datetime.now(tz=dt.UTC))
     
     assert hasattr(model, 'version')

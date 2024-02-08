@@ -5,6 +5,7 @@ PVNet model class
 import datetime as dt
 import logging
 import os
+import shutil
 import tempfile
 
 import fsspec
@@ -26,8 +27,8 @@ WIND_MODEL_NAME = os.getenv("WIND_MODEL_NAME", default="openclimatefix/windnet_i
 WIND_MODEL_VERSION = os.getenv("WIND_MODEL_VERSION",
                                default="c6af802823edc5e87b22df680b41b0dcdb4869e1")
 
-PV_MODEL_NAME = os.getenv("WIND_MODEL_NAME", default="openclimatefix/pvnet_india")
-PV_MODEL_VERSION = os.getenv("WIND_MODEL_VERSION",
+PV_MODEL_NAME = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
+PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION",
                              default="d194488203375e766253f0d2961010356de52eb9")
 
 BATCH_SIZE = 10
@@ -57,14 +58,11 @@ class PVNetModel:
 
         self.asset_type = asset_type
         self.t0 = timestamp
-        self.setup()
 
-    def setup(self):
-        """Sets up the model ready for inference"""
-
+        # Setup the data, dataloader, and model
         self._prepare_data_sources()
-        self._create_dataloader()
-        self._load_model()
+        self.dataloader = self._create_dataloader()
+        self.model = self._load_model()
 
     def predict(self, site_id: str, timestamp: dt.datetime):
         """Make a prediction for the model"""
@@ -76,11 +74,17 @@ class PVNetModel:
 
         log.info("Preparing data sources")
 
-        nwp_source_file_path = os.getenv("NWP_ZARR_PATH", default="")
+        # Load remote zarr source
+        nwp_source_file_path = os.environ["NWP_ZARR_PATH"]
         fs = fsspec.open(nwp_source_file_path).fs
+
+        # Remove local zarr if already exists
+        shutil.rmtree("nwp.zarr", ignore_errors=True)
+
+        # Copy remote zarr locally
         fs.get(nwp_source_file_path, "nwp.zarr", recursive=True)
 
-        # TODO load historic wind data
+        # TODO load live wind data
 
     def _create_dataloader(self):
         """Setup dataloader with prepared data sources"""
@@ -141,13 +145,13 @@ class PVNetModel:
             persistent_workers=False,
         )
 
-        self.dataloader = DataLoader(batch_datapipe, **dataloader_kwargs)
+        return DataLoader(batch_datapipe, **dataloader_kwargs)
 
     def _load_model(self):
         """Load model"""
 
         log.info(f"Loading model: {self.name} - {self.version}")
-        self.model = PVNetBaseModel.from_pretrained(
+        return PVNetBaseModel.from_pretrained(
             self.name,
             revision=self.version
         ).to(DEVICE)

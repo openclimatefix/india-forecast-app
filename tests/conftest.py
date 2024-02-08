@@ -6,7 +6,6 @@ Fixtures for testing
 import datetime as dt
 import logging
 import os
-import tempfile
 
 import numpy as np
 import pandas as pd
@@ -109,7 +108,7 @@ def forecast_values():
 
 
 @pytest.fixture(scope="session")
-def nwp_data():
+def nwp_data(tmp_path_factory):
     """Dummy NWP data"""
 
     # Load dataset which only contains coordinates, but no data
@@ -148,12 +147,9 @@ def nwp_data():
     # ds.ecmwf.attrs = ds.attrs["_data_attrs"]
     # del ds.attrs["_data_attrs"]
 
-    with tempfile.TemporaryDirectory() as tmp_dirname:
-        # AS NWP data is loaded from environment variable - save out data
-        # and set paths as environmental variables
-        temp_nwp_path = f"{tmp_dirname}/nwp.zarr"
-        os.environ["NWP_ZARR_PATH"] = temp_nwp_path
-        ds.to_zarr(temp_nwp_path)
-
-        yield ds
+    # AS NWP data is loaded by the app from environment variable,
+    # save out data and set paths as environmental variables
+    temp_nwp_path = f"{tmp_path_factory.mktemp('data')}/nwp.zarr"
+    os.environ["NWP_ZARR_PATH"] = temp_nwp_path
+    ds.to_zarr(temp_nwp_path)
 

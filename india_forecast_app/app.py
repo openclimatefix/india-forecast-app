@@ -164,10 +164,12 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
         log.info(f"Found {len(sites)} sites")
 
         # 2. Load models
-        log.info("Loading models...")
-        pv_model = get_model("pv")
+        log.info("Loading PV model...")
+        pv_model = get_model("pv", timestamp)
         log.info("Loaded PV model")
-        wind_model = get_model("wind")
+
+        log.info("Loading wind model...")
+        wind_model = get_model("wind", timestamp)
         log.info("Loaded wind model")
 
         for site in sites:
