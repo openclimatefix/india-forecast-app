@@ -137,4 +137,4 @@ dmypy.json
 .idea/
 
 # App specific
-nwp.zarr/
+data/

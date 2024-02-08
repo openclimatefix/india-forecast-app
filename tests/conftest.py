@@ -7,6 +7,7 @@ import datetime as dt
 import logging
 import os
 
+import fsspec
 import numpy as np
 import pandas as pd
 import pytest
@@ -113,7 +114,7 @@ def nwp_data(tmp_path_factory):
 
     # Load dataset which only contains coordinates, but no data
     ds = xr.open_zarr(
-        f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp_india.zarr"
+        f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp.zarr"
     )
 
     # Last init time was at least 2 hours ago and floor to 3-hour interval
@@ -153,3 +154,25 @@ def nwp_data(tmp_path_factory):
     os.environ["NWP_ZARR_PATH"] = temp_nwp_path
     ds.to_zarr(temp_nwp_path)
 
+
+@pytest.fixture(scope="session")
+def wind_data(tmp_path_factory):
+    """Dummy wind data"""
+
+    # AS wind data is loaded by the app from environment variable,
+    # save out data and set paths as environmental variables
+    root_path = tmp_path_factory.mktemp('data')
+
+    root_source_path = os.path.dirname(os.path.abspath(__file__))
+
+    netcdf_source_path = f"{root_source_path}/test_data/wind/wind_data.nc"
+    temp_netcdf_path = f"{root_path}/wind_data.nc"
+    os.environ["WIND_NETCDF_PATH"] = temp_netcdf_path
+    fs = fsspec.open(netcdf_source_path).fs
+    fs.copy(netcdf_source_path, temp_netcdf_path)
+
+    metadata_source_path = f"{root_source_path}/test_data/wind/wind_metadata.csv"
+    temp_metadata_path = f"{root_path}/wind_metadata.csv"
+    os.environ["WIND_METADATA_PATH"] = temp_metadata_path
+    fs = fsspec.open(metadata_source_path).fs
+    fs.copy(metadata_source_path, temp_metadata_path)

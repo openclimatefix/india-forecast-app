@@ -29,7 +29,7 @@ def test_get_sites(db_session):
 
 
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_get_model(asset_type, nwp_data, caplog):
+def test_get_model(asset_type, nwp_data, wind_data, caplog):
     """Test for getting valid model"""
 
     caplog.set_level('INFO')
@@ -40,15 +40,15 @@ def test_get_model(asset_type, nwp_data, caplog):
     assert hasattr(model, 'predict')
 
 
-@pytest.mark.skip(reason="Temporarily disabled while integrating Windnet")
+# @pytest.mark.skip(reason="Temporarily disabled while integrating Windnet")
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_run_model(db_session, asset_type, nwp_data):
+def test_run_model(db_session, asset_type, nwp_data, wind_data):
     """Test for running PV and wind models"""
 
     model = PVNetModel if asset_type == "wind" else DummyModel
 
     forecast = run_model(
-        model=model(asset_type, timestamp=dt.datetime.now(tz=dt)),
+        model=model(asset_type, timestamp=dt.datetime.now(tz=None)),
         site_id=str(uuid.uuid4()),
         timestamp=dt.datetime.now(tz=dt.UTC)
     )
@@ -82,7 +82,7 @@ def test_save_forecast(db_session, forecast_values):
 
 @pytest.mark.skip(reason="Temporarily disabled while integrating Windnet")
 @pytest.mark.parametrize("write_to_db", [True, False])
-def test_app(write_to_db, db_session, nwp_data):
+def test_app(write_to_db, db_session, nwp_data, wind_data):
     """Test for running app from command line"""
 
     init_n_forecasts = db_session.query(ForecastSQL).count()

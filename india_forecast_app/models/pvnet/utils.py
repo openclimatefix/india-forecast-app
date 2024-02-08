@@ -1,9 +1,12 @@
 """Useful functions for setting up PVNet model"""
+import logging
 
 import fsspec
 import yaml
 
+from .consts import nwp_path, wind_metadata_path, wind_netcdf_path
 
+log = logging.getLogger(__name__)
 def worker_init_fn(worker_id):
     """
     Clear reference to the loop and thread.
@@ -31,8 +34,13 @@ def populate_data_config_sources(input_path, output_path):
         config = yaml.load(infile, Loader=yaml.FullLoader)
 
     production_paths = {
-        # "wind": os.environ["DB_URL"],
-        "nwp": {"ecmwf": "nwp.zarr"}
+        "wind": {
+            "filename": wind_netcdf_path,
+            "wind_metadata_filename": wind_metadata_path
+        },
+        "nwp": {
+            "ecmwf": nwp_path
+        }
     }
 
     if "nwp" in config["input_data"]:
@@ -43,8 +51,13 @@ def populate_data_config_sources(input_path, output_path):
                 assert nwp_source in production_paths["nwp"], f"Missing NWP path: {nwp_source}"
                 nwp_config[nwp_source]["nwp_zarr_path"] = production_paths["nwp"][nwp_source]
 
-    # We do not need to set wind/PV path right now. This currently done through datapipes
-    # TODO - Move the wind/PV path to here?
+    if "wind" in config["input_data"]:
+        wind_config = config["input_data"]["wind"]
+        assert "wind" in production_paths, "Missing production path: wind"
+        wind_config["wind_files_groups"][0]["wind_filename"] = production_paths["wind"]['filename']
+        wind_config["wind_files_groups"][0]["wind_metadata_filename"] = (
+            production_paths)["wind"]['wind_metadata_filename']
 
+    log.info(config)
     with open(output_path, 'w') as outfile:
         yaml.dump(config, outfile, default_flow_style=False)
