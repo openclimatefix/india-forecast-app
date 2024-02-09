@@ -139,7 +139,8 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     logging.basicConfig(stream=sys.stdout, level=getattr(logging, log_level.upper()))
 
     if timestamp is None:
-        timestamp = dt.datetime.now(tz=dt.UTC)
+        # get the timestamp now rounded down the neartes 15 minutes
+        timestamp = pd.Timestamp.now(tz="UTC").floor("15min")
         log.info('Timestamp omitted - will generate forecasts for "now"')
     else:
         # Ensure timestamp is UTC
