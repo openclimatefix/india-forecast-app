@@ -48,8 +48,10 @@ def test_run_model(db_session, asset_type, nwp_data, wind_data, caplog):
 
     model = PVNetModel if asset_type == "wind" else DummyModel
 
+    timestamp = dt.datetime(year=2024, month=2, day=14, hour=11, minute=0, second=0, microsecond=0)
     forecast = run_model(
         model=model(asset_type, timestamp=dt.datetime.now(tz=None)),
+        # model=model(asset_type, timestamp=timestamp),
         site_id=str(uuid.uuid4()),
         timestamp=dt.datetime.now(tz=dt.UTC)
     )

@@ -66,6 +66,7 @@ class PVNetModel:
 
         self.asset_type = asset_type
         self.t0 = timestamp
+        log.info(self.t0)
 
         # Setup the data, dataloader, and model
         self._prepare_data_sources()
@@ -124,6 +125,7 @@ class PVNetModel:
         fs.get(nwp_source_file_path, nwp_path, recursive=True)
 
         if self.asset_type == "wind":
+            # TODO wind generation data should be coming from DB, not a NETCDF file
             # Load remote netcdf and metadata sources
             wind_netcdf_source_file_path = os.environ["WIND_NETCDF_PATH"]
             wind_metadata_source_file_path = os.environ["WIND_METADATA_PATH"]
