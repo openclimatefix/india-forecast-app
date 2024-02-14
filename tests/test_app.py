@@ -44,11 +44,10 @@ def test_get_model(asset_type, nwp_data, wind_data):
 def test_run_model(db_session, asset_type, nwp_data, wind_data, caplog):
     """Test for running PV and wind models"""
 
-    caplog.set_level('INFO')
+    caplog.set_level('DEBUG')
 
     model = PVNetModel if asset_type == "wind" else DummyModel
 
-    timestamp = dt.datetime(year=2024, month=2, day=14, hour=11, minute=0, second=0, microsecond=0)
     forecast = run_model(
         model=model(asset_type, timestamp=dt.datetime.now(tz=None)),
         # model=model(asset_type, timestamp=timestamp),

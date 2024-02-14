@@ -36,7 +36,7 @@ def populate_data_config_sources(input_path, output_path):
     production_paths = {
         "wind": {
             "filename": wind_netcdf_path,
-            "wind_metadata_filename": wind_metadata_path
+            "metadata_filename": wind_metadata_path
         },
         "nwp": {
             "ecmwf": nwp_path
@@ -56,7 +56,7 @@ def populate_data_config_sources(input_path, output_path):
         assert "wind" in production_paths, "Missing production path: wind"
         wind_config["wind_files_groups"][0]["wind_filename"] = production_paths["wind"]['filename']
         wind_config["wind_files_groups"][0]["wind_metadata_filename"] = (
-            production_paths)["wind"]['wind_metadata_filename']
+            production_paths)["wind"]['metadata_filename']
 
     log.info(config)
     with open(output_path, 'w') as outfile:

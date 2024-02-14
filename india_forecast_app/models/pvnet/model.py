@@ -14,10 +14,10 @@ import pandas as pd
 import torch
 from ocf_datapipes.batch import stack_np_examples_into_batch
 from ocf_datapipes.training.pvnet import construct_sliced_data_pipeline as pv_base_pipeline
-from ocf_datapipes.training.windnet import DictDatasetIterDataPipe
+from ocf_datapipes.training.windnet import DictDatasetIterDataPipe, split_dataset_dict_dp
 from ocf_datapipes.training.windnet import construct_sliced_data_pipeline as wind_base_pipeline
 from ocf_datapipes.utils import Location
-from ocf_datapipes.utils.utils import combine_to_single_dataset
+from ocf_datapipes.utils.utils import combine_to_single_dataset, uncombine_from_single_dataset
 from pvnet.data.utils import batch_to_tensor, copy_batch_to_device
 from pvnet.models.base_model import BaseModel as PVNetBaseModel
 from torch.utils.data import DataLoader
@@ -39,7 +39,7 @@ PV_MODEL_NAME = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
 PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION",
                              default="d194488203375e766253f0d2961010356de52eb9")
 
-BATCH_SIZE = 10
+BATCH_SIZE = 1
 
 log = logging.getLogger(__name__)
 
@@ -164,10 +164,8 @@ class PVNetModel:
         populate_data_config_sources(data_config_filename, populated_data_config_filename)
 
         # Location and time datapipes
-        # TODO not sure if this is the correct way to set these up...
         location_pipe = IterableWrapper([Location(coordinate_system="lon_lat", x=72.6399, y=26.4499)])
         t0_datapipe = IterableWrapper([self.t0])
-        # t0_datapipe = IterableWrapper([self.t0]).repeat(len(location_pipe))
 
         location_pipe = location_pipe.sharding_filter()
         t0_datapipe = t0_datapipe.sharding_filter()
@@ -181,14 +179,24 @@ class PVNetModel:
                     t0_datapipe=t0_datapipe
                 )
             )
-            log.info(next(iter(base_datapipe_dict["nwp"]["ecmwf"])))
 
-            # TODO figure out why this is an empty dataset
-            log.info(next(iter(base_datapipe_dict["wind"])).to_pandas())
-
-            base_datapipe = DictDatasetIterDataPipe(
+            base_datapipe = (DictDatasetIterDataPipe(
                 {k: v for k, v in base_datapipe_dict.items() if k != "config"},
-            ).map(combine_to_single_dataset)
+            )
+            .map(split_dataset_dict_dp))
+
+            # log.info(next(iter(next(iter(base_datapipe))["nwp"]['ecmwf'])))
+            # log.info(next(iter(next(iter(base_datapipe))["wind"])))
+
+            batch_datapipe = (
+                base_datapipe
+                    .windnet_convert_to_numpy_batch()
+                    .batch(BATCH_SIZE)
+                    .map(stack_np_examples_into_batch)
+                    .map(batch_to_tensor)
+            )
+
+            # log.info(next(iter(batch_datapipe)))
         else:
             base_datapipe = (
                 pv_base_pipeline(
@@ -198,8 +206,7 @@ class PVNetModel:
                     production=True
                 )
             )
-
-        batch_datapipe = base_datapipe.batch(BATCH_SIZE).map(stack_np_examples_into_batch)
+            batch_datapipe = base_datapipe.batch(BATCH_SIZE).map(stack_np_examples_into_batch)
 
         n_workers = os.cpu_count() - 1
 

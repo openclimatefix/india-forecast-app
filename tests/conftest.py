@@ -129,7 +129,7 @@ def nwp_data(tmp_path_factory, time_before_present):
     )
 
     # Last t0 to at least 2 hours ago and floor to 3-hour interval
-    t0_datetime_utc = (time_before_present(dt.timedelta(hours=2))
+    t0_datetime_utc = (time_before_present(dt.timedelta(hours=0))
                        .floor(dt.timedelta(hours=3)))
     ds.init_time.values[:] = pd.date_range(
         t0_datetime_utc - dt.timedelta(hours=3 * (len(ds.init_time) - 1)),
@@ -182,7 +182,7 @@ def wind_data(tmp_path_factory, time_before_present):
     ds = xr.open_dataset(netcdf_source_path)
 
     # Set t0 to at least 2 hours ago and floor to 15-min interval
-    t0_datetime_utc = (time_before_present(dt.timedelta(hours=2))
+    t0_datetime_utc = (time_before_present(dt.timedelta(hours=0))
                        .floor(dt.timedelta(minutes=15)))
     ds.time_utc.values[:] = pd.date_range(
         t0_datetime_utc - dt.timedelta(minutes=15 * (len(ds.time_utc) - 1)),
