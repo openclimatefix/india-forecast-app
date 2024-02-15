@@ -60,7 +60,7 @@ class DummyModel:
         return values
 
 
-def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
+def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 4000) -> float:
     """Gets a fake solar yield for the input time.
 
     The basic yield function is built from a sine wave
@@ -82,9 +82,9 @@ def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
     # translateX moves the minimum of the function to 0 hours
     translateX = -math.pi / 2
     # translateY modulates the base function based on the month.
-    # * + 0.5 at the summer solstice
-    # * - 0.5 at the winter solstice
-    translateY = math.sin((math.pi / 6) * time.month + translateX) / 2.0
+    # * + 0.01 at the summer solstice
+    # * - 0.01 at the winter solstice
+    translateY = math.sin((math.pi / 6) * time.month + translateX) / 100.0
 
     # basefunc ranges between -1 and 1 with a period of 24 hours,
     # peaking at 12 hours.
@@ -94,7 +94,7 @@ def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
     # Remove negative values
     basefunc = max(0, basefunc)
     # Steepen the curve. The divisor is based on the max value
-    basefunc = basefunc**4 / 1.5**4
+    basefunc = basefunc**4 / 1.01**4
 
     # Instead of completely random noise, apply based on the following process:
     # * A base noise function which is the product of long and short sines
