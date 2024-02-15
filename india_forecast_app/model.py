@@ -5,6 +5,7 @@ Model classes (currently just allows for loading a dummy model)
 import datetime as dt
 import math
 import random
+import pandas as pd
 
 
 class DummyModel:
@@ -45,6 +46,16 @@ class DummyModel:
                     "forecast_power_kw": int(_yield),
                 }
             )
+
+        if self.asset_type == "wind":
+            # change to dataframe
+            values_df = pd.DataFrame(values)
+
+            # smooth the wind forecast
+            values_df["forecast_power_kw"] = values_df["forecast_power_kw"].rolling(6, min_periods=1).mean()
+
+            # turn back to list of dicts
+            values = values_df.to_dict(orient="records")
 
         return values
 
@@ -99,7 +110,7 @@ def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
     return output
 
 
-def _basicWindYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
+def _basicWindYieldFunc(timeUnix: int, scaleFactor: int = 3000) -> float:
     """Gets a fake wind yield for the input time."""
     output = min(scaleFactor, scaleFactor * random.random())
 
