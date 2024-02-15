@@ -3,8 +3,8 @@ Model classes (currently just allows for loading a dummy model)
 """
 import datetime as dt
 import math
-import random
 import pandas as pd
+import random
 
 
 class DummyModel:
