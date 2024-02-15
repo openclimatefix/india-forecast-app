@@ -12,7 +12,8 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from pvsite_datamodel.sqlmodels import Base, SiteSQL
+from pvsite_datamodel import DatabaseConnection
+from pvsite_datamodel.sqlmodels import Base, SiteSQL, GenerationSQL
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from testcontainers.postgres import PostgresContainer
@@ -28,65 +29,97 @@ def engine():
         url = postgres.get_connection_url()
         os.environ["DB_URL"] = url
         engine = create_engine(url)
-        Base.metadata.create_all(engine)
 
         yield engine
 
+        engine.dispose()
+
 
 @pytest.fixture()
-def db_session(engine):
+def db_conn(engine):
+    """Create db connections and create/drop tables at the start/end of each test"""
+
+    connection = DatabaseConnection(engine.url, echo=False)
+    engine = connection.engine
+
+    Base.metadata.create_all(engine)
+
+    yield connection
+
+    Base.metadata.drop_all(engine)
+
+
+@pytest.fixture()
+def db_session(db_conn, engine):
     """Return a sqlalchemy session, which tears down everything properly post-test."""
 
-    connection = engine.connect()
-    # begin the nested transaction
-    transaction = connection.begin()
-    # use the connection with the already started transaction
-
-    with Session(bind=connection) as session:
+    with db_conn.get_session() as session:
+        # begin the nested transaction
+        session.begin()
+        # use the connection with the already started transaction
         yield session
 
-        session.close()
         # roll back the broader transaction
-        transaction.rollback()
-        # put back the connection to the connection pool
-        connection.close()
-        session.flush()
-
-    engine.dispose()
+        session.rollback()
 
 
-@pytest.fixture(scope="session", autouse=True)
-def db_data(engine):
+@pytest.fixture()
+def sites(db_session):
     """Seed some initial data into DB."""
 
-    with engine.connect() as connection:
-        with Session(bind=connection) as session:
+    sites = []
+    # PV site
+    site = SiteSQL(
+        client_site_id=1,
+        latitude=20.59,
+        longitude=78.96,
+        capacity_kw=4,
+        ml_id=1,
+        asset_type="pv",
+        country="india",
+    )
+    db_session.add(site)
+    sites.append(site)
 
-            # PV site
-            site = SiteSQL(
-                client_site_id=1,
-                latitude=20.59,
-                longitude=78.96,
-                capacity_kw=4,
-                ml_id=1,
-                asset_type="pv",
-                country="india"
+    # Wind site
+    site = SiteSQL(
+        client_site_id=2,
+        latitude=20.59,
+        longitude=78.96,
+        capacity_kw=4,
+        ml_id=2,
+        asset_type="wind",
+        country="india",
+    )
+    db_session.add(site)
+    sites.append(site)
+
+    db_session.commit()
+
+    return sites
+
+
+@pytest.fixture()
+def generation_db_values(db_session, sites, init_timestamp):
+    """Create some fake generations"""
+    start_times = [init_timestamp - dt.timedelta(minutes=x*3+6) for x in range(10)]
+
+    all_generations = []
+
+    for site in sites:
+        for i in range(0, 10):
+            generation = GenerationSQL(
+                site_uuid=site.site_uuid,
+                generation_power_kw=i,
+                start_utc=start_times[i],
+                end_utc=start_times[i] + dt.timedelta(minutes=3),
             )
-            session.add(site)
+            all_generations.append(generation)
 
-            # Wind site
-            site = SiteSQL(
-                client_site_id=2,
-                latitude=20.59,
-                longitude=78.96,
-                capacity_kw=4,
-                ml_id=2,
-                asset_type="wind",
-                country="india"
-            )
-            session.add(site)
+    db_session.add_all(all_generations)
+    db_session.commit()
 
-            session.commit()
+    return all_generations
 
 
 @pytest.fixture()
@@ -109,6 +142,13 @@ def forecast_values():
 
 
 @pytest.fixture(scope="session")
+def init_timestamp():
+    """Returns a datetime floored to the last 15 mins"""
+
+    return pd.Timestamp(dt.datetime.now(tz=None)).floor(dt.timedelta(minutes=15))
+
+
+@pytest.fixture(scope="session")
 def time_before_present():
     """Returns a fixed time in the past with specified offset"""
 
@@ -118,6 +158,7 @@ def time_before_present():
         return now - dt
 
     return _time_before_present
+
 
 @pytest.fixture(scope="session")
 def nwp_data(tmp_path_factory, time_before_present):
@@ -182,8 +223,9 @@ def wind_data(tmp_path_factory, time_before_present):
     ds = xr.open_dataset(netcdf_source_path)
 
     # Set t0 to at least 2 hours ago and floor to 15-min interval
-    t0_datetime_utc = (time_before_present(dt.timedelta(hours=0))
-                       .floor(dt.timedelta(minutes=15)))
+    # t0_datetime_utc = (time_before_present(dt.timedelta(hours=0))
+    #                    .floor(dt.timedelta(minutes=15)))
+    t0_datetime_utc = pd.Timestamp.now(tz=None).floor(dt.timedelta(minutes=15))
     ds.time_utc.values[:] = pd.date_range(
         t0_datetime_utc - dt.timedelta(minutes=15 * (len(ds.time_utc) - 1)),
         t0_datetime_utc,

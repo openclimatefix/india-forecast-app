@@ -10,8 +10,8 @@ import sys
 import click
 import pandas as pd
 from pvsite_datamodel import DatabaseConnection
-from pvsite_datamodel.read import get_sites_by_country
-from pvsite_datamodel.sqlmodels import SiteSQL
+from pvsite_datamodel.read import get_sites_by_country, get_pv_generation_by_sites
+from pvsite_datamodel.sqlmodels import SiteSQL, GenerationSQL, SiteAssetType
 from pvsite_datamodel.write import insert_forecast_values
 from sqlalchemy.orm import Session
 
@@ -35,13 +35,40 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
     return sites
 
 
-def get_model(asset_type: str, timestamp: dt.datetime) -> PVNetModel:
+def get_generation_data(db_session: Session, sites: list[SiteSQL], timestamp: dt.datetime) -> list[GenerationSQL]:
+    """
+        Gets generation data values for given sites
+
+        Args:
+                db_session: A SQLAlchemy session
+                sites: A list of SiteSQL objects
+                timestamp: The time from which to get generation data for
+
+        Returns:
+                A list of SiteSQL objects
+    """
+
+    site_uuids = [s.site_uuid for s in sites]
+    start = timestamp - dt.timedelta(hours=1)
+    end = timestamp
+
+    generation_data = get_pv_generation_by_sites(
+        session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
+    )
+
+    # TODO resample data to 15 min intervals - ensure 5 values for wind
+
+    return generation_data
+
+
+def get_model(asset_type: str, timestamp: dt.datetime, generation_data) -> PVNetModel:
     """
     Instantiates and returns the forecast model ready for running inference
 
     Args:
             asset_type: One or "pv" or "wind"
             timestamp: Datetime at which the forecast will be made
+            generation_data: Latest historic generation data
 
     Returns:
             A forecasting model
@@ -49,10 +76,11 @@ def get_model(asset_type: str, timestamp: dt.datetime) -> PVNetModel:
 
     # Only windnet is ready, so if asset_type is PV, continue using dummy model
     if asset_type == "wind":
-        model = PVNetModel(asset_type, timestamp)
+        model_cls = PVNetModel
     else:
-        model = DummyModel(asset_type, timestamp)
+        model_cls = DummyModel
 
+    model = model_cls(asset_type, timestamp, generation_data)
     return model
 
 
@@ -145,11 +173,10 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     logging.basicConfig(stream=sys.stdout, level=getattr(logging, log_level.upper()))
 
     if timestamp is None:
-        timestamp = dt.datetime.now(tz=dt.UTC)
+        timestamp = pd.Timestamp(dt.datetime.now(tz=dt.UTC)).floor(dt.timedelta(minutes=15))
         log.info('Timestamp omitted - will generate forecasts for "now"')
     else:
-        # Ensure timestamp is UTC
-        timestamp.replace(tzinfo=dt.UTC)
+        timestamp = pd.Timestamp(timestamp).floor(dt.timedelta(minutes=15))
         
     # 0. Initialise DB connection
     url = os.environ["DB_URL"]
@@ -161,16 +188,25 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
         # 1. Get sites
         log.info("Getting sites...")
         sites = get_sites(session)
-        log.info(f"Found {len(sites)} sites")
+        log.info(sites)
+        pv_sites = [site for site in sites if site.asset_type == SiteAssetType.wind]
+        log.info(f"Found {len(pv_sites)} pv sites")
+        wind_sites = [site for site in sites if site.asset_type == SiteAssetType.wind]
+        log.info(f"Found {len(wind_sites)} wind sites")
 
-        # 2. Load models
-        log.info("Loading PV model...")
-        pv_model = get_model("pv", timestamp)
-        log.info("Loaded PV model")
+        # 2. Load data/models
+        if len(pv_sites) > 0:
+            # TODO get gen data -> pass to get_model
+            log.info("Loading PV model...")
+            pv_model = get_model("pv", timestamp, generation_data=[])
+            log.info("PV model loaded")
 
-        log.info("Loading wind model...")
-        wind_model = get_model("wind", timestamp)
-        log.info("Loaded wind model")
+        if len(wind_sites) > 0:
+            log.info("Reading latest historic wind generation data...")
+            generation_data = get_generation_data(session, wind_sites, timestamp)
+            log.info("Loading wind model...")
+            wind_model = get_model("wind", timestamp, generation_data)
+            log.info("Wind model loaded")
 
         for site in sites:
             # 3. Run model for each site
@@ -188,7 +224,9 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                 forecast = {
                     "meta": {
                         "site_id": site_id,
-                        "version": model.version,
+                        # TODO model version strings too long to store db field (max 32 chars)
+                        # "version": model.version,
+                        "version": "0.0.0",
                         "timestamp": timestamp,
                     },
                     "values": forecast_values,

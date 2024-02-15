@@ -17,7 +17,7 @@ class DummyModel:
         """Version number"""
         return "0.0.0"
 
-    def __init__(self, asset_type: str, timestamp: dt.datetime):
+    def __init__(self, asset_type: str, timestamp: dt.datetime, generation_data):
         """Initializer for the model"""
         self.asset_type = asset_type
         self.to = timestamp
@@ -27,30 +27,30 @@ class DummyModel:
         return self._generate_dummy_forecast(timestamp)
 
     def _generate_dummy_forecast(self, timestamp: dt.datetime):
-        """Generates a fake 2-day forecast (15 minute intervals"""
+        """Generates a fake 2-day forecast (15 minute intervals)"""
         start = timestamp
         end = timestamp + dt.timedelta(days=2)
         step = dt.timedelta(minutes=15)
-        numSteps = int((end - start) / step)
+        num_steps = int((end - start) / step)
         values: list[dict] = []
 
-        for i in range(numSteps):
+        for i in range(num_steps):
             time = start + i * step
-            gen_func = _basicSolarYieldFunc if self.asset_type == "pv" else _basicWindYieldFunc
+            gen_func = _basic_solar_yield_fn if self.asset_type == "pv" else _basic_wind_yield_fn
             _yield = gen_func(int(time.timestamp()))
 
             values.append(
                 {
                     "start_utc": time,
                     "end_utc": time + step,
-                    "forecast_power_kw": int(_yield),
+                    "forecast_power_kw": float(_yield),
                 }
             )
 
         return values
 
 
-def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
+def _basic_solar_yield_fn(time_unix: int, scale_factor: int = 10000) -> float:
     """Gets a fake solar yield for the input time.
 
     The basic yield function is built from a sine wave
@@ -63,7 +63,7 @@ def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
             A scale factor of 10000 will result in a peak yield of 10 kW.
     """
     # Create a datetime object from the unix time
-    time = dt.datetime.fromtimestamp(timeUnix, tz=dt.UTC)
+    time = dt.datetime.fromtimestamp(time_unix, tz=dt.UTC)
     # The functions x values are hours, so convert the time to hours
     hour = time.day * 24 + time.hour + time.minute / 60 + time.second / 3600
 
@@ -82,7 +82,7 @@ def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
     # depending on the month.
     basefunc = math.sin(scaleX * hour + translateX) + translateY
     # Remove negative values
-    basefunc = max(0, basefunc)
+    basefunc = max(0.0, basefunc)
     # Steepen the curve. The divisor is based on the max value
     basefunc = basefunc**4 / 1.5**4
 
@@ -95,13 +95,13 @@ def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
     noise = noise * random.random() / 20 + 0.97
 
     # Create the output value from the base function, noise, and scale factor
-    output = basefunc * noise * scaleFactor
+    output = basefunc * noise * scale_factor
 
     return output
 
 
-def _basicWindYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
+def _basic_wind_yield_fn(time_unix: int, scale_factor: int = 10000) -> float:
     """Gets a fake wind yield for the input time."""
-    output = min(scaleFactor, scaleFactor * random.random())
+    output = min(float(scale_factor), scale_factor * random.random())
 
     return output

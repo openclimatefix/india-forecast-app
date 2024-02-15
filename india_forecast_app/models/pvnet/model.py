@@ -8,18 +8,20 @@ import os
 import shutil
 import tempfile
 
+import xarray as xr
 import fsspec
 import numpy as np
 import pandas as pd
 import torch
+
 from ocf_datapipes.batch import stack_np_examples_into_batch
 from ocf_datapipes.training.pvnet import construct_sliced_data_pipeline as pv_base_pipeline
 from ocf_datapipes.training.windnet import DictDatasetIterDataPipe, split_dataset_dict_dp
 from ocf_datapipes.training.windnet import construct_sliced_data_pipeline as wind_base_pipeline
 from ocf_datapipes.utils import Location
-from ocf_datapipes.utils.utils import combine_to_single_dataset, uncombine_from_single_dataset
 from pvnet.data.utils import batch_to_tensor, copy_batch_to_device
 from pvnet.models.base_model import BaseModel as PVNetBaseModel
+from pvsite_datamodel import GenerationSQL
 from torch.utils.data import DataLoader
 from torch.utils.data.datapipes.iter import IterableWrapper
 
@@ -61,15 +63,15 @@ class PVNetModel:
 
         return WIND_MODEL_VERSION if self.asset_type == "wind" else PV_MODEL_VERSION
 
-    def __init__(self, asset_type: str, timestamp: dt.datetime):
+    def __init__(self, asset_type: str, timestamp: dt.datetime, generation_data):
         """Initializer for the model"""
 
         self.asset_type = asset_type
         self.t0 = timestamp
-        log.info(self.t0)
+        log.info(f"Model initialised at t0={self.t0}")
 
         # Setup the data, dataloader, and model
-        self._prepare_data_sources()
+        self._prepare_data_sources(generation_data)
         self.dataloader = self._create_dataloader()
         self.model = self._load_model()
 
@@ -94,16 +96,16 @@ class PVNetModel:
 
         normed_preds = np.concatenate(normed_preds)
         n_times = normed_preds.shape[1]
-        valid_times = pd.to_datetime([self.t0 + dt.timedelta(minutes=30 * (i + 1))
+        valid_times = pd.to_datetime([self.t0 + dt.timedelta(minutes=15 * (i + 1))
                                       for i in range(n_times)])
 
         return [{
             "start_utc": valid_times[i],
-            "end_utc": valid_times[i] + dt.timedelta(minutes=30),
-            "forecast_power_kw": v
-        } for i, v in enumerate(normed_preds)]
+            "end_utc": valid_times[i] + dt.timedelta(minutes=15),
+            "forecast_power_kw": float(v)
+        } for i, v in enumerate(normed_preds[0, :, 3])]  # index 3 is the 50th percentile
 
-    def _prepare_data_sources(self):
+    def _prepare_data_sources(self, generation_data: list[GenerationSQL]):
         """Pull and prepare data sources required for inference"""
 
         log.info("Preparing data sources")
@@ -125,7 +127,6 @@ class PVNetModel:
         fs.get(nwp_source_file_path, nwp_path, recursive=True)
 
         if self.asset_type == "wind":
-            # TODO wind generation data should be coming from DB, not a NETCDF file
             # Load remote netcdf and metadata sources
             wind_netcdf_source_file_path = os.environ["WIND_NETCDF_PATH"]
             wind_metadata_source_file_path = os.environ["WIND_METADATA_PATH"]
@@ -139,6 +140,13 @@ class PVNetModel:
             fs.get(wind_netcdf_source_file_path,
                    wind_netcdf_path,
                    recursive=True)
+
+            # TODO tidy this up and replace the code above
+            # df = pd.DataFrame([(g.start_utc, g.generation_power_kw) for g in generation_data],
+            #                   columns=["time_utc", "0"]).set_index("time_utc")
+            #
+            # da = df.to_xarray()
+            # da.to_netcdf(wind_netcdf_path, engine="h5netcdf")
 
             # Copy remote metadata locally
             fs = fsspec.open(wind_metadata_source_file_path).fs
@@ -181,22 +189,16 @@ class PVNetModel:
             )
 
             base_datapipe = (DictDatasetIterDataPipe(
-                {k: v for k, v in base_datapipe_dict.items() if k != "config"},
-            )
-            .map(split_dataset_dict_dp))
-
-            # log.info(next(iter(next(iter(base_datapipe))["nwp"]['ecmwf'])))
-            # log.info(next(iter(next(iter(base_datapipe))["wind"])))
+                { k: v for k, v in base_datapipe_dict.items() if k != "config" },
+            ).map(split_dataset_dict_dp))
 
             batch_datapipe = (
                 base_datapipe
-                    .windnet_convert_to_numpy_batch()
-                    .batch(BATCH_SIZE)
-                    .map(stack_np_examples_into_batch)
-                    .map(batch_to_tensor)
+                .windnet_convert_to_numpy_batch()
+                .batch(BATCH_SIZE)
+                .map(stack_np_examples_into_batch)
             )
 
-            # log.info(next(iter(batch_datapipe)))
         else:
             base_datapipe = (
                 pv_base_pipeline(

@@ -6,16 +6,16 @@ import uuid
 
 import pytest
 from pvsite_datamodel.read import get_all_sites
-from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL
+from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, GenerationSQL
 
-from india_forecast_app.app import app, get_model, get_sites, run_model, save_forecast
+from india_forecast_app.app import app, get_model, get_sites, get_generation_data, run_model, save_forecast
 from india_forecast_app.models.dummy import DummyModel
 from india_forecast_app.models.pvnet.model import PVNetModel
 
 from ._utils import run_click_script
 
 
-def test_get_sites(db_session):
+def test_get_sites(db_session, sites):
     """Test for correct site ids"""
 
     sites = get_sites(db_session)
@@ -28,44 +28,55 @@ def test_get_sites(db_session):
         assert sites[1].asset_type.name == "wind"
 
 
+def test_get_generation_data(db_session, sites, generation_db_values, init_timestamp):
+    """Test for correct generation data"""
+
+    generation_values = get_generation_data(db_session, sites, timestamp=init_timestamp)
+
+    assert len(generation_values) == (2 * 10)
+
+
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_get_model(asset_type, nwp_data, wind_data):
+def test_get_model(asset_type, nwp_data, wind_data, generation_db_values, init_timestamp, caplog):
     """Test for getting valid model"""
 
-    model = get_model(asset_type, timestamp=dt.datetime.now(tz=None))
+    caplog.set_level("INFO")
+
+    model = get_model(asset_type, timestamp=init_timestamp, generation_data=generation_db_values)
     
     assert hasattr(model, 'version')
     assert isinstance(model.version, str)
     assert hasattr(model, 'predict')
 
 
-# @pytest.mark.skip(reason="Temporarily disabled while integrating Windnet")
+# @pytest.mark.skip(reason="blah")
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_run_model(db_session, asset_type, nwp_data, wind_data, caplog):
+def test_run_model(db_session, asset_type, sites, nwp_data, wind_data, generation_db_values, init_timestamp, caplog):
     """Test for running PV and wind models"""
 
     caplog.set_level('DEBUG')
 
-    model = PVNetModel if asset_type == "wind" else DummyModel
+    gen_sites = [s for s in sites if s.asset_type.name == asset_type]
+    generation_values = get_generation_data(db_session, sites=gen_sites, timestamp=init_timestamp)
 
+    model = PVNetModel if asset_type == "wind" else DummyModel
     forecast = run_model(
-        model=model(asset_type, timestamp=dt.datetime.now(tz=None)),
-        # model=model(asset_type, timestamp=timestamp),
+        model=model(asset_type, timestamp=init_timestamp, generation_data=generation_values),
         site_id=str(uuid.uuid4()),
         timestamp=dt.datetime.now(tz=dt.UTC)
     )
 
     assert isinstance(forecast, list)
-    assert len(forecast) == 192 # value for every 15mins over 2 days
+    assert len(forecast) == 192  # value for every 15mins over 2 days
     assert all([isinstance(value["start_utc"], dt.datetime) for value in forecast])
     assert all([isinstance(value["end_utc"], dt.datetime) for value in forecast])
-    assert all([isinstance(value["forecast_power_kw"], int) for value in forecast])
+    assert all([isinstance(value["forecast_power_kw"], float) for value in forecast])
 
 
-def test_save_forecast(db_session, forecast_values):
+def test_save_forecast(db_session, sites, forecast_values):
     """Test for saving forecast"""
 
-    site = get_all_sites(db_session)[0]
+    site = sites[0]
 
     forecast = {
         "meta": {
@@ -82,9 +93,9 @@ def test_save_forecast(db_session, forecast_values):
     assert db_session.query(ForecastValueSQL).count() == 10
 
 
-@pytest.mark.skip(reason="Temporarily disabled while integrating Windnet")
+# @pytest.mark.skip(reason="blah")
 @pytest.mark.parametrize("write_to_db", [True, False])
-def test_app(write_to_db, db_session, nwp_data, wind_data):
+def test_app(write_to_db, db_session, sites, nwp_data, wind_data):
     """Test for running app from command line"""
 
     init_n_forecasts = db_session.query(ForecastSQL).count()

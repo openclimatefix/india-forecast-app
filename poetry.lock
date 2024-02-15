@@ -4490,13 +4490,13 @@ requests = "*"
 
 [[package]]
 name = "pvnet"
-version = "3.0.2"
+version = "3.0.4"
 description = "PVNet"
 optional = false
 python-versions = "*"
 files = [
-    {file = "PVNet-3.0.2-py3-none-any.whl", hash = "sha256:6306135808b4874821174a0ab9356b85f99cbad3c4e476582192455c9611f0ba"},
-    {file = "PVNet-3.0.2.tar.gz", hash = "sha256:0850ba593a59a01ce07137cd8b99acfa6d3dd0637414f334831dc515737139e2"},
+    {file = "PVNet-3.0.4-py3-none-any.whl", hash = "sha256:cce28ec38fec54bd60b5ff33027dcce04d65e011c5e7a1c57915e01a1114a682"},
+    {file = "PVNet-3.0.4.tar.gz", hash = "sha256:906c9424b3ccfaa0b231f72f04da51cfe903c40c31aad37ee99cb7ab015ff7d1"},
 ]
 
 [package.dependencies]
