@@ -53,7 +53,7 @@ class DummyModel:
 
             # smooth the wind forecast
             values_df["forecast_power_kw"] = (
-                values_df["forecast_power_kw"].rolling(6, min_periods=1).mean()
+                values_df["forecast_power_kw"].rolling(6, min_periods=1).mean().astype(int)
             )
 
             # turn back to list of dicts
