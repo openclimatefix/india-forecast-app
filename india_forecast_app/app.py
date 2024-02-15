@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 def get_sites(db_session: Session) -> list[SiteSQL]:
     """
     Gets all available sites in India
-    
+
     Args:
             db_session: A SQLAlchemy session
 
