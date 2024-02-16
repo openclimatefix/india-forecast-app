@@ -1,10 +1,11 @@
 """
 Model classes (currently just allows for loading a dummy model)
 """
-
 import datetime as dt
 import math
 import random
+
+import pandas as pd
 
 
 class DummyModel:
@@ -46,10 +47,22 @@ class DummyModel:
                 }
             )
 
+        if self.asset_type == "wind":
+            # change to dataframe
+            values_df = pd.DataFrame(values)
+
+            # smooth the wind forecast
+            values_df["forecast_power_kw"] = (
+                values_df["forecast_power_kw"].rolling(6, min_periods=1).mean().astype(int)
+            )
+
+            # turn back to list of dicts
+            values = values_df.to_dict(orient="records")
+
         return values
 
 
-def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
+def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 4000) -> float:
     """Gets a fake solar yield for the input time.
 
     The basic yield function is built from a sine wave
@@ -71,9 +84,9 @@ def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
     # translateX moves the minimum of the function to 0 hours
     translateX = -math.pi / 2
     # translateY modulates the base function based on the month.
-    # * + 0.5 at the summer solstice
-    # * - 0.5 at the winter solstice
-    translateY = math.sin((math.pi / 6) * time.month + translateX) / 2.0
+    # * + 0.01 at the summer solstice
+    # * - 0.01 at the winter solstice
+    translateY = math.sin((math.pi / 6) * time.month + translateX) / 100.0
 
     # basefunc ranges between -1 and 1 with a period of 24 hours,
     # peaking at 12 hours.
@@ -83,14 +96,12 @@ def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
     # Remove negative values
     basefunc = max(0, basefunc)
     # Steepen the curve. The divisor is based on the max value
-    basefunc = basefunc**4 / 1.5**4
+    basefunc = basefunc ** 4 / 1.01 ** 4
 
     # Instead of completely random noise, apply based on the following process:
     # * A base noise function which is the product of long and short sines
     # * The resultant function modulates with very small amplitude around 1
-    noise = (math.sin(math.pi * time.hour) / 20) * (
-        math.sin(math.pi * time.hour / 3)
-    ) + 1
+    noise = (math.sin(math.pi * time.hour) / 20) * (math.sin(math.pi * time.hour / 3)) + 1
     noise = noise * random.random() / 20 + 0.97
 
     # Create the output value from the base function, noise, and scale factor
@@ -99,7 +110,7 @@ def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
     return output
 
 
-def _basicWindYieldFunc(timeUnix: int, scaleFactor: int = 10000) -> float:
+def _basicWindYieldFunc(timeUnix: int, scaleFactor: int = 3000) -> float:
     """Gets a fake wind yield for the input time."""
     output = min(scaleFactor, scaleFactor * random.random())
 
