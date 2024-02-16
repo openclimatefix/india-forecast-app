@@ -7,6 +7,8 @@ import random
 
 import pandas as pd
 
+import pytz
+
 
 class DummyModel:
     """
@@ -75,7 +77,7 @@ def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 4000) -> float:
             A scale factor of 10000 will result in a peak yield of 10 kW.
     """
     # Create a datetime object from the unix time
-    time = dt.datetime.fromtimestamp(timeUnix, tz=dt.UTC)
+    time = dt.datetime.fromtimestamp(timeUnix, tz=pytz.timezone("Asia/Kolkata"))
     # The functions x values are hours, so convert the time to hours
     hour = time.day * 24 + time.hour + time.minute / 60 + time.second / 3600
 
