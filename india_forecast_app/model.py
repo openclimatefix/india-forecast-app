@@ -72,7 +72,7 @@ def _basicSolarYieldFunc(timeUnix: int, scaleFactor_kw: int = 4e6) -> float:
 
     Args:
         timeUnix: The time in unix time.
-        scaleFactor: The scale factor for the sine wave.
+        scaleFactor_kw: The scale factor for the sine wave.
             A scale factor of 10000 will result in a peak yield of 10 kW.
     """
     # Create a datetime object from the unix time
