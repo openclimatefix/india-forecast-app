@@ -63,7 +63,7 @@ class DummyModel:
         return values
 
 
-def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 4000) -> float:
+def _basicSolarYieldFunc(timeUnix: int, scaleFactor_kw: int = 4e6) -> float:
     """Gets a fake solar yield for the input time.
 
     The basic yield function is built from a sine wave
@@ -108,13 +108,13 @@ def _basicSolarYieldFunc(timeUnix: int, scaleFactor: int = 4000) -> float:
     noise = noise * random.random() / 20 + 0.97
 
     # Create the output value from the base function, noise, and scale factor
-    output = basefunc * noise * scaleFactor
+    output = basefunc * noise * scaleFactor_kw
 
     return output
 
 
-def _basicWindYieldFunc(timeUnix: int, scaleFactor: int = 3000) -> float:
+def _basicWindYieldFunc(timeUnix: int, scaleFactor_kw: int = 3e6) -> float:
     """Gets a fake wind yield for the input time."""
-    output = min(scaleFactor, scaleFactor * random.random())
+    output = min(scaleFactor_kw, scaleFactor_kw * random.random())
 
     return output
