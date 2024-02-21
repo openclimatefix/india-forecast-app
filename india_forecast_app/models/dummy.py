@@ -20,7 +20,12 @@ class DummyModel:
         """Version number"""
         return "0.0.0"
 
-    def __init__(self, asset_type: str, timestamp: dt.datetime, generation_data):
+    def __init__(
+            self,
+            asset_type: str,
+            timestamp: dt.datetime,
+            generation_data: dict[str, pd.DataFrame] = None
+    ):
         """Initializer for the model"""
         self.asset_type = asset_type
         self.to = timestamp

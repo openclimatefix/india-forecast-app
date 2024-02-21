@@ -1,6 +1,6 @@
 """Useful functions for setting up PVNet model"""
 import logging
-import datetime as dt
+
 import fsspec
 import yaml
 
@@ -58,6 +58,7 @@ def populate_data_config_sources(input_path, output_path):
         wind_config["wind_files_groups"][0]["wind_metadata_filename"] = (
             production_paths)["wind"]['metadata_filename']
 
-    log.info(config)
+    log.debug(config)
+
     with open(output_path, 'w') as outfile:
         yaml.dump(config, outfile, default_flow_style=False)

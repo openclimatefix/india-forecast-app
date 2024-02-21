@@ -8,12 +8,10 @@ import os
 import shutil
 import tempfile
 
-import xarray as xr
 import fsspec
 import numpy as np
 import pandas as pd
 import torch
-
 from ocf_datapipes.batch import stack_np_examples_into_batch
 from ocf_datapipes.training.pvnet import construct_sliced_data_pipeline as pv_base_pipeline
 from ocf_datapipes.training.windnet import DictDatasetIterDataPipe, split_dataset_dict_dp
@@ -21,12 +19,10 @@ from ocf_datapipes.training.windnet import construct_sliced_data_pipeline as win
 from ocf_datapipes.utils import Location
 from pvnet.data.utils import batch_to_tensor, copy_batch_to_device
 from pvnet.models.base_model import BaseModel as PVNetBaseModel
-from pvsite_datamodel import GenerationSQL
 from torch.utils.data import DataLoader
 from torch.utils.data.datapipes.iter import IterableWrapper
 
-from .consts import (root_data_path, nwp_path
-, wind_metadata_path, wind_netcdf_path, wind_path)
+from .consts import nwp_path, root_data_path, wind_metadata_path, wind_netcdf_path, wind_path
 from .utils import populate_data_config_sources, worker_init_fn
 
 # Global settings for running the model
@@ -63,7 +59,12 @@ class PVNetModel:
 
         return WIND_MODEL_VERSION if self.asset_type == "wind" else PV_MODEL_VERSION
 
-    def __init__(self, asset_type: str, timestamp: dt.datetime, generation_data):
+    def __init__(
+            self,
+            asset_type: str,
+            timestamp: dt.datetime,
+            generation_data: dict[str, pd.DataFrame]
+    ):
         """Initializer for the model"""
 
         self.asset_type = asset_type
@@ -105,7 +106,7 @@ class PVNetModel:
             "forecast_power_kw": int(v)
         } for i, v in enumerate(normed_preds[0, :, 3])]  # index 3 is the 50th percentile
 
-    def _prepare_data_sources(self, generation_data: list[GenerationSQL]):
+    def _prepare_data_sources(self, generation_data: dict[str, pd.DataFrame]):
         """Pull and prepare data sources required for inference"""
 
         log.info("Preparing data sources")
@@ -127,32 +128,16 @@ class PVNetModel:
         fs.get(nwp_source_file_path, nwp_path, recursive=True)
 
         if self.asset_type == "wind":
-            # Load remote netcdf and metadata sources
-            wind_netcdf_source_file_path = os.environ["WIND_NETCDF_PATH"]
-            wind_metadata_source_file_path = os.environ["WIND_METADATA_PATH"]
-
             # Clear local wind data if already exists
             shutil.rmtree(wind_path, ignore_errors=True)
             os.mkdir(wind_path)
 
-            # Copy remote netcdf locally
-            fs = fsspec.open(wind_netcdf_source_file_path).fs
-            fs.get(wind_netcdf_source_file_path,
-                   wind_netcdf_path,
-                   recursive=True)
+            # Save generation data as netcdf file
+            generation_da = generation_data["data"].to_xarray()
+            generation_da.to_netcdf(wind_netcdf_path, engine="h5netcdf")
 
-            # TODO tidy this up and replace the code above
-            # df = pd.DataFrame([(g.start_utc, g.generation_power_kw) for g in generation_data],
-            #                   columns=["time_utc", "0"]).set_index("time_utc")
-            #
-            # da = df.to_xarray()
-            # da.to_netcdf(wind_netcdf_path, engine="h5netcdf")
-
-            # Copy remote metadata locally
-            fs = fsspec.open(wind_metadata_source_file_path).fs
-            fs.get(wind_metadata_source_file_path,
-                   wind_metadata_path,
-                   recursive=True)
+            # Save metadata as csv
+            generation_data["metadata"].to_csv(wind_metadata_path, index=False)
 
     def _create_dataloader(self):
         """Setup dataloader with prepared data sources"""
@@ -172,7 +157,9 @@ class PVNetModel:
         populate_data_config_sources(data_config_filename, populated_data_config_filename)
 
         # Location and time datapipes
-        location_pipe = IterableWrapper([Location(coordinate_system="lon_lat", x=72.6399, y=26.4499)])
+        location_pipe = IterableWrapper([
+            Location(coordinate_system="lon_lat", x=72.6399, y=26.4499)
+        ])
         t0_datapipe = IterableWrapper([self.t0])
 
         location_pipe = location_pipe.sharding_filter()

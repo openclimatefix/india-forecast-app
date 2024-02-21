@@ -7,15 +7,13 @@ import datetime as dt
 import logging
 import os
 
-import fsspec
 import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
 from pvsite_datamodel import DatabaseConnection
-from pvsite_datamodel.sqlmodels import Base, SiteSQL, GenerationSQL
+from pvsite_datamodel.sqlmodels import Base, GenerationSQL, SiteSQL
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 from testcontainers.postgres import PostgresContainer
 
 log = logging.getLogger(__name__)
@@ -73,7 +71,7 @@ def sites(db_session):
         client_site_id=1,
         latitude=20.59,
         longitude=78.96,
-        capacity_kw=4,
+        capacity_kw=20000,
         ml_id=1,
         asset_type="pv",
         country="india",
@@ -86,7 +84,7 @@ def sites(db_session):
         client_site_id=2,
         latitude=20.59,
         longitude=78.96,
-        capacity_kw=4,
+        capacity_kw=10000,
         ml_id=2,
         asset_type="wind",
         country="india",
@@ -102,12 +100,15 @@ def sites(db_session):
 @pytest.fixture()
 def generation_db_values(db_session, sites, init_timestamp):
     """Create some fake generations"""
-    start_times = [init_timestamp - dt.timedelta(minutes=x*3+6) for x in range(10)]
+
+    n = 100  # 5 hours of readings
+    start_times = [init_timestamp - dt.timedelta(minutes=x*3) for x in range(n)]
+    # start_times = [init_timestamp - dt.timedelta(minutes=(x*3+6) for x in range(n)]
 
     all_generations = []
 
     for site in sites:
-        for i in range(0, 10):
+        for i in range(0, n):
             generation = GenerationSQL(
                 site_uuid=site.site_uuid,
                 generation_power_kw=i,
@@ -166,7 +167,7 @@ def nwp_data(tmp_path_factory, time_before_present):
 
     # Load dataset which only contains coordinates, but no data
     ds = xr.open_zarr(
-        f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp.zarr"
+        f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data.zarr"
     )
 
     # Last t0 to at least 2 hours ago and floor to 3-hour interval
@@ -193,64 +194,8 @@ def nwp_data(tmp_path_factory, time_before_present):
         coords=[ds[c] for c in ds.xindexes],
     )
 
-    # log.error(ds.attrs)
-
-    # TODO ds.attrs["_data_attrs"] isn't defined, check this isn't a problem
-    # Add stored attributes to DataArray
-    # ds.ecmwf.attrs = ds.attrs["_data_attrs"]
-    # del ds.attrs["_data_attrs"]
-
     # AS NWP data is loaded by the app from environment variable,
     # save out data and set paths as environmental variables
     temp_nwp_path = f"{tmp_path_factory.mktemp('data')}/nwp.zarr"
     os.environ["NWP_ZARR_PATH"] = temp_nwp_path
     ds.to_zarr(temp_nwp_path)
-
-
-@pytest.fixture(scope="session")
-def wind_data(tmp_path_factory, time_before_present):
-    """Dummy wind data"""
-
-    # AS wind data is loaded by the app from environment variable,
-    # save out data and set paths as environmental variables
-    root_path = tmp_path_factory.mktemp('data')
-
-    root_source_path = os.path.dirname(os.path.abspath(__file__))
-
-    netcdf_source_path = f"{root_source_path}/test_data/wind/wind_data.nc"
-    temp_netcdf_path = f"{root_path}/wind_data.nc"
-    os.environ["WIND_NETCDF_PATH"] = temp_netcdf_path
-    ds = xr.open_dataset(netcdf_source_path)
-
-    # Set t0 to at least 2 hours ago and floor to 15-min interval
-    # t0_datetime_utc = (time_before_present(dt.timedelta(hours=0))
-    #                    .floor(dt.timedelta(minutes=15)))
-    t0_datetime_utc = pd.Timestamp.now(tz=None).floor(dt.timedelta(minutes=15))
-    ds.time_utc.values[:] = pd.date_range(
-        t0_datetime_utc - dt.timedelta(minutes=15 * (len(ds.time_utc) - 1)),
-        t0_datetime_utc,
-        freq=dt.timedelta(minutes=15),
-    )
-
-    # This is important to avoid saving errors
-    for v in list(ds.coords.keys()):
-        if ds.coords[v].dtype == object:
-            ds[v].encoding.clear()
-
-    for v in list(ds.variables.keys()):
-        if ds[v].dtype == object:
-            ds[v].encoding.clear()
-
-    # Add data to dataset
-    # ds["wind"] = xr.DataArray(
-    #     np.zeros([len(ds[c]) for c in ds.xindexes]),
-    #     coords=[ds[c] for c in ds.xindexes],
-    # )
-
-    ds.to_netcdf(temp_netcdf_path, engine="h5netcdf")
-
-    metadata_source_path = f"{root_source_path}/test_data/wind/wind_metadata.csv"
-    temp_metadata_path = f"{root_path}/wind_metadata.csv"
-    os.environ["WIND_METADATA_PATH"] = temp_metadata_path
-    fs = fsspec.open(metadata_source_path).fs
-    fs.copy(metadata_source_path, temp_metadata_path)

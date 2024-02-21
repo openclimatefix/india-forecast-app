@@ -5,10 +5,16 @@ import datetime as dt
 import uuid
 
 import pytest
-from pvsite_datamodel.read import get_all_sites
-from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, GenerationSQL
+from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, SiteAssetType
 
-from india_forecast_app.app import app, get_model, get_sites, get_generation_data, run_model, save_forecast
+from india_forecast_app.app import (
+    app,
+    get_generation_data,
+    get_model,
+    get_sites,
+    run_model,
+    save_forecast,
+)
 from india_forecast_app.models.dummy import DummyModel
 from india_forecast_app.models.pvnet.model import PVNetModel
 
@@ -28,42 +34,54 @@ def test_get_sites(db_session, sites):
         assert sites[1].asset_type.name == "wind"
 
 
-def test_get_generation_data(db_session, sites, generation_db_values, init_timestamp):
+def test_get_generation_data(db_session, sites, generation_db_values, init_timestamp, caplog):
     """Test for correct generation data"""
 
-    generation_values = get_generation_data(db_session, sites, timestamp=init_timestamp)
+    caplog.set_level('INFO')
 
-    assert len(generation_values) == (2 * 10)
+    # Test only checks for wind data as solar data not ready yet
+    gen_sites = [s for s in sites if s.asset_type == SiteAssetType.wind]  # 1 site
+    gen_data = get_generation_data(db_session, gen_sites, timestamp=init_timestamp)
+    gen_df, gen_meta = gen_data["data"], gen_data["metadata"]
+
+    # Check for 5 (non-null) generation values
+    assert len(gen_df) == 5
+    assert not gen_df["2"].isnull().any()  # 2 is the ml_id/system_id of the wind site
+
+    # Check first and last timestamps are correct
+    assert gen_df.index[0] == init_timestamp - dt.timedelta(hours=1)
+    assert gen_df.index[-1] == init_timestamp
+
+    # Check for expected metadata
+    assert len(gen_meta) == 1
 
 
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_get_model(asset_type, nwp_data, wind_data, generation_db_values, init_timestamp, caplog):
+def test_get_model(db_session, asset_type, sites, nwp_data, generation_db_values, init_timestamp):
     """Test for getting valid model"""
 
-    caplog.set_level("INFO")
-
-    model = get_model(asset_type, timestamp=init_timestamp, generation_data=generation_db_values)
+    gen_sites = [s for s in sites if s.asset_type.name == asset_type]
+    gen_data = get_generation_data(db_session, gen_sites, timestamp=init_timestamp)
+    model = get_model(asset_type, timestamp=init_timestamp, generation_data=gen_data)
     
     assert hasattr(model, 'version')
     assert isinstance(model.version, str)
     assert hasattr(model, 'predict')
 
 
-# @pytest.mark.skip(reason="blah")
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_run_model(db_session, asset_type, sites, nwp_data, wind_data, generation_db_values, init_timestamp, caplog):
+def test_run_model(db_session, asset_type, sites, nwp_data, generation_db_values, init_timestamp):
     """Test for running PV and wind models"""
 
-    caplog.set_level('DEBUG')
-
     gen_sites = [s for s in sites if s.asset_type.name == asset_type]
-    generation_values = get_generation_data(db_session, sites=gen_sites, timestamp=init_timestamp)
+    gen_data = get_generation_data(db_session, sites=gen_sites, timestamp=init_timestamp)
 
-    model = PVNetModel if asset_type == "wind" else DummyModel
+    model_cls = PVNetModel if asset_type == "wind" else DummyModel
+    model = model_cls(asset_type, timestamp=init_timestamp, generation_data=gen_data)
     forecast = run_model(
-        model=model(asset_type, timestamp=init_timestamp, generation_data=generation_values),
+        model=model,
         site_id=str(uuid.uuid4()),
-        timestamp=dt.datetime.now(tz=dt.UTC)
+        timestamp=init_timestamp
     )
 
     assert isinstance(forecast, list)
@@ -93,9 +111,8 @@ def test_save_forecast(db_session, sites, forecast_values):
     assert db_session.query(ForecastValueSQL).count() == 10
 
 
-# @pytest.mark.skip(reason="blah")
 @pytest.mark.parametrize("write_to_db", [True, False])
-def test_app(write_to_db, db_session, sites, nwp_data, wind_data):
+def test_app(write_to_db, db_session, sites, nwp_data, generation_db_values):
     """Test for running app from command line"""
 
     init_n_forecasts = db_session.query(ForecastSQL).count()
