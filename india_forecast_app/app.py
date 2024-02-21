@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 def get_sites(db_session: Session) -> list[SiteSQL]:
     """
     Gets all available sites in India
-    
+
     Args:
             db_session: A SQLAlchemy session
 
@@ -173,10 +173,11 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     logging.basicConfig(stream=sys.stdout, level=getattr(logging, log_level.upper()))
 
     if timestamp is None:
-        timestamp = pd.Timestamp(dt.datetime.now(tz=dt.UTC)).floor(dt.timedelta(minutes=15))
+        # get the timestamp now rounded down the neartes 15 minutes
+        timestamp = pd.Timestamp.now(tz="UTC").floor("15min")
         log.info('Timestamp omitted - will generate forecasts for "now"')
     else:
-        timestamp = pd.Timestamp(timestamp).floor(dt.timedelta(minutes=15))
+        timestamp = pd.Timestamp(timestamp).floor("15min")
         
     # 0. Initialise DB connection
     url = os.environ["DB_URL"]
