@@ -70,7 +70,7 @@ def test_run_model(db_session, asset_type, sites, nwp_data, wind_data, generatio
     assert len(forecast) == 192  # value for every 15mins over 2 days
     assert all([isinstance(value["start_utc"], dt.datetime) for value in forecast])
     assert all([isinstance(value["end_utc"], dt.datetime) for value in forecast])
-    assert all([isinstance(value["forecast_power_kw"], float) for value in forecast])
+    assert all([isinstance(value["forecast_power_kw"], int) for value in forecast])
 
 
 def test_save_forecast(db_session, sites, forecast_values):

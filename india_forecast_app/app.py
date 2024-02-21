@@ -57,6 +57,7 @@ def get_generation_data(db_session: Session, sites: list[SiteSQL], timestamp: dt
     )
 
     # TODO resample data to 15 min intervals - ensure 5 values for wind
+    # Expect that some values may be missing
 
     return generation_data
 

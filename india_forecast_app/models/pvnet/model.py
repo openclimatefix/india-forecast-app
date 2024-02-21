@@ -102,7 +102,7 @@ class PVNetModel:
         return [{
             "start_utc": valid_times[i],
             "end_utc": valid_times[i] + dt.timedelta(minutes=15),
-            "forecast_power_kw": float(v)
+            "forecast_power_kw": int(v)
         } for i, v in enumerate(normed_preds[0, :, 3])]  # index 3 is the 50th percentile
 
     def _prepare_data_sources(self, generation_data: list[GenerationSQL]):
