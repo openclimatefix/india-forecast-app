@@ -83,8 +83,8 @@ def sites(db_session):
     # Wind site
     site = SiteSQL(
         client_site_id=2,
-        latitude=20.59,
-        longitude=78.96,
+        latitude=26.4499,
+        longitude=72.6399,
         capacity_kw=10000,
         ml_id=2,
         asset_type="wind",

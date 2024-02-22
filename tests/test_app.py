@@ -34,10 +34,8 @@ def test_get_sites(db_session, sites):
         assert sites[1].asset_type.name == "wind"
 
 
-def test_get_generation_data(db_session, sites, generation_db_values, init_timestamp, caplog):
+def test_get_generation_data(db_session, sites, generation_db_values, init_timestamp):
     """Test for correct generation data"""
-
-    caplog.set_level('INFO')
 
     # Test only checks for wind data as solar data not ready yet
     gen_sites = [s for s in sites if s.asset_type == SiteAssetType.wind]  # 1 site

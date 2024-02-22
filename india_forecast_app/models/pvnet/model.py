@@ -73,7 +73,7 @@ class PVNetModel:
 
         # Setup the data, dataloader, and model
         self._prepare_data_sources(generation_data)
-        self.dataloader = self._create_dataloader()
+        self.dataloader = self._create_dataloader(generation_data["metadata"])
         self.model = self._load_model()
 
     def predict(self, site_id: str, timestamp: dt.datetime):
@@ -139,7 +139,7 @@ class PVNetModel:
             # Save metadata as csv
             generation_data["metadata"].to_csv(wind_metadata_path, index=False)
 
-    def _create_dataloader(self):
+    def _create_dataloader(self, gen_sites: pd.DataFrame):
         """Setup dataloader with prepared data sources"""
 
         log.info("Creating dataloader")
@@ -157,10 +157,13 @@ class PVNetModel:
         populate_data_config_sources(data_config_filename, populated_data_config_filename)
 
         # Location and time datapipes
-        location_pipe = IterableWrapper([
-            Location(coordinate_system="lon_lat", x=72.6399, y=26.4499)
-        ])
-        t0_datapipe = IterableWrapper([self.t0])
+        location_pipe = IterableWrapper([Location(
+            coordinate_system="lon_lat",
+            x=s.longitude,
+            y=s.latitude,
+            id=s.system_id
+        ) for s in gen_sites.itertuples()])
+        t0_datapipe = IterableWrapper([self.t0 for _ in range(gen_sites.shape[0])])
 
         location_pipe = location_pipe.sharding_filter()
         t0_datapipe = t0_datapipe.sharding_filter()
