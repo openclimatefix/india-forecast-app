@@ -1,12 +1,17 @@
 """Useful functions for setting up PVNet model"""
+import datetime as dt
 import logging
 
 import fsspec
+import pandas as pd
+import xarray as xr
 import yaml
 
 from .consts import nwp_path, wind_metadata_path, wind_netcdf_path
 
 log = logging.getLogger(__name__)
+
+
 def worker_init_fn(worker_id):
     """
     Clear reference to the loop and thread.
@@ -62,3 +67,30 @@ def populate_data_config_sources(input_path, output_path):
 
     with open(output_path, 'w') as outfile:
         yaml.dump(config, outfile, default_flow_style=False)
+
+
+def reset_stale_nwp_timestamps(source_nwp_path: str):
+    """Resets the init_time values of the NWP zarr to more recent timestamps"""
+
+    # Load dataset from source
+    ds = xr.open_zarr(source_nwp_path)
+
+    # Set t0 now and floor to 3-hour interval
+    t0_datetime_utc = (pd.Timestamp.now(tz=None).floor(dt.timedelta(hours=3)))
+    ds.init_time.values[:] = pd.date_range(
+        t0_datetime_utc - dt.timedelta(hours=3 * (len(ds.init_time) - 1)),
+        t0_datetime_utc,
+        freq=dt.timedelta(hours=3),
+    )
+
+    # This is important to avoid saving errors
+    for v in list(ds.coords.keys()):
+        if ds.coords[v].dtype == object:
+            ds[v].encoding.clear()
+
+    for v in list(ds.variables.keys()):
+        if ds[v].dtype == object:
+            ds[v].encoding.clear()
+
+    # Save back down to source path
+    ds.to_zarr(source_nwp_path, mode="a")
