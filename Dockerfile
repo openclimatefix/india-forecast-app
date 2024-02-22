@@ -1,5 +1,8 @@
 FROM python:3.11-slim as base
 
+RUN apt-get update
+RUN apt-get install -y git
+
 ENV PYTHONFAULTHANDLER=1 \
 	PYTHONHASHSEED=random \
 	PYTHONUNBUFFERED=1
