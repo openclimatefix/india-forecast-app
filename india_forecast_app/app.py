@@ -71,7 +71,10 @@ def get_generation_data(
     ).pivot(index="time_utc", columns="ml_id", values="power_kw"))
 
     # Ensure timestamps line up with 3min intervals
-    generation_df.index = generation_df.index.floor("3min")
+    generation_df.index = generation_df.index.round("3min")
+
+    # Drop any duplicated timestamps
+    generation_df = generation_df[~generation_df.index.duplicated()]
 
     # xarray (used later) expects columns with string names
     generation_df.columns = generation_df.columns.astype(str)
