@@ -70,15 +70,18 @@ def get_generation_data(
         columns=["time_utc", "power_kw", "ml_id"]
     ).pivot(index="time_utc", columns="ml_id", values="power_kw"))
 
+    # Ensure timestamps line up with 3min intervals
+    generation_df.index = generation_df.index.floor("3min")
+
     # xarray (used later) expects columns with string names
     generation_df.columns = generation_df.columns.astype(str)
 
-    # Handle missing timestamps
+    # Handle any missing timestamps
     contiguous_dt_idx = pd.date_range(start=start, end=end, freq="3min")[:-1]
     generation_df = generation_df.reindex(contiguous_dt_idx, fill_value=None)
 
     # Interpolate NaNs
-    generation_df = generation_df.interpolate()
+    generation_df = generation_df.interpolate(method="linear", limit_direction="both")
 
     # Down-sample from 3 min to 15 min intervals
     generation_df = generation_df.resample("15min").sum()
@@ -173,11 +176,11 @@ def save_forecast(db_session: Session, forecast, write_to_db: bool):
     if write_to_db:
         insert_forecast_values(db_session, forecast_meta, forecast_values_df)
     else:
-        output = f'Forecast for site_id={forecast_meta["site_uuid"]}, \
-                   timestamp={forecast_meta["timestamp_utc"]}, \
-                   version={forecast_meta["forecast_version"]}\n\n\
-                   {forecast_values_df.to_string()}'
-        log.info(output.strip('\t'))
+        output = f'Forecast for site_id={forecast_meta["site_uuid"]},\
+                   timestamp={forecast_meta["timestamp_utc"]},\
+                   version={forecast_meta["forecast_version"]}:'
+        log.info(output.replace('  ', ''))
+        log.info(f'\n{forecast_values_df.to_string()}')
 
 
 @click.command()

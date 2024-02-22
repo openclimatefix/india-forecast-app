@@ -160,8 +160,7 @@ class PVNetModel:
         location_pipe = IterableWrapper([Location(
             coordinate_system="lon_lat",
             x=s.longitude,
-            y=s.latitude,
-            id=s.system_id
+            y=s.latitude
         ) for s in gen_sites.itertuples()])
         t0_datapipe = IterableWrapper([self.t0 for _ in range(gen_sites.shape[0])])
 

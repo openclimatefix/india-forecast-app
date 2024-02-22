@@ -86,7 +86,7 @@ def sites(db_session):
         latitude=26.4499,
         longitude=72.6399,
         capacity_kw=10000,
-        ml_id=2,
+        ml_id=0,
         asset_type="wind",
         country="india",
     )
@@ -106,6 +106,7 @@ def generation_db_values(db_session, sites, init_timestamp):
     start_times = [init_timestamp - dt.timedelta(minutes=x*3) for x in range(n)]
 
     # remove some of the most recent readings (to simulate missing timestamps)
+    del start_times[20]
     del start_times[8]
     del start_times[3]
 
