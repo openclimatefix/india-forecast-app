@@ -73,7 +73,12 @@ def get_generation_data(
     # xarray (used later) expects columns with string names
     generation_df.columns = generation_df.columns.astype(str)
 
-    # TODO handle missing values
+    # Handle missing timestamps
+    contiguous_dt_idx = pd.date_range(start=start, end=end, freq="3min")[:-1]
+    generation_df = generation_df.reindex(contiguous_dt_idx, fill_value=None)
+
+    # Interpolate NaNs
+    generation_df = generation_df.interpolate()
 
     # Down-sample from 3 min to 15 min intervals
     generation_df = generation_df.resample("15min").sum()

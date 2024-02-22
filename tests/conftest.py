@@ -6,6 +6,7 @@ Fixtures for testing
 import datetime as dt
 import logging
 import os
+import random
 
 import numpy as np
 import pandas as pd
@@ -103,15 +104,20 @@ def generation_db_values(db_session, sites, init_timestamp):
 
     n = 100  # 5 hours of readings
     start_times = [init_timestamp - dt.timedelta(minutes=x*3) for x in range(n)]
-    # start_times = [init_timestamp - dt.timedelta(minutes=(x*3+6) for x in range(n)]
+
+    # remove some of the most recent readings (to simulate missing timestamps)
+    del start_times[8]
+    del start_times[3]
+
+    # Random power values in the range 0-10000kw
+    power_values = [random.random()*10000 for _ in range(len(start_times))]
 
     all_generations = []
-
     for site in sites:
-        for i in range(0, n):
+        for i in range(0, len(start_times)):
             generation = GenerationSQL(
                 site_uuid=site.site_uuid,
-                generation_power_kw=i,
+                generation_power_kw=power_values[i],
                 start_utc=start_times[i],
                 end_utc=start_times[i] + dt.timedelta(minutes=3),
             )
