@@ -77,6 +77,7 @@ def reset_stale_nwp_timestamps(source_nwp_path: str):
 
     # Set t0 now and floor to 3-hour interval
     t0_datetime_utc = (pd.Timestamp.now(tz=None).floor(dt.timedelta(hours=3)))
+    t0_datetime_utc = t0_datetime_utc - dt.timedelta(hours=1)
     ds.init_time.values[:] = pd.date_range(
         t0_datetime_utc - dt.timedelta(hours=3 * (len(ds.init_time) - 1)),
         t0_datetime_utc,
