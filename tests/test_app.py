@@ -2,6 +2,7 @@
 Tests for functions in app.py
 """
 import datetime as dt
+import multiprocessing as mp
 import uuid
 
 import pytest
@@ -19,8 +20,6 @@ from india_forecast_app.models.dummy import DummyModel
 from india_forecast_app.models.pvnet.model import PVNetModel
 
 from ._utils import run_click_script
-
-import multiprocessing as mp
 
 mp.set_start_method("spawn", force=True)
 
