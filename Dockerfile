@@ -1,5 +1,7 @@
 FROM python:3.11-slim as base
 
+ARG TESTING=0
+
 RUN apt-get update
 RUN apt-get install -y git
 
@@ -37,4 +39,7 @@ COPY --from=builder /venv /venv
 COPY --from=builder /app/dist .
 RUN . /venv/bin/activate && pip install *.whl
 
-ENTRYPOINT ["app", "--write-to-db"]
+RUN if [ "$TESTING" = 1 ]; then pip install pytest testcontainers ; fi
+COPY tests /tests .
+
+CMD ["app", "--write-to-db"]
