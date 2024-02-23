@@ -12,7 +12,7 @@ pvsite-datamodel = "^1.0.10"
 pandas = "1.5.3"
 pvnet = "^3.0.1"
 pytz = "^2024.1"
-ocf-datapipes = "^3.2.7"
+ocf-datapipes = "3.2.9"
 fsspec = "^2024.2.0"
 numpy = "^1.26.4"
 
