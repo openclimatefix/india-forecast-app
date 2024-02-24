@@ -35,9 +35,9 @@ DB_URL={DB_URL} poetry run seeder
 ```
 ⚠️ Note this is a destructive script and will drop all tables before recreating them to ensure a clean slate. DO NOT RUN IN PRODUCTION ENVIRONMENTS
 
-This example invokes app.py and passes the help flag
+This example runs the application and writes the results to stdout
 ```
-DB_URL={DB_URL} poetry run app --help
+DB_URL={DB_URL} NWP_ZARR_PATH=./nwp.zarr poetry run app
 ```
 
 ### Starting a local database using docker
@@ -62,7 +62,9 @@ Build the Docker image
 make docker.build
 ```
 
-Run the image (this example invokes app.py and passes the help flag)
+Create a container from the image. This example runs the application and writes the results to stdout.\
+Replace `{DB_URL}` with a postgres DB connection string.\
+*N.B if the database host is `localhost` on the host machine, replace `localhost` with `host.docker.internal` so that docker can access the database from within the container*
 ```
-docker run -it --rm ocf/india-forecast-app --help
+docker run -it --rm -e DB_URL={DB_URL} -e NWP_ZARR_PATH=./nwp.zarr ocf/india-forecast-app 
 ```

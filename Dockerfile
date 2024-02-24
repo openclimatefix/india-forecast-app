@@ -35,6 +35,7 @@ ENV PATH="/venv/bin:$PATH"
 
 COPY --from=builder /venv /venv
 COPY --from=builder /app/dist .
+COPY nwp.zarr ./nwp.zarr
 RUN . /venv/bin/activate && pip install *.whl
 
 ENTRYPOINT ["app", "--write-to-db"]
