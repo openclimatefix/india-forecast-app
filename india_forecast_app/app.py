@@ -60,6 +60,7 @@ def get_generation_data(
     # pad by 1 second to ensure get_pv_generation_by_sites returns correct data
     end = timestamp + dt.timedelta(seconds=1)
 
+    log.info(f'Getting generation data for sites: {site_uuids}, from {start=} to {end=}')
     generation_data = get_pv_generation_by_sites(
         session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
     )
