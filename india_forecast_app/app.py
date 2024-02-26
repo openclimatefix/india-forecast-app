@@ -15,7 +15,7 @@ from pvsite_datamodel.sqlmodels import SiteAssetType, SiteSQL
 from pvsite_datamodel.write import insert_forecast_values
 from sqlalchemy.orm import Session
 
-from .models import DummyModel, PVNetModel
+from india_forecast_app.models import DummyModel, PVNetModel
 
 log = logging.getLogger(__name__)
 
@@ -60,6 +60,7 @@ def get_generation_data(
     # pad by 1 second to ensure get_pv_generation_by_sites returns correct data
     end = timestamp + dt.timedelta(seconds=1)
 
+    log.info(f'Getting generation data for sites: {site_uuids}, from {start=} to {end=}')
     generation_data = get_pv_generation_by_sites(
         session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
     )
@@ -243,7 +244,10 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
             asset_sites = pv_sites if asset_type == "pv" else wind_sites
             if len(asset_sites) > 0:
                 log.info(f"Reading latest historic {asset_type} generation data...")
-                generation_data = get_generation_data(session, asset_sites, timestamp)
+                if asset_type == "wind":
+                    generation_data = get_generation_data(session, asset_sites, timestamp)
+                else:
+                    generation_data = {"data": pd.DataFrame(), "metadata": pd.DataFrame()}
                 log.info(f"Loading {asset_type} model...")
                 models[asset_type] = get_model(asset_type, timestamp, generation_data)
                 log.info(f"{asset_type} model loaded")
