@@ -20,11 +20,11 @@ ENV PIP_DEFAULT_TIMEOUT=100 \
 RUN pip install "poetry==$POETRY_VERSION"
 
 COPY pyproject.toml poetry.lock README.md .
-RUN poetry install --no-dev --no-root
+RUN poetry install --only main --no-root
 
 COPY india_forecast_app ./india_forecast_app
 RUN poetry build
-RUN poetry install
+RUN poetry install --only main
 
 COPY nwp.zarr ./nwp.zarr
 
