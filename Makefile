@@ -13,7 +13,7 @@ format:
 
 .PHONY: test
 test:
-	poetry run pytest tests
+	poetry run pytest tests --disable-warnings
 	
 .PHONY: docker.build
 docker.build:

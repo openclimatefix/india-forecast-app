@@ -135,3 +135,7 @@ dmypy.json
 .nova/
 .vscode/
 .idea/
+
+# App specific
+data/
+scripts/notebooks
