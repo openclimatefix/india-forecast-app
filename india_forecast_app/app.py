@@ -243,7 +243,10 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
             asset_sites = pv_sites if asset_type == "pv" else wind_sites
             if len(asset_sites) > 0:
                 log.info(f"Reading latest historic {asset_type} generation data...")
-                generation_data = get_generation_data(session, asset_sites, timestamp)
+                if asset_type == "wind":
+                    generation_data = get_generation_data(session, asset_sites, timestamp)
+                else:
+                    generation_data = {"data": pd.DataFrame(), "metadata": pd.DataFrame()}
                 log.info(f"Loading {asset_type} model...")
                 models[asset_type] = get_model(asset_type, timestamp, generation_data)
                 log.info(f"{asset_type} model loaded")
