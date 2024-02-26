@@ -21,8 +21,6 @@ RUN pip install "poetry==$POETRY_VERSION"
 
 RUN python -m venv /venv
 
-RUN . /venv/bin/activate && pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-
 COPY pyproject.toml poetry.lock README.md .
 RUN . /venv/bin/activate && poetry install --no-dev --no-root
 
