@@ -9,8 +9,7 @@ ENV PYTHONFAULTHANDLER=1 \
 
 WORKDIR /app
 
-RUN apt-get update
-RUN apt-get install -y gdal-bin libgdal-dev g++
+RUN apt-get install -y gdal-bin
 
 ENV PIP_DEFAULT_TIMEOUT=100 \
 	PIP_DISABLE_PIP_VERSION_CHECK=1 \
