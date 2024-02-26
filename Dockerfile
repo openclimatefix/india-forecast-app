@@ -9,8 +9,6 @@ ENV PYTHONFAULTHANDLER=1 \
 
 WORKDIR /app
 
-FROM base as builder
-
 RUN apt-get update
 RUN apt-get install -y gdal-bin libgdal-dev g++
 
@@ -31,12 +29,8 @@ RUN . /venv/bin/activate && poetry install --no-dev --no-root
 COPY india_forecast_app ./india_forecast_app
 RUN . /venv/bin/activate && poetry build
 
-FROM base as final
-
 ENV PATH="/venv/bin:$PATH"
 
-COPY --from=builder /venv /venv
-COPY --from=builder /app/dist .
 COPY nwp.zarr ./nwp.zarr
 RUN . /venv/bin/activate && pip install *.whl
 
