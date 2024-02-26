@@ -6,3 +6,4 @@ jobs:
 
   DockerBuild:
     uses: openclimatefix/.github/.github/workflows/build-docker.yml@v1.8.2
+    docker_file: ./Dockerfile
