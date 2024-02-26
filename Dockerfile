@@ -27,4 +27,4 @@ RUN poetry build
 
 COPY nwp.zarr ./nwp.zarr
 
-ENTRYPOINT ["python3", "india_forecast_app/app.py", "--write-to-db"]
+ENTRYPOINT ["poetry", "run" , "python", "india_forecast_app/app.py", "--write-to-db"]
