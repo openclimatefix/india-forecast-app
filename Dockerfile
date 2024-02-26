@@ -19,16 +19,12 @@ ENV PIP_DEFAULT_TIMEOUT=100 \
 
 RUN pip install "poetry==$POETRY_VERSION"
 
-RUN python -m venv /venv
-
 COPY pyproject.toml poetry.lock README.md .
-RUN . /venv/bin/activate && poetry install --no-dev --no-root
+RUN poetry install --no-dev --no-root
 
 COPY india_forecast_app ./india_forecast_app
-RUN . /venv/bin/activate && poetry build
-
-ENV PATH="/venv/bin:$PATH"
+RUN poetry build
 
 COPY nwp.zarr ./nwp.zarr
 
-ENTRYPOINT ["app", "--write-to-db"]
+ENTRYPOINT ["python3", "india_forecast_app/app.py", "--write-to-db"]
