@@ -24,7 +24,8 @@ RUN poetry install --no-dev --no-root
 
 COPY india_forecast_app ./india_forecast_app
 RUN poetry build
+RUN poetry install
 
 COPY nwp.zarr ./nwp.zarr
 
-ENTRYPOINT ["poetry", "run" , "python", "india_forecast_app/app.py", "--write-to-db"]
+ENTRYPOINT ["poetry", "run" , "python3", "india_forecast_app/app.py", "--write-to-db"]

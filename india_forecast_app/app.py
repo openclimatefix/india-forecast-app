@@ -15,7 +15,7 @@ from pvsite_datamodel.sqlmodels import SiteAssetType, SiteSQL
 from pvsite_datamodel.write import insert_forecast_values
 from sqlalchemy.orm import Session
 
-from .models import DummyModel, PVNetModel
+from india_forecast_app.models import DummyModel, PVNetModel
 
 log = logging.getLogger(__name__)
 
