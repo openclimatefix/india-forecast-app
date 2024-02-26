@@ -30,6 +30,11 @@ app = "india_forecast_app.app:app"
 seeder = "scripts.seed_local_db:seed_db"
 inspect = "tests.test_data.inspect:run"
 
+[[tool.poetry.source]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 select = ["B", "E", "F", "D", "I"]
