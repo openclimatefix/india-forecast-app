@@ -30,6 +30,5 @@ RUN . /venv/bin/activate && poetry build
 ENV PATH="/venv/bin:$PATH"
 
 COPY nwp.zarr ./nwp.zarr
-RUN . /venv/bin/activate && pip install *.whl
 
 ENTRYPOINT ["app", "--write-to-db"]
