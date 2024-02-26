@@ -24,7 +24,7 @@ RUN poetry install --no-dev --no-root
 
 COPY india_forecast_app ./india_forecast_app
 RUN poetry build
-RUN poetry install
+RUN poetry install --no-dev
 
 COPY nwp.zarr ./nwp.zarr
 
