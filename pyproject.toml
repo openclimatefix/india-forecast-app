@@ -10,11 +10,12 @@ python = "^3.11"
 click = "^8.1.7"
 pvsite-datamodel = "^1.0.10"
 pandas = "1.5.3"
-pvnet = "^3.0.1"
+pvnet = "3.0.5"
 pytz = "^2024.1"
-ocf-datapipes = "3.2.9"
-fsspec = "^2024.2.0"
 numpy = "^1.26.4"
+huggingface-hub = "0.20.3"
+torch = {version = "2.1.1", source = "pytorch-cpu" }
+ocf-datapipes = "^3.2.9"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.4"
@@ -34,6 +35,17 @@ inspect = "tests.test_data.inspect:run"
 name = "pytorch"
 url = "https://download.pytorch.org/whl/cpu"
 priority = "explicit"
+
+[[tool.poetry.source]]
+name = "torch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "supplemental"
+
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
 
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
