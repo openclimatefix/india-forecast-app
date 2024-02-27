@@ -14,7 +14,7 @@ pvnet = "3.0.5"
 pytz = "^2024.1"
 numpy = "^1.26.4"
 huggingface-hub = "0.20.3"
-torch = "2.2.1"
+torch = {version = "2.1.1", source = "pytorch-cpu" }
 ocf-datapipes = "^3.2.9"
 
 [tool.poetry.group.dev.dependencies]
@@ -35,6 +35,17 @@ inspect = "tests.test_data.inspect:run"
 name = "pytorch"
 url = "https://download.pytorch.org/whl/cpu"
 priority = "explicit"
+
+[[tool.poetry.source]]
+name = "torch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "supplemental"
+
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
 
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
