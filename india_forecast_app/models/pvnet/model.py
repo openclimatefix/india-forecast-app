@@ -39,7 +39,8 @@ WIND_MODEL_VERSION = os.getenv(
 )
 
 PV_MODEL_NAME = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
-PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION", default="d194488203375e766253f0d2961010356de52eb9")
+PV_MODEL_VERSION = os.getenv(
+    "PV_MODEL_VERSION", default="d194488203375e766253f0d2961010356de52eb9")
 
 log = logging.getLogger(__name__)
 
