@@ -23,19 +23,24 @@ from torch.utils.data import DataLoader
 from torch.utils.data.datapipes.iter import IterableWrapper
 
 from .consts import nwp_path, root_data_path, wind_metadata_path, wind_netcdf_path, wind_path
-from .utils import populate_data_config_sources, reset_stale_nwp_timestamps, worker_init_fn
+from .utils import (
+    populate_data_config_sources,
+    reset_stale_nwp_timestamps_and_rename_t,
+    worker_init_fn,
+)
 
 # Global settings for running the model
 
 # Model will use GPU if available
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 WIND_MODEL_NAME = os.getenv("WIND_MODEL_NAME", default="openclimatefix/windnet_india")
-WIND_MODEL_VERSION = os.getenv("WIND_MODEL_VERSION",
-                               default="c6af802823edc5e87b22df680b41b0dcdb4869e1")
+WIND_MODEL_VERSION = os.getenv(
+    "WIND_MODEL_VERSION", default="c6af802823edc5e87b22df680b41b0dcdb4869e1"
+)
 
 PV_MODEL_NAME = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
-PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION",
-                             default="d194488203375e766253f0d2961010356de52eb9")
+PV_MODEL_VERSION = os.getenv(
+    "PV_MODEL_VERSION", default="d194488203375e766253f0d2961010356de52eb9")
 
 log = logging.getLogger(__name__)
 
@@ -58,10 +63,7 @@ class PVNetModel:
         return WIND_MODEL_VERSION if self.asset_type == "wind" else PV_MODEL_VERSION
 
     def __init__(
-            self,
-            asset_type: str,
-            timestamp: dt.datetime,
-            generation_data: dict[str, pd.DataFrame]
+        self, asset_type: str, timestamp: dt.datetime, generation_data: dict[str, pd.DataFrame]
     ):
         """Initializer for the model"""
 
@@ -98,14 +100,18 @@ class PVNetModel:
 
         normed_preds = np.concatenate(normed_preds)
         n_times = normed_preds.shape[1]
-        valid_times = pd.to_datetime([self.t0 + dt.timedelta(minutes=15 * (i + 1))
-                                      for i in range(n_times)])
+        valid_times = pd.to_datetime(
+            [self.t0 + dt.timedelta(minutes=15 * (i + 1)) for i in range(n_times)]
+        )
 
-        return [{
-            "start_utc": valid_times[i],
-            "end_utc": valid_times[i] + dt.timedelta(minutes=15),
-            "forecast_power_kw": int(v * capacity_kw)
-        } for i, v in enumerate(normed_preds[0, :, 3])]  # index 3 is the 50th percentile
+        return [
+            {
+                "start_utc": valid_times[i],
+                "end_utc": valid_times[i] + dt.timedelta(minutes=15),
+                "forecast_power_kw": int(v * capacity_kw),
+            }
+            for i, v in enumerate(normed_preds[0, :, 3])
+        ]  # index 3 is the 50th percentile
 
     def _prepare_data_sources(self):
         """Pull and prepare data sources required for inference"""
@@ -124,7 +130,7 @@ class PVNetModel:
         # This is temporary measure due to not having access to the latest ECMWP data
         # Here we reset timestamps in nwp_source_file_path to ensure they're not stale
         # TODO remove this once NWP consumer is ready
-        reset_stale_nwp_timestamps(nwp_source_file_path)
+        reset_stale_nwp_timestamps_and_rename_t(nwp_source_file_path)
 
         # Remove local cached zarr if already exists
         shutil.rmtree(nwp_path, ignore_errors=True)
@@ -164,11 +170,12 @@ class PVNetModel:
 
         # Location and time datapipes
         gen_sites = self.generation_data["metadata"]
-        location_pipe = IterableWrapper([Location(
-            coordinate_system="lon_lat",
-            x=s.longitude,
-            y=s.latitude
-        ) for s in gen_sites.itertuples()])
+        location_pipe = IterableWrapper(
+            [
+                Location(coordinate_system="lon_lat", x=s.longitude, y=s.latitude)
+                for s in gen_sites.itertuples()
+            ]
+        )
         t0_datapipe = IterableWrapper([self.t0 for _ in range(gen_sites.shape[0])])
 
         location_pipe = location_pipe.sharding_filter()
@@ -178,37 +185,32 @@ class PVNetModel:
 
         # Batch datapipe
         if self.asset_type == "wind":
-            base_datapipe_dict = (
-                wind_base_pipeline(
-                    config_filename=populated_data_config_filename,
-                    location_pipe=location_pipe,
-                    t0_datapipe=t0_datapipe
-                )
+            base_datapipe_dict = wind_base_pipeline(
+                config_filename=populated_data_config_filename,
+                location_pipe=location_pipe,
+                t0_datapipe=t0_datapipe,
             )
 
-            base_datapipe = (DictDatasetIterDataPipe(
-                { k: v for k, v in base_datapipe_dict.items() if k != "config" },
-            ).map(split_dataset_dict_dp))
+            base_datapipe = DictDatasetIterDataPipe(
+                {k: v for k, v in base_datapipe_dict.items() if k != "config"},
+            ).map(split_dataset_dict_dp)
 
             batch_datapipe = (
-                base_datapipe
-                .windnet_convert_to_numpy_batch()
+                base_datapipe.windnet_convert_to_numpy_batch()
                 .batch(batch_size)
                 .map(stack_np_examples_into_batch)
             )
 
         else:
-            base_datapipe = (
-                pv_base_pipeline(
-                    config_filename=populated_data_config_filename,
-                    location_pipe=location_pipe,
-                    t0_datapipe=t0_datapipe,
-                    production=True
-                )
+            base_datapipe = pv_base_pipeline(
+                config_filename=populated_data_config_filename,
+                location_pipe=location_pipe,
+                t0_datapipe=t0_datapipe,
+                production=True,
             )
             batch_datapipe = base_datapipe.batch(batch_size).map(stack_np_examples_into_batch)
 
-        n_workers = os.cpu_count() - 1
+        n_workers = 1
 
         # Set up dataloader for parallel loading
         dataloader_kwargs = dict(
@@ -222,7 +224,7 @@ class PVNetModel:
             drop_last=False,
             timeout=0,
             worker_init_fn=worker_init_fn,
-            prefetch_factor=None if n_workers == 0 else 2,
+            prefetch_factor=None,
             persistent_workers=False,
         )
 
@@ -232,7 +234,4 @@ class PVNetModel:
         """Load model"""
 
         log.info(f"Loading model: {self.name} - {self.version}")
-        return PVNetBaseModel.from_pretrained(
-            self.name,
-            revision=self.version
-        ).to(DEVICE)
+        return PVNetBaseModel.from_pretrained(self.name, revision=self.version).to(DEVICE)
