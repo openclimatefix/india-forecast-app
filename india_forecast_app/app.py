@@ -248,6 +248,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                     generation_data = get_generation_data(session, asset_sites, timestamp)
                 else:
                     generation_data = {"data": pd.DataFrame(), "metadata": pd.DataFrame()}
+                log.info(f"Latest historic {asset_type} generation data read {generation_data}}")
                 log.info(f"Loading {asset_type} model...")
                 models[asset_type] = get_model(asset_type, timestamp, generation_data)
                 log.info(f"{asset_type} model loaded")
