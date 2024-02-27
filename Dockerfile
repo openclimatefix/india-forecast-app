@@ -19,6 +19,7 @@ ENV PIP_DEFAULT_TIMEOUT=100 \
 RUN pip install "poetry==$POETRY_VERSION"
 
 COPY pyproject.toml poetry.lock README.md .
+RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 RUN poetry install --only main --no-root
 
 COPY india_forecast_app ./india_forecast_app
