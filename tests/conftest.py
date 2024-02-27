@@ -198,8 +198,8 @@ def nwp_data(tmp_path_factory, time_before_present):
     variables = list(ds.variable.values)
     new_variables = []
     for var in variables:
-        if 't2m' == var:
-            new_variables.append('t')
+        if 't' == var:
+            new_variables.append('t2m')
         else:
             new_variables.append(var)
     ds.__setitem__('variable', new_variables)
