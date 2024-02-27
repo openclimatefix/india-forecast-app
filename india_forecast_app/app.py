@@ -88,7 +88,7 @@ def get_generation_data(
     generation_df = generation_df.interpolate(method="linear", limit_direction="both")
 
     # Down-sample from 3 min to 15 min intervals
-    generation_df = generation_df.resample("15min").sum()
+    generation_df = generation_df.resample("15min").mean()
 
     # Add a final row for t0, set to the mean of the previous values
     generation_df.loc[timestamp] = generation_df.mean()
@@ -248,7 +248,8 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                     generation_data = get_generation_data(session, asset_sites, timestamp)
                 else:
                     generation_data = {"data": pd.DataFrame(), "metadata": pd.DataFrame()}
-                log.info(f"Latest historic {asset_type} generation data read {generation_data}")
+                log.info(f"{generation_data['data']=}")
+                log.info(f"{generation_data['metadata']=}")
                 log.info(f"Loading {asset_type} model...")
                 models[asset_type] = get_model(asset_type, timestamp, generation_data)
                 log.info(f"{asset_type} model loaded")
