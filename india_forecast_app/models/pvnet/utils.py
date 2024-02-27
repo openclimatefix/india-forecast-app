@@ -101,7 +101,8 @@ def reset_stale_nwp_timestamps_and_rename_t(source_nwp_path: str):
             new_variables.append('t')
         else:
             new_variables.append(var)
-    ds.__setitem__('variables', new_variables)
+    ds.__setitem__('variable', new_variables)
+    log.info(f"Renamed t2m to t in NWP data {ds.variable.values}")
 
     # Save back down to source path
     ds.to_zarr(source_nwp_path, mode="a")
