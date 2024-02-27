@@ -208,7 +208,7 @@ class PVNetModel:
             )
             batch_datapipe = base_datapipe.batch(batch_size).map(stack_np_examples_into_batch)
 
-        n_workers = os.cpu_count() - 1
+        n_workers = 1
 
         # Set up dataloader for parallel loading
         dataloader_kwargs = dict(
@@ -222,7 +222,7 @@ class PVNetModel:
             drop_last=False,
             timeout=0,
             worker_init_fn=worker_init_fn,
-            prefetch_factor=None if n_workers == 0 else 2,
+            prefetch_factor=None,
             persistent_workers=False,
         )
 
