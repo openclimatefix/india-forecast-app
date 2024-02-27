@@ -15,7 +15,7 @@ pytz = "^2024.1"
 numpy = "^1.26.4"
 huggingface-hub = "0.20.3"
 torch = {version = "2.1.1", source = "pytorch-cpu" }
-ocf-datapipes = "^3.2.9"
+ocf-datapipes = "3.2.10"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.4"
@@ -32,20 +32,9 @@ seeder = "scripts.seed_local_db:seed_db"
 inspect = "tests.test_data.inspect:run"
 
 [[tool.poetry.source]]
-name = "pytorch"
-url = "https://download.pytorch.org/whl/cpu"
-priority = "explicit"
-
-[[tool.poetry.source]]
-name = "torch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
-priority = "supplemental"
-
-[[tool.poetry.source]]
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 priority = "explicit"
-
 
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.

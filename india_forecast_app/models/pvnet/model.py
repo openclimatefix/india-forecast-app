@@ -31,7 +31,7 @@ from .utils import populate_data_config_sources, reset_stale_nwp_timestamps, wor
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 WIND_MODEL_NAME = os.getenv("WIND_MODEL_NAME", default="openclimatefix/windnet_india")
 WIND_MODEL_VERSION = os.getenv("WIND_MODEL_VERSION",
-                               default="c6af802823edc5e87b22df680b41b0dcdb4869e1")
+                               default="e5e482fe86928d5571bfda049903fcc0a414e6c9")
 
 PV_MODEL_NAME = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
 PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION",
