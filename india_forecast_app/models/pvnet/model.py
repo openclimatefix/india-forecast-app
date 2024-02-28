@@ -210,8 +210,6 @@ class PVNetModel:
             )
             batch_datapipe = base_datapipe.batch(batch_size).map(stack_np_examples_into_batch)
 
-        # log.info(next(iter(batch_datapipe)))
-
         n_workers = 0
 
         # Set up dataloader for parallel loading

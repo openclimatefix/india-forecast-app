@@ -32,7 +32,7 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
     """
     
     sites = get_sites_by_country(db_session, country="india")
-    return [sites[1]]
+    return sites
 
 
 def get_generation_data(
@@ -213,7 +213,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     """
     Main function for running forecasts for sites in India
     """
-    logging.basicConfig(stream=sys.stdout, level=getattr(logging, log_level.upper()), force=True)
+    logging.basicConfig(stream=sys.stdout, level=getattr(logging, log_level.upper()))
 
     if timestamp is None:
         # get the timestamp now rounded down the nearest 15 minutes
@@ -250,6 +250,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                     generation_data = {"data": pd.DataFrame(), "metadata": pd.DataFrame()}
                 log.info(f"{generation_data['data']=}")
                 log.info(f"{generation_data['metadata']=}")
+
                 log.info(f"Loading {asset_type} model...")
                 models[asset_type] = get_model(asset_type, timestamp, generation_data)
                 log.info(f"{asset_type} model loaded")
