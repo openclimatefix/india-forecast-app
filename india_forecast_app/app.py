@@ -32,7 +32,7 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
     """
     
     sites = get_sites_by_country(db_session, country="india")
-    return sites
+    return [sites[1]]
 
 
 def get_generation_data(
@@ -213,7 +213,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     """
     Main function for running forecasts for sites in India
     """
-    logging.basicConfig(stream=sys.stdout, level=getattr(logging, log_level.upper()))
+    logging.basicConfig(stream=sys.stdout, level=getattr(logging, log_level.upper()), force=True)
 
     if timestamp is None:
         # get the timestamp now rounded down the nearest 15 minutes

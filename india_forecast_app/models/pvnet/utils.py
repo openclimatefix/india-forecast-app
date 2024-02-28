@@ -24,8 +24,8 @@ def worker_init_fn(worker_id):
     - https://github.com/fsspec/filesystem_spec/pull/963#issuecomment-1131709948
     TODO: Try deleting this two lines to make sure this is still relevant.
     """
-    fsspec.asyn.iothread[0] = None
-    fsspec.asyn.loop[0] = None
+    # fsspec.asyn.iothread[0] = None
+    # fsspec.asyn.loop[0] = None
 
 
 def populate_data_config_sources(input_path, output_path):

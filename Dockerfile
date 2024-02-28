@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-slim as base
 
 RUN apt-get update
 RUN apt-get install -y git
@@ -9,23 +9,36 @@ ENV PYTHONFAULTHANDLER=1 \
 
 WORKDIR /app
 
-RUN apt-get install -y gdal-bin
+FROM base as builder
+
+RUN apt-get update
+RUN apt-get install -y gdal-bin libgdal-dev g++
 
 ENV PIP_DEFAULT_TIMEOUT=100 \
 	PIP_DISABLE_PIP_VERSION_CHECK=1 \
 	PIP_NO_CACHE_DIR=1 \
-	POETRY_VERSION=1.7.1
+	POETRY_VERSION=1.8.1
 
 RUN pip install "poetry==$POETRY_VERSION"
 
+RUN python -m venv /venv
+
 COPY pyproject.toml poetry.lock README.md .
-RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-RUN poetry install --only main --no-root
+RUN . /venv/bin/activate && poetry install --only main --no-root
+RUN . /venv/bin/activate && poetry run pip install torch==2.2.1 torchvision==0.17.1 -f https://download.pytorch.org/whl/cpu
 
 COPY india_forecast_app ./india_forecast_app
-RUN poetry build
-RUN poetry install --only main
+RUN . /venv/bin/activate && poetry build
+
+FROM base as final
+
+ENV PATH="/venv/bin:$PATH"
+
+COPY --from=builder /venv /venv
+COPY --from=builder /app/dist .
+RUN . /venv/bin/activate && pip install *.whl
 
 COPY nwp.zarr ./nwp.zarr
 
-ENTRYPOINT ["poetry", "run" , "python3", "india_forecast_app/app.py", "--write-to-db"]
+#ENTRYPOINT ["app", "--write-to-db"]
+ENTRYPOINT ["app"]
