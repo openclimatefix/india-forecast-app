@@ -283,9 +283,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                 forecast = {
                     "meta": {
                         "site_id": site_id,
-                        # TODO model version strings too long to store db field (max 32 chars)
-                        # "version": models[asset_type].version,
-                        "version": "0.0.0",
+                        "version": models[asset_type].version,
                         "timestamp": timestamp,
                     },
                     "values": forecast_values,
