@@ -6,6 +6,7 @@ import datetime as dt
 import logging
 import os
 import sys
+import importlib.metadata
 
 import click
 import pandas as pd
@@ -283,7 +284,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                 forecast = {
                     "meta": {
                         "site_id": site_id,
-                        "version": models[asset_type].version,
+                        "version": importlib.metadata.version('india_forecast_app'),
                         "timestamp": timestamp,
                     },
                     "values": forecast_values,
