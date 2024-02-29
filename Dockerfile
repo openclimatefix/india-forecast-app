@@ -39,5 +39,4 @@ RUN . /venv/bin/activate && pip install *.whl
 
 COPY nwp.zarr ./nwp.zarr
 
-#ENTRYPOINT ["app", "--write-to-db"]
-ENTRYPOINT ["app"]
+ENTRYPOINT ["app", "--write-to-db"]
