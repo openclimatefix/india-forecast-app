@@ -116,7 +116,7 @@ class PVNetModel:
 
         # smooth with a 1 hour rolling window
         values_df["forecast_power_kw"] = (
-            values_df["forecast_power_kw"].rolling(4, min_periods=1).mean()
+            values_df["forecast_power_kw"].rolling(4, min_periods=1).mean().astype(int)
         )
 
         return values_df.to_dict("records")
