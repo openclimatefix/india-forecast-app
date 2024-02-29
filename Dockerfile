@@ -25,7 +25,6 @@ RUN python -m venv /venv
 
 COPY pyproject.toml poetry.lock README.md .
 RUN . /venv/bin/activate && poetry install --only main --no-root
-RUN . /venv/bin/activate && poetry run pip install torch==2.2.1 torchvision==0.17.1 -f https://download.pytorch.org/whl/cpu
 
 COPY india_forecast_app ./india_forecast_app
 RUN . /venv/bin/activate && poetry build
