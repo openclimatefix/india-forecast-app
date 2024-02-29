@@ -102,6 +102,10 @@ def get_generation_data(
         # Add a final row for t0, set to the mean of the previous values
         generation_df.loc[timestamp] = generation_df.mean()
 
+        # convert to megamwatts,
+        # as this is current what ocf_datapipes expects
+        generation_df['0'] = generation_df['0'].astype(float) /1000.0
+
     # Site metadata dataframe
     sites_df = pd.DataFrame(
         [(s.ml_id, s.latitude, s.longitude, s.capacity_kw/1000.0) for s in sites],
