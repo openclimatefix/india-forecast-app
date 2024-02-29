@@ -3,6 +3,7 @@ Main forecast app entrypoint
 """
 
 import datetime as dt
+import importlib.metadata
 import logging
 import os
 import sys
@@ -283,9 +284,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                 forecast = {
                     "meta": {
                         "site_id": site_id,
-                        # TODO model version strings too long to store db field (max 32 chars)
-                        # "version": models[asset_type].version,
-                        "version": "0.0.0",
+                        "version": importlib.metadata.version('india_forecast_app'),
                         "timestamp": timestamp,
                     },
                     "values": forecast_values,
