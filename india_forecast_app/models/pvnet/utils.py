@@ -89,16 +89,12 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
         if 't' == var:
             new_variables.append('t2m')
             log.debug(f"Renamed t to t2m in NWP data {ds.variable.values}")
+        elif 'clt' == var:
+            new_variables.append('tcc')
+            log.debug(f"Renamed clt to tcc in NWP data {ds.variable.values}")
         else:
             new_variables.append(var)
     ds.__setitem__('variable', new_variables)
-
-    log.warning('Faking TCC variable in NWP data')
-    # TODO remove this when tcc variable is available
-    # adding tcc, which is the sum of hcc, lcc and mcc
-    tcc = ds.sel(variable=['hcc','mcc','lcc']).mean(dim=['variable'])
-    tcc = tcc.expand_dims('variable').assign_coords(variable=['tcc'])
-    ds = ds.merge(tcc)
 
     # Save destination path
     ds.to_zarr(dest_nwp_path, mode="a")
