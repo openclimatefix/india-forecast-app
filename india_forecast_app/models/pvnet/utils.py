@@ -1,9 +1,7 @@
 """Useful functions for setting up PVNet model"""
-import datetime as dt
 import logging
 
 import fsspec
-import pandas as pd
 import xarray as xr
 import yaml
 
@@ -69,20 +67,11 @@ def populate_data_config_sources(input_path, output_path):
         yaml.dump(config, outfile, default_flow_style=False)
 
 
-def reset_stale_nwp_timestamps_and_rename_t(source_nwp_path: str):
-    """Resets the init_time values of the NWP zarr to more recent timestamps"""
+def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
+    """Reads zarr file, renames t variable to t2m and saves zarr to new destination"""
 
     # Load dataset from source
     ds = xr.open_zarr(source_nwp_path)
-
-    # Set t0 now and floor to 3-hour interval
-    t0_datetime_utc = (pd.Timestamp.now(tz=None).floor(dt.timedelta(hours=3)))
-    t0_datetime_utc = t0_datetime_utc - dt.timedelta(hours=1)
-    ds.init_time.values[:] = pd.date_range(
-        t0_datetime_utc - dt.timedelta(hours=3 * (len(ds.init_time) - 1)),
-        t0_datetime_utc,
-        freq=dt.timedelta(hours=3),
-    )
 
     # This is important to avoid saving errors
     for v in list(ds.coords.keys()):
@@ -93,18 +82,18 @@ def reset_stale_nwp_timestamps_and_rename_t(source_nwp_path: str):
         if ds[v].dtype == object:
             ds[v].encoding.clear()
 
-    # get list of variables
+    # Rename t variable to t2m
     variables = list(ds.variable.values)
     new_variables = []
     for var in variables:
         if 't' == var:
             new_variables.append('t2m')
+            log.debug(f"Renamed t to t2m in NWP data {ds.variable.values}")
         else:
             new_variables.append(var)
     ds.__setitem__('variable', new_variables)
-    log.info(f"Renamed t2m to t in NWP data {ds.variable.values}")
 
-    # Save back down to source path
-    ds.to_zarr(source_nwp_path, mode="a")
+    # Save destination path
+    ds.to_zarr(dest_nwp_path, mode="a")
 
 

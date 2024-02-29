@@ -8,7 +8,6 @@ import os
 import shutil
 import tempfile
 
-import fsspec
 import numpy as np
 import pandas as pd
 import torch
@@ -25,7 +24,7 @@ from torch.utils.data.datapipes.iter import IterableWrapper
 from .consts import nwp_path, root_data_path, wind_metadata_path, wind_netcdf_path, wind_path
 from .utils import (
     populate_data_config_sources,
-    reset_stale_nwp_timestamps_and_rename_t,
+    process_and_cache_nwp,
     worker_init_fn,
 )
 
@@ -127,17 +126,11 @@ class PVNetModel:
         # Load remote zarr source
         nwp_source_file_path = os.environ["NWP_ZARR_PATH"]
 
-        # This is temporary measure due to not having access to the latest ECMWP data
-        # Here we reset timestamps in nwp_source_file_path to ensure they're not stale
-        # TODO remove this once NWP consumer is ready
-        reset_stale_nwp_timestamps_and_rename_t(nwp_source_file_path)
-
         # Remove local cached zarr if already exists
         shutil.rmtree(nwp_path, ignore_errors=True)
 
-        # Cache remote zarr locally
-        fs = fsspec.open(nwp_source_file_path).fs
-        fs.get(nwp_source_file_path, nwp_path, recursive=True)
+        # Process/cache remote zarr locally
+        process_and_cache_nwp(nwp_source_file_path, nwp_path)
 
         if self.asset_type == "wind":
             # Clear local cached wind data if already exists
