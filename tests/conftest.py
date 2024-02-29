@@ -180,6 +180,7 @@ def nwp_data(tmp_path_factory, time_before_present):
     # Last t0 to at least 2 hours ago and floor to 3-hour interval
     t0_datetime_utc = (time_before_present(dt.timedelta(hours=0))
                        .floor(dt.timedelta(hours=3)))
+    t0_datetime_utc = t0_datetime_utc - dt.timedelta(hours=1)
     ds.init_time.values[:] = pd.date_range(
         t0_datetime_utc - dt.timedelta(hours=3 * (len(ds.init_time) - 1)),
         t0_datetime_utc,
@@ -194,15 +195,6 @@ def nwp_data(tmp_path_factory, time_before_present):
     for v in list(ds.variables.keys()):
         if ds[v].dtype == object:
             ds[v].encoding.clear()
-
-    variables = list(ds.variable.values)
-    new_variables = []
-    for var in variables:
-        if 't' == var:
-            new_variables.append('t2m')
-        else:
-            new_variables.append(var)
-    ds.__setitem__('variable', new_variables)
 
     # Add data to dataset
     ds["ecmwf"] = xr.DataArray(
