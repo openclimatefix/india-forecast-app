@@ -3,10 +3,10 @@ Main forecast app entrypoint
 """
 
 import datetime as dt
+import importlib.metadata
 import logging
 import os
 import sys
-import importlib.metadata
 
 import click
 import pandas as pd
