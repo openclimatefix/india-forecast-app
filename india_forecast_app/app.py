@@ -192,7 +192,7 @@ def save_forecast(db_session: Session, forecast, write_to_db: bool):
                    timestamp={forecast_meta["timestamp_utc"]},\
                    version={forecast_meta["forecast_version"]}:'
         log.info(output.replace('  ', ''))
-        log.info(f'\n{forecast_values_df.to_string()}')
+        log.info(f'\n{forecast_values_df.to_string()}\n')
 
 
 @click.command()
@@ -256,8 +256,9 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                     generation_data = get_generation_data(session, asset_sites, timestamp)
                 else:
                     generation_data = {"data": pd.DataFrame(), "metadata": pd.DataFrame()}
-                log.info(f"{generation_data['data']=}")
-                log.info(f"{generation_data['metadata']=}")
+
+                log.debug(f"{generation_data['data']=}")
+                log.debug(f"{generation_data['metadata']=}")
 
                 log.info(f"Loading {asset_type} model...")
                 models[asset_type] = get_model(asset_type, timestamp, generation_data)
