@@ -3,7 +3,6 @@ Tests for functions in app.py
 """
 import datetime as dt
 import multiprocessing as mp
-import os
 import uuid
 
 import pytest
