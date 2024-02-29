@@ -207,3 +207,5 @@ def nwp_data(tmp_path_factory, time_before_present):
     temp_nwp_path = f"{tmp_path_factory.mktemp('data')}/nwp.zarr"
     os.environ["NWP_ZARR_PATH"] = temp_nwp_path
     ds.to_zarr(temp_nwp_path)
+
+    return temp_nwp_path

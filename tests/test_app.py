@@ -4,6 +4,7 @@ Tests for functions in app.py
 import datetime as dt
 import multiprocessing as mp
 import uuid
+import os
 
 import pytest
 from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, SiteAssetType
@@ -61,6 +62,8 @@ def test_get_generation_data(db_session, sites, generation_db_values, init_times
 def test_get_model(db_session, asset_type, sites, nwp_data, generation_db_values, init_timestamp):
     """Test for getting valid model"""
 
+    os.environ["NWP_ZARR_PATH"] = nwp_data
+
     gen_sites = [s for s in sites if s.asset_type.name == asset_type]
     gen_data = get_generation_data(db_session, gen_sites, timestamp=init_timestamp)
     model = get_model(asset_type, timestamp=init_timestamp, generation_data=gen_data)
@@ -73,6 +76,8 @@ def test_get_model(db_session, asset_type, sites, nwp_data, generation_db_values
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
 def test_run_model(db_session, asset_type, sites, nwp_data, generation_db_values, init_timestamp):
     """Test for running PV and wind models"""
+
+    os.environ["NWP_ZARR_PATH"] = nwp_data
 
     gen_sites = [s for s in sites if s.asset_type.name == asset_type]
     gen_data = get_generation_data(db_session, sites=gen_sites, timestamp=init_timestamp)
@@ -112,6 +117,7 @@ def test_save_forecast(db_session, sites, forecast_values):
 def test_app(write_to_db, db_session, sites, nwp_data, generation_db_values):
     """Test for running app from command line"""
 
+    os.environ["NWP_ZARR_PATH"] = nwp_data
     init_n_forecasts = db_session.query(ForecastSQL).count()
     init_n_forecast_values = db_session.query(ForecastValueSQL).count()
 
