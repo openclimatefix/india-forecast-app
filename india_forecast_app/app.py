@@ -65,33 +65,41 @@ def get_generation_data(
         session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
     )
 
-    # Convert to dataframe
-    generation_df = (pd.DataFrame(
-        [(g.start_utc, g.generation_power_kw, g.site.ml_id) for g in generation_data],
-        columns=["time_utc", "power_kw", "ml_id"]
-    ).pivot(index="time_utc", columns="ml_id", values="power_kw"))
+    if len(generation_data) == 0:
+        log.warning("No generation found for the specified sites/period")
+        generation_df = pd.DataFrame()
 
-    # Ensure timestamps line up with 3min intervals
-    generation_df.index = generation_df.index.round("3min")
+    else:
+        # Convert to dataframe
+        generation_df = (pd.DataFrame(
+            [(g.start_utc, g.generation_power_kw, g.site.ml_id) for g in generation_data],
+            columns=["time_utc", "power_kw", "ml_id"]
+        ).pivot(index="time_utc", columns="ml_id", values="power_kw"))
 
-    # Drop any duplicated timestamps
-    generation_df = generation_df[~generation_df.index.duplicated()]
+        log.info(generation_df)
+        log.info(generation_df.index)
 
-    # xarray (used later) expects columns with string names
-    generation_df.columns = generation_df.columns.astype(str)
+        # Ensure timestamps line up with 3min intervals
+        generation_df.index = generation_df.index.round("3min")
 
-    # Handle any missing timestamps
-    contiguous_dt_idx = pd.date_range(start=start, end=end, freq="3min")[:-1]
-    generation_df = generation_df.reindex(contiguous_dt_idx, fill_value=None)
+        # Drop any duplicated timestamps
+        generation_df = generation_df[~generation_df.index.duplicated()]
 
-    # Interpolate NaNs
-    generation_df = generation_df.interpolate(method="linear", limit_direction="both")
+        # xarray (used later) expects columns with string names
+        generation_df.columns = generation_df.columns.astype(str)
 
-    # Down-sample from 3 min to 15 min intervals
-    generation_df = generation_df.resample("15min").mean()
+        # Handle any missing timestamps
+        contiguous_dt_idx = pd.date_range(start=start, end=end, freq="3min")[:-1]
+        generation_df = generation_df.reindex(contiguous_dt_idx, fill_value=None)
 
-    # Add a final row for t0, set to the mean of the previous values
-    generation_df.loc[timestamp] = generation_df.mean()
+        # Interpolate NaNs
+        generation_df = generation_df.interpolate(method="linear", limit_direction="both")
+
+        # Down-sample from 3 min to 15 min intervals
+        generation_df = generation_df.resample("15min").mean()
+
+        # Add a final row for t0, set to the mean of the previous values
+        generation_df.loc[timestamp] = generation_df.mean()
 
     # Site metadata dataframe
     sites_df = pd.DataFrame(
@@ -184,7 +192,7 @@ def save_forecast(db_session: Session, forecast, write_to_db: bool):
                    timestamp={forecast_meta["timestamp_utc"]},\
                    version={forecast_meta["forecast_version"]}:'
         log.info(output.replace('  ', ''))
-        log.info(f'\n{forecast_values_df.to_string()}')
+        log.info(f'\n{forecast_values_df.to_string()}\n')
 
 
 @click.command()
@@ -248,8 +256,10 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                     generation_data = get_generation_data(session, asset_sites, timestamp)
                 else:
                     generation_data = {"data": pd.DataFrame(), "metadata": pd.DataFrame()}
-                log.info(f"{generation_data['data']=}")
-                log.info(f"{generation_data['metadata']=}")
+
+                log.debug(f"{generation_data['data']=}")
+                log.debug(f"{generation_data['metadata']=}")
+
                 log.info(f"Loading {asset_type} model...")
                 models[asset_type] = get_model(asset_type, timestamp, generation_data)
                 log.info(f"{asset_type} model loaded")

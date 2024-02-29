@@ -210,7 +210,7 @@ class PVNetModel:
             )
             batch_datapipe = base_datapipe.batch(batch_size).map(stack_np_examples_into_batch)
 
-        n_workers = 1
+        n_workers = 0
 
         # Set up dataloader for parallel loading
         dataloader_kwargs = dict(
@@ -228,7 +228,9 @@ class PVNetModel:
             persistent_workers=False,
         )
 
-        return DataLoader(batch_datapipe, **dataloader_kwargs)
+        dataloader = DataLoader(batch_datapipe, **dataloader_kwargs)
+
+        return dataloader
 
     def _load_model(self):
         """Load model"""
