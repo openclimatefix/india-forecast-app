@@ -103,20 +103,23 @@ class PVNetModel:
             [self.t0 + dt.timedelta(minutes=15 * (i + 1)) for i in range(n_times)]
         )
 
-
-        values_df = pd.DataFrame([
-            {
-                "start_utc": valid_times[i],
-                "end_utc": valid_times[i] + dt.timedelta(minutes=15),
-                "forecast_power_kw": int(v * capacity_kw),
-            }
-            for i, v in enumerate(normed_preds[0, :, 3])
-        ])  # index 3 is the 50th percentile)
+        values_df = pd.DataFrame(
+            [
+                {
+                    "start_utc": valid_times[i],
+                    "end_utc": valid_times[i] + dt.timedelta(minutes=15),
+                    "forecast_power_kw": int(v * capacity_kw),
+                }
+                for i, v in enumerate(normed_preds[0, :, 3])
+            ]
+        )  # index 3 is the 50th percentile)
 
         # smooth with a 1 hour rolling window
-        values_df['forecast_power_kw'] = values_df['forecast_power_kw'].rolling(4, min_periods=1).mean()
+        values_df["forecast_power_kw"] = (
+            values_df["forecast_power_kw"].rolling(4, min_periods=1).mean()
+        )
 
-        return values_df.to_dict('records')
+        return values_df.to_dict("records")
 
     def _prepare_data_sources(self):
         """Pull and prepare data sources required for inference"""
