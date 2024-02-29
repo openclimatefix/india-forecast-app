@@ -3,8 +3,8 @@ Tests for functions in app.py
 """
 import datetime as dt
 import multiprocessing as mp
-import uuid
 import os
+import uuid
 
 import pytest
 from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, SiteAssetType
