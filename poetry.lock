@@ -4391,13 +4391,13 @@ requests = "*"
 
 [[package]]
 name = "pvnet"
-version = "3.0.5"
+version = "3.0.7"
 description = "PVNet"
 optional = false
 python-versions = "*"
 files = [
-    {file = "PVNet-3.0.5-py3-none-any.whl", hash = "sha256:063e53cfcdad667bda2aa029f60c87339deb5ed4ad948889ca01310ae4f33d6c"},
-    {file = "PVNet-3.0.5.tar.gz", hash = "sha256:b368a9664d911bc8a20f62680681853e11827eb925389850485e806abca82c00"},
+    {file = "PVNet-3.0.7-py3-none-any.whl", hash = "sha256:51e56dfe9cb3b51b28ec2cf800b0410667b425d0b9ab13783d55e6229369cc4c"},
+    {file = "PVNet-3.0.7.tar.gz", hash = "sha256:92b58881bf4428f205d808defdd7fc9e5ca28fdbd3292e2c0626f6b525ec011f"},
 ]
 
 [package.dependencies]
@@ -6332,6 +6332,94 @@ torch = "2.2.1"
 scipy = ["scipy"]
 
 [[package]]
+name = "torchvision"
+version = "0.17.1"
+description = "image and video datasets and models for torch deep learning"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "torchvision-0.17.1-cp311-cp311-linux_aarch64.whl", hash = "sha256:e74f5a26ef8190eab0c38b3f63914fea94e58e3b2f0e5466611c9f63bd91a80b"},
+]
+
+[package.dependencies]
+numpy = "*"
+pillow = ">=5.3.0,<8.3.dev0 || >=8.4.dev0"
+torch = "2.2.1"
+
+[package.extras]
+scipy = ["scipy"]
+
+[package.source]
+type = "url"
+url = "https://download.pytorch.org/whl/cpu/torchvision-0.17.1-cp311-cp311-linux_aarch64.whl"
+
+[[package]]
+name = "torchvision"
+version = "0.17.1"
+description = "image and video datasets and models for torch deep learning"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "torchvision-0.17.1-cp311-cp311-macosx_10_13_x86_64.whl", hash = "sha256:ea2ccdbf5974e0bf27fd6644a33b19cb0700297cf397bb0469e762c11c6c4105"},
+]
+
+[package.dependencies]
+numpy = "*"
+pillow = ">=5.3.0,<8.3.dev0 || >=8.4.dev0"
+torch = "2.2.1"
+
+[package.extras]
+scipy = ["scipy"]
+
+[package.source]
+type = "url"
+url = "https://download.pytorch.org/whl/cpu/torchvision-0.17.1-cp311-cp311-macosx_10_13_x86_64.whl"
+
+[[package]]
+name = "torchvision"
+version = "0.17.1"
+description = "image and video datasets and models for torch deep learning"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "torchvision-0.17.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:9106e32c9f1e70afa8172cf1b064cf9c2998d8dff0769ec69d537b20209ee43d"},
+]
+
+[package.dependencies]
+numpy = "*"
+pillow = ">=5.3.0,<8.3.dev0 || >=8.4.dev0"
+torch = "2.2.1"
+
+[package.extras]
+scipy = ["scipy"]
+
+[package.source]
+type = "url"
+url = "https://download.pytorch.org/whl/cpu/torchvision-0.17.1-cp311-cp311-macosx_11_0_arm64.whl"
+
+[[package]]
+name = "torchvision"
+version = "0.17.1+cpu"
+description = "image and video datasets and models for torch deep learning"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "torchvision-0.17.1+cpu-cp311-cp311-linux_x86_64.whl", hash = "sha256:7dbe91c25cec4444729f8d73109b661be2a0df68c6dccd6d42b0c38653caafd2"},
+]
+
+[package.dependencies]
+numpy = "*"
+pillow = ">=5.3.0,<8.3.dev0 || >=8.4.dev0"
+torch = "2.2.1"
+
+[package.extras]
+scipy = ["scipy"]
+
+[package.source]
+type = "url"
+url = "https://download.pytorch.org/whl/cpu/torchvision-0.17.1%2Bcpu-cp311-cp311-linux_x86_64.whl"
+
+[[package]]
 name = "tornado"
 version = "6.4"
 description = "Tornado is a Python web framework and asynchronous networking library, originally developed at FriendFeed."
@@ -6823,4 +6911,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "47cddfb83b167c750691d838ef66e1677e13ebc3e1ddea02d7bdeea3306780f4"
+content-hash = "18b997cee70b2922509a2ef728fa938edcea2427109eed07a12b6ac5b89f769d"
