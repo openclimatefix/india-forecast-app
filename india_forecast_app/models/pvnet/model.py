@@ -132,6 +132,9 @@ class PVNetModel:
         # Process/cache remote zarr locally
         process_and_cache_nwp(nwp_source_file_path, nwp_path)
 
+        # set NWP_ZARR_PATH as this new path
+        os.environ["NWP_ZARR_PATH"] = nwp_path
+
         if self.asset_type == "wind":
             # Clear local cached wind data if already exists
             shutil.rmtree(wind_path, ignore_errors=True)
