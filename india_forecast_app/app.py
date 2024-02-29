@@ -104,7 +104,8 @@ def get_generation_data(
 
         # convert to megamwatts,
         # as this is current what ocf_datapipes expects
-        generation_df['0'] = generation_df['0'].astype(float) /1000.0
+        col = generation_df.columns[0]
+        generation_df[col] = generation_df[col].astype(float) /1000.0
 
     # Site metadata dataframe
     sites_df = pd.DataFrame(
