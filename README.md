@@ -37,7 +37,7 @@ DB_URL={DB_URL} poetry run seeder
 
 This example runs the application and writes the results to stdout
 ```
-DB_URL={DB_URL} NWP_ZARR_PATH=./nwp.zarr poetry run app
+DB_URL={DB_URL} NWP_ZARR_PATH={NWP_ZARR_PATH} poetry run app
 ```
 
 ### Starting a local database using docker
@@ -66,7 +66,7 @@ Create a container from the image. This example runs the application and writes 
 Replace `{DB_URL}` with a postgres DB connection string.\
 *N.B if the database host is `localhost` on the host machine, replace `localhost` with `host.docker.internal` so that docker can access the database from within the container*
 ```
-docker run -it --rm -e DB_URL=${DB_URL} -e NWP_ZARR_PATH=./nwp.zarr -p 5433:5433 ocf/india-forecast-app
+docker run -it --rm -e DB_URL={DB_URL} -e NWP_ZARR_PATH={NWP_ZARR_PATH} ocf/india-forecast-app
 ```
 
 ## Notes
