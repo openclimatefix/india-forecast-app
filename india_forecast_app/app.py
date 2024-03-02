@@ -68,50 +68,57 @@ def get_generation_data(
 
     if len(generation_data) == 0:
         log.warning("No generation found for the specified sites/period")
-        generation_df = pd.DataFrame()
+        index = pd.date_range(start=start, end=end, freq="3min")
+
+        # TODO passing Nans, or zeros here results in the model batch creation failing
+        recs = [(t, None, s.ml_id) for t in index for s in sites]
+        generation_df = pd.DataFrame.from_records(
+            recs,
+            columns=["time_utc", "power_kw", "ml_id"]
+        )
 
     else:
-        # Convert to dataframe
-        generation_df = (pd.DataFrame(
+        generation_df = pd.DataFrame(
             [(g.start_utc, g.generation_power_kw, g.site.ml_id) for g in generation_data],
             columns=["time_utc", "power_kw", "ml_id"]
-        ).pivot(index="time_utc", columns="ml_id", values="power_kw"))
+        )
 
-        log.info(generation_df)
-        log.info(generation_df.index)
+    generation_df = generation_df.pivot(index="time_utc", columns="ml_id", values="power_kw")
 
-        # Ensure timestamps line up with 3min intervals
-        generation_df.index = generation_df.index.round("3min")
+    # convert to megawatts as this is current what ocf_datapipes expects
+    col = generation_df.columns[0]
+    generation_df[col] = generation_df[col].astype(float) / 1000.0
 
-        # Drop any duplicated timestamps
-        generation_df = generation_df[~generation_df.index.duplicated()]
+    # Ensure timestamps line up with 3min intervals
+    generation_df.index = generation_df.index.round("3min")
 
-        # xarray (used later) expects columns with string names
-        generation_df.columns = generation_df.columns.astype(str)
+    # Drop any duplicated timestamps
+    generation_df = generation_df[~generation_df.index.duplicated()]
 
-        # Handle any missing timestamps
-        contiguous_dt_idx = pd.date_range(start=start, end=end, freq="3min")[:-1]
-        generation_df = generation_df.reindex(contiguous_dt_idx, fill_value=None)
+    # xarray (used later) expects columns with string names
+    generation_df.columns = generation_df.columns.astype(str)
 
-        # Interpolate NaNs
-        generation_df = generation_df.interpolate(method="linear", limit_direction="both")
+    # Handle any missing timestamps
+    contiguous_dt_idx = pd.date_range(start=start, end=end, freq="3min")[:-1]
+    generation_df = generation_df.reindex(contiguous_dt_idx, fill_value=None)
 
-        # Down-sample from 3 min to 15 min intervals
-        generation_df = generation_df.resample("15min").mean()
+    # Interpolate NaNs
+    generation_df = generation_df.interpolate(method="linear", limit_direction="both")
 
-        # Add a final row for t0, set to the mean of the previous values
-        generation_df.loc[timestamp] = generation_df.mean()
+    # Down-sample from 3 min to 15 min intervals
+    generation_df = generation_df.resample("15min").mean()
 
-        # convert to megamwatts,
-        # as this is current what ocf_datapipes expects
-        col = generation_df.columns[0]
-        generation_df[col] = generation_df[col].astype(float) /1000.0
+    # Add a final row for t0, set to the mean of the previous values
+    generation_df.loc[timestamp] = generation_df.mean()
 
     # Site metadata dataframe
     sites_df = pd.DataFrame(
         [(s.ml_id, s.latitude, s.longitude, s.capacity_kw/1000.0) for s in sites],
         columns=["system_id", "latitude", "longitude", "capacity_megawatts"]
     )
+
+    log.info(generation_df)
+    log.info(sites_df)
 
     return {
         "data": generation_df,
