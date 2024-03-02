@@ -117,8 +117,8 @@ def get_generation_data(
         columns=["system_id", "latitude", "longitude", "capacity_megawatts"]
     )
 
-    log.info(generation_df)
-    log.info(sites_df)
+    log.debug(generation_df)
+    log.debug(sites_df)
 
     return {
         "data": generation_df,

@@ -203,7 +203,7 @@ class PVNetModel:
                 .map(stack_np_examples_into_batch)
             )
 
-            log.info(next(iter(batch_datapipe)))
+            log.debug(next(iter(batch_datapipe)))
 
         else:
             base_datapipe = pv_base_pipeline(
