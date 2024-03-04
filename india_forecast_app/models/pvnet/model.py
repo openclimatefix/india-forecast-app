@@ -119,6 +119,9 @@ class PVNetModel:
             values_df["forecast_power_kw"].rolling(4, min_periods=1).mean().astype(int)
         )
 
+        # remove any negative values
+        values_df["forecast_power_kw"] = values_df["forecast_power_kw"].clip(lower=0.0)
+
         return values_df.to_dict("records")
 
     def _prepare_data_sources(self):
