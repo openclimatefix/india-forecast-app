@@ -194,6 +194,7 @@ class PVNetModel:
                 config_filename=populated_data_config_filename,
                 location_pipe=location_pipe,
                 t0_datapipe=t0_datapipe,
+                upsample_nwp=True,
             )
 
             base_datapipe = DictDatasetIterDataPipe(
