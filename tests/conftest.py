@@ -187,6 +187,10 @@ def nwp_data(tmp_path_factory, time_before_present):
         freq=dt.timedelta(hours=3),
     )
 
+    # force lat and lon to be in 0.1 steps
+    ds.latitude.values[:] = [35.0 - i*0.1 for i in range(len(ds.latitude))]
+    ds.longitude.values[:] = [65.0 + i * 0.1 for i in range(len(ds.longitude))]
+
     # This is important to avoid saving errors
     for v in list(ds.coords.keys()):
         if ds.coords[v].dtype == object:
