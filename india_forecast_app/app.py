@@ -16,9 +16,10 @@ from pvsite_datamodel.sqlmodels import SiteAssetType, SiteSQL
 from pvsite_datamodel.write import insert_forecast_values
 from sqlalchemy.orm import Session
 
-from india_forecast_app.models import DummyModel, PVNetModel
+from india_forecast_app.models import PVNetModel
 
 log = logging.getLogger(__name__)
+version = importlib.metadata.version("india_forecast_app")
 
 
 def get_sites(db_session: Session) -> list[SiteSQL]:
@@ -31,15 +32,13 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
     Returns:
             A list of SiteSQL objects
     """
-    
+
     sites = get_sites_by_country(db_session, country="india")
     return sites
 
 
 def get_generation_data(
-        db_session: Session,
-        sites: list[SiteSQL],
-        timestamp: dt.datetime
+    db_session: Session, sites: list[SiteSQL], timestamp: dt.datetime
 ) -> dict[str, pd.DataFrame]:
     """
     Gets generation data values for given sites
@@ -61,7 +60,7 @@ def get_generation_data(
     # pad by 1 second to ensure get_pv_generation_by_sites returns correct data
     end = timestamp + dt.timedelta(seconds=1)
 
-    log.info(f'Getting generation data for sites: {site_uuids}, from {start=} to {end=}')
+    log.info(f"Getting generation data for sites: {site_uuids}, from {start=} to {end=}")
     generation_data = get_pv_generation_by_sites(
         session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
     )
@@ -71,14 +70,16 @@ def get_generation_data(
         generation_df = pd.DataFrame()
 
     else:
+        # hard code as for the moment
+        system_id = int(0.0)
+
         # Convert to dataframe
-        generation_df = (pd.DataFrame(
-            [(g.start_utc, g.generation_power_kw, g.site.ml_id) for g in generation_data],
-            columns=["time_utc", "power_kw", "ml_id"]
-        ).pivot(index="time_utc", columns="ml_id", values="power_kw"))
+        generation_df = pd.DataFrame(
+            [(g.start_utc, g.generation_power_kw, system_id) for g in generation_data],
+            columns=["time_utc", "power_kw", "ml_id"],
+        ).pivot(index="time_utc", columns="ml_id", values="power_kw")
 
         log.info(generation_df)
-        log.info(generation_df.index)
 
         # Ensure timestamps line up with 3min intervals
         generation_df.index = generation_df.index.round("3min")
@@ -105,18 +106,18 @@ def get_generation_data(
         # convert to megamwatts,
         # as this is current what ocf_datapipes expects
         col = generation_df.columns[0]
-        generation_df[col] = generation_df[col].astype(float) /1000.0
+        generation_df[col] = generation_df[col].astype(float) / 1000.0
 
     # Site metadata dataframe
     sites_df = pd.DataFrame(
-        [(s.ml_id, s.latitude, s.longitude, s.capacity_kw/1000.0) for s in sites],
-        columns=["system_id", "latitude", "longitude", "capacity_megawatts"]
+        [
+            (system_id, s.latitude, s.longitude, s.capacity_kw / 1000.0, s.capacity_kw*1000)
+            for s in sites
+        ],
+        columns=["system_id", "latitude", "longitude", "capacity_megawatts", "capacity_watts"],
     )
 
-    return {
-        "data": generation_df,
-        "metadata": sites_df
-    }
+    return {"data": generation_df, "metadata": sites_df}
 
 
 def get_model(asset_type: str, timestamp: dt.datetime, generation_data) -> PVNetModel:
@@ -132,11 +133,8 @@ def get_model(asset_type: str, timestamp: dt.datetime, generation_data) -> PVNet
             A forecasting model
     """
 
-    # Only windnet is ready, so if asset_type is PV, continue using dummy model
-    if asset_type == "wind":
-        model_cls = PVNetModel
-    else:
-        model_cls = DummyModel
+    # Only Windnet and PVnet is now used
+    model_cls = PVNetModel
 
     model = model_cls(asset_type, timestamp, generation_data)
     return model
@@ -187,8 +185,7 @@ def save_forecast(db_session: Session, forecast, write_to_db: bool):
     }
     forecast_values_df = pd.DataFrame(forecast["values"])
     forecast_values_df["horizon_minutes"] = (
-        (forecast_values_df["start_utc"] - forecast_meta["timestamp_utc"])
-        / pd.Timedelta("60s")
+        (forecast_values_df["start_utc"] - forecast_meta["timestamp_utc"]) / pd.Timedelta("60s")
     ).astype("int")
 
     if write_to_db:
@@ -197,8 +194,8 @@ def save_forecast(db_session: Session, forecast, write_to_db: bool):
         output = f'Forecast for site_id={forecast_meta["site_uuid"]},\
                    timestamp={forecast_meta["timestamp_utc"]},\
                    version={forecast_meta["forecast_version"]}:'
-        log.info(output.replace('  ', ''))
-        log.info(f'\n{forecast_values_df.to_string()}\n')
+        log.info(output.replace("  ", ""))
+        log.info(f"\n{forecast_values_df.to_string()}\n")
 
 
 @click.command()
@@ -229,25 +226,27 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     """
     logging.basicConfig(stream=sys.stdout, level=getattr(logging, log_level.upper()))
 
+    log.info(f"Running India forecast app:{version}")
+
     if timestamp is None:
         # get the timestamp now rounded down the nearest 15 minutes
         timestamp = pd.Timestamp.now(tz=None).floor("15min")
         log.info(f'Timestamp omitted - will generate forecasts for "now" ({timestamp})')
     else:
         timestamp = pd.Timestamp(timestamp).floor("15min")
-        
+
     # 0. Initialise DB connection
     url = os.environ["DB_URL"]
 
     db_conn = DatabaseConnection(url, echo=False)
-    
+
     with db_conn.get_session() as session:
 
         # 1. Get sites
         log.info("Getting sites...")
         sites = get_sites(session)
 
-        pv_sites = [site for site in sites if site.asset_type == SiteAssetType.wind]
+        pv_sites = [site for site in sites if site.asset_type == SiteAssetType.pv]
         log.info(f"Found {len(pv_sites)} pv sites")
         wind_sites = [site for site in sites if site.asset_type == SiteAssetType.wind]
         log.info(f"Found {len(wind_sites)} wind sites")
@@ -258,10 +257,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
             asset_sites = pv_sites if asset_type == "pv" else wind_sites
             if len(asset_sites) > 0:
                 log.info(f"Reading latest historic {asset_type} generation data...")
-                if asset_type == "wind":
-                    generation_data = get_generation_data(session, asset_sites, timestamp)
-                else:
-                    generation_data = {"data": pd.DataFrame(), "metadata": pd.DataFrame()}
+                generation_data = get_generation_data(session, asset_sites, timestamp)
 
                 log.debug(f"{generation_data['data']=}")
                 log.debug(f"{generation_data['metadata']=}")
@@ -276,9 +272,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
             asset_type = site.asset_type.name
             log.info(f"Running {asset_type} model for site={site_id}...")
             forecast_values = run_model(
-                model=models[asset_type],
-                site_id=site_id,
-                timestamp=timestamp
+                model=models[asset_type], site_id=site_id, timestamp=timestamp
             )
 
             if forecast_values is None:
@@ -289,7 +283,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                 forecast = {
                     "meta": {
                         "site_id": site_id,
-                        "version": importlib.metadata.version('india_forecast_app'),
+                        "version": version,
                         "timestamp": timestamp,
                     },
                     "values": forecast_values,

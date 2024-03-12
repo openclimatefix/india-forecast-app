@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import torch
 from ocf_datapipes.batch import stack_np_examples_into_batch
-from ocf_datapipes.training.pvnet import construct_sliced_data_pipeline as pv_base_pipeline
+from ocf_datapipes.training.pvnet_site import construct_sliced_data_pipeline as pv_base_pipeline
 from ocf_datapipes.training.windnet import DictDatasetIterDataPipe, split_dataset_dict_dp
 from ocf_datapipes.training.windnet import construct_sliced_data_pipeline as wind_base_pipeline
 from ocf_datapipes.utils import Location
@@ -21,7 +21,16 @@ from pvnet.models.base_model import BaseModel as PVNetBaseModel
 from torch.utils.data import DataLoader
 from torch.utils.data.datapipes.iter import IterableWrapper
 
-from .consts import nwp_path, root_data_path, wind_metadata_path, wind_netcdf_path, wind_path
+from .consts import (
+    nwp_path,
+    pv_metadata_path,
+    pv_netcdf_path,
+    pv_path,
+    root_data_path,
+    wind_metadata_path,
+    wind_netcdf_path,
+    wind_path,
+)
 from .utils import (
     populate_data_config_sources,
     process_and_cache_nwp,
@@ -156,6 +165,18 @@ class PVNetModel:
             # Save metadata as csv
             self.generation_data["metadata"].to_csv(wind_metadata_path, index=False)
 
+        if self.asset_type == "pv":
+            # Clear local cached wind data if already exists
+            shutil.rmtree(pv_path, ignore_errors=True)
+            os.mkdir(pv_path)
+
+            # Save generation data as netcdf file
+            generation_da = self.generation_data["data"].to_xarray()
+            generation_da.to_netcdf(pv_netcdf_path, engine="h5netcdf")
+
+            # Save metadata as csv
+            self.generation_data["metadata"].to_csv(pv_metadata_path, index=False)
+
     def _create_dataloader(self):
         """Setup dataloader with prepared data sources"""
 
@@ -208,13 +229,23 @@ class PVNetModel:
             )
 
         else:
-            base_datapipe = pv_base_pipeline(
+            base_datapipe_dict = pv_base_pipeline(
                 config_filename=populated_data_config_filename,
                 location_pipe=location_pipe,
                 t0_datapipe=t0_datapipe,
-                production=True,
             )
-            batch_datapipe = base_datapipe.batch(batch_size).map(stack_np_examples_into_batch)
+
+            base_datapipe = DictDatasetIterDataPipe(
+                {k: v for k, v in base_datapipe_dict.items() if k != "config"},
+            ).map(split_dataset_dict_dp)
+
+            batch_datapipe = (
+                base_datapipe.pvnet_site_convert_to_numpy_batch()
+                .batch(batch_size)
+                .map(stack_np_examples_into_batch)
+            )
+
+            # batch_datapipe = base_datapipe.batch(batch_size).map(stack_np_examples_into_batch)
 
         n_workers = 0
 
