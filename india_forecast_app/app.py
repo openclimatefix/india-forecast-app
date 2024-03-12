@@ -3,12 +3,12 @@ Main forecast app entrypoint
 """
 
 import datetime as dt
-import importlib.metadata
 import logging
 import os
 import sys
 
 import click
+import numpy as np
 import pandas as pd
 from pvsite_datamodel import DatabaseConnection
 from pvsite_datamodel.read import get_pv_generation_by_sites, get_sites_by_country
@@ -16,10 +16,11 @@ from pvsite_datamodel.sqlmodels import SiteAssetType, SiteSQL
 from pvsite_datamodel.write import insert_forecast_values
 from sqlalchemy.orm import Session
 
+import india_forecast_app
 from india_forecast_app.models import PVNetModel
 
 log = logging.getLogger(__name__)
-version = importlib.metadata.version("india_forecast_app")
+version = india_forecast_app.__version__
 
 
 def get_sites(db_session: Session) -> list[SiteSQL]:
@@ -100,18 +101,21 @@ def get_generation_data(
         # Down-sample from 3 min to 15 min intervals
         generation_df = generation_df.resample("15min").mean()
 
-        # Add a final row for t0, set to the mean of the previous values
-        generation_df.loc[timestamp] = generation_df.mean()
+        # Add a final row for t0, and interpolate this row
+        generation_df.loc[timestamp] = np.nan
+        generation_df = generation_df.interpolate(method="quadratic", fill_value="extrapolate")
 
         # convert to megamwatts,
         # as this is current what ocf_datapipes expects
         col = generation_df.columns[0]
-        generation_df[col] = generation_df[col].astype(float) / 1000.0
+        generation_df[col] = generation_df[col].astype(float) / 1e3
+
+        print(generation_df)
 
     # Site metadata dataframe
     sites_df = pd.DataFrame(
         [
-            (system_id, s.latitude, s.longitude, s.capacity_kw / 1000.0, s.capacity_kw*1000)
+            (system_id, s.latitude, s.longitude, s.capacity_kw / 1000.0, s.capacity_kw * 1000)
             for s in sites
         ],
         columns=["system_id", "latitude", "longitude", "capacity_megawatts", "capacity_watts"],
@@ -190,12 +194,12 @@ def save_forecast(db_session: Session, forecast, write_to_db: bool):
 
     if write_to_db:
         insert_forecast_values(db_session, forecast_meta, forecast_values_df)
-    else:
-        output = f'Forecast for site_id={forecast_meta["site_uuid"]},\
-                   timestamp={forecast_meta["timestamp_utc"]},\
-                   version={forecast_meta["forecast_version"]}:'
-        log.info(output.replace("  ", ""))
-        log.info(f"\n{forecast_values_df.to_string()}\n")
+
+    output = f'Forecast for site_id={forecast_meta["site_uuid"]},\
+               timestamp={forecast_meta["timestamp_utc"]},\
+               version={forecast_meta["forecast_version"]}:'
+    log.info(output.replace("  ", ""))
+    log.info(f"\n{forecast_values_df.to_string()}\n")
 
 
 @click.command()
