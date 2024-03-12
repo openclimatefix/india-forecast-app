@@ -66,13 +66,14 @@ def get_generation_data(
         session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
     )
 
+    # hard code as for the moment
+    system_id = int(0.0)
+    
     if len(generation_data) == 0:
         log.warning("No generation found for the specified sites/period")
         generation_df = pd.DataFrame()
 
     else:
-        # hard code as for the moment
-        system_id = int(0.0)
 
         # Convert to dataframe
         generation_df = pd.DataFrame(
