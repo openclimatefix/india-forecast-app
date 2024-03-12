@@ -70,14 +70,16 @@ def get_generation_data(
         generation_df = pd.DataFrame()
 
     else:
+        # hard code as for the moment
+        system_id = int(0.0)
+
         # Convert to dataframe
         generation_df = pd.DataFrame(
-            [(g.start_utc, g.generation_power_kw, g.site.ml_id) for g in generation_data],
+            [(g.start_utc, g.generation_power_kw, system_id) for g in generation_data],
             columns=["time_utc", "power_kw", "ml_id"],
         ).pivot(index="time_utc", columns="ml_id", values="power_kw")
 
         log.info(generation_df)
-        log.info(generation_df.index)
 
         # Ensure timestamps line up with 3min intervals
         generation_df.index = generation_df.index.round("3min")
@@ -109,7 +111,7 @@ def get_generation_data(
     # Site metadata dataframe
     sites_df = pd.DataFrame(
         [
-            (s.ml_id, s.latitude, s.longitude, s.capacity_kw / 1000.0, s.capacity_kw * 1000.0)
+            (system_id, s.latitude, s.longitude, s.capacity_kw / 1000.0, s.capacity_kw*1000)
             for s in sites
         ],
         columns=["system_id", "latitude", "longitude", "capacity_megawatts", "capacity_watts"],
@@ -244,7 +246,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
         log.info("Getting sites...")
         sites = get_sites(session)
 
-        pv_sites = [site for site in sites if site.asset_type == SiteAssetType.wind]
+        pv_sites = [site for site in sites if site.asset_type == SiteAssetType.pv]
         log.info(f"Found {len(pv_sites)} pv sites")
         wind_sites = [site for site in sites if site.asset_type == SiteAssetType.wind]
         log.info(f"Found {len(wind_sites)} wind sites")
