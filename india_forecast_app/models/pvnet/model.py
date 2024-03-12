@@ -11,7 +11,7 @@ import tempfile
 import numpy as np
 import pandas as pd
 import torch
-from ocf_datapipes.batch import stack_np_examples_into_batch, BatchKey, NWPBatchKey
+from ocf_datapipes.batch import stack_np_examples_into_batch
 from ocf_datapipes.training.pvnet_site import construct_sliced_data_pipeline as pv_base_pipeline
 from ocf_datapipes.training.windnet import DictDatasetIterDataPipe, split_dataset_dict_dp
 from ocf_datapipes.training.windnet import construct_sliced_data_pipeline as wind_base_pipeline
@@ -21,7 +21,16 @@ from pvnet.models.base_model import BaseModel as PVNetBaseModel
 from torch.utils.data import DataLoader
 from torch.utils.data.datapipes.iter import IterableWrapper
 
-from .consts import nwp_path, root_data_path, wind_metadata_path, wind_netcdf_path, wind_path, pv_metadata_path, pv_path, pv_netcdf_path
+from .consts import (
+    nwp_path,
+    root_data_path,
+    wind_metadata_path,
+    wind_netcdf_path,
+    wind_path,
+    pv_metadata_path,
+    pv_path,
+    pv_netcdf_path,
+)
 from .utils import (
     populate_data_config_sources,
     process_and_cache_nwp,
