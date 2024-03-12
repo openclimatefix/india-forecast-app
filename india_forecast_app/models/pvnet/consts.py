@@ -3,5 +3,8 @@
 root_data_path = "data"
 nwp_path = f"{root_data_path}/nwp.zarr"
 wind_path = f"{root_data_path}/wind"
+pv_path = f"{root_data_path}/pv"
 wind_netcdf_path = f"{wind_path}/wind_data.nc"
 wind_metadata_path = f"{wind_path}/wind_metadata.csv"
+pv_netcdf_path = f"{pv_path}/pv_data.nc"
+pv_metadata_path = f"{pv_path}/pv_metadata.csv"

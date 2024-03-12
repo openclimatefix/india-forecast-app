@@ -5,7 +5,7 @@ import fsspec
 import xarray as xr
 import yaml
 
-from .consts import nwp_path, wind_metadata_path, wind_netcdf_path
+from .consts import nwp_path, wind_metadata_path, wind_netcdf_path, pv_metadata_path, pv_netcdf_path
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +41,10 @@ def populate_data_config_sources(input_path, output_path):
             "filename": wind_netcdf_path,
             "metadata_filename": wind_metadata_path
         },
+        "pv": {
+            "filename": pv_netcdf_path,
+            "metadata_filename": pv_metadata_path
+        },
         "nwp": {
             "ecmwf": nwp_path
         }
@@ -60,6 +64,13 @@ def populate_data_config_sources(input_path, output_path):
         wind_config["wind_files_groups"][0]["wind_filename"] = production_paths["wind"]['filename']
         wind_config["wind_files_groups"][0]["wind_metadata_filename"] = (
             production_paths)["wind"]['metadata_filename']
+
+    if "pv" in config["input_data"]:
+        pv_config = config["input_data"]["pv"]
+        assert "pv" in production_paths, "Missing production path: pv"
+        pv_config["pv_files_groups"][0]["pv_filename"] = production_paths["pv"]['filename']
+        pv_config["pv_files_groups"][0]["pv_metadata_filename"] = (
+            production_paths)["pv"]['metadata_filename']
 
     log.debug(config)
 
