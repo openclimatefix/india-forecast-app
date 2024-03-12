@@ -5,7 +5,7 @@ import fsspec
 import xarray as xr
 import yaml
 
-from .consts import nwp_path, wind_metadata_path, wind_netcdf_path, pv_metadata_path, pv_netcdf_path
+from .consts import nwp_path, pv_metadata_path, pv_netcdf_path, wind_metadata_path, wind_netcdf_path
 
 log = logging.getLogger(__name__)
 

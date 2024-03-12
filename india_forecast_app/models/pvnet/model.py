@@ -23,13 +23,13 @@ from torch.utils.data.datapipes.iter import IterableWrapper
 
 from .consts import (
     nwp_path,
+    pv_metadata_path,
+    pv_netcdf_path,
+    pv_path,
     root_data_path,
     wind_metadata_path,
     wind_netcdf_path,
     wind_path,
-    pv_metadata_path,
-    pv_path,
-    pv_netcdf_path,
 )
 from .utils import (
     populate_data_config_sources,
