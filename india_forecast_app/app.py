@@ -132,11 +132,8 @@ def get_model(asset_type: str, timestamp: dt.datetime, generation_data) -> PVNet
             A forecasting model
     """
 
-    # Only windnet is ready, so if asset_type is PV, continue using dummy model
-    if asset_type == "wind":
-        model_cls = PVNetModel
-    else:
-        model_cls = DummyModel
+    # Only Windnet and PVnet is now used
+    model_cls = PVNetModel
 
     model = model_cls(asset_type, timestamp, generation_data)
     return model

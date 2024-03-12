@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import torch
 from ocf_datapipes.batch import stack_np_examples_into_batch
-from ocf_datapipes.training.pvnet import construct_sliced_data_pipeline as pv_base_pipeline
+from ocf_datapipes.training.pvnet_site import construct_sliced_data_pipeline as pv_base_pipeline
 from ocf_datapipes.training.windnet import DictDatasetIterDataPipe, split_dataset_dict_dp
 from ocf_datapipes.training.windnet import construct_sliced_data_pipeline as wind_base_pipeline
 from ocf_datapipes.utils import Location
@@ -208,12 +208,16 @@ class PVNetModel:
             )
 
         else:
-            base_datapipe = pv_base_pipeline(
+            base_datapipe_dict = pv_base_pipeline(
                 config_filename=populated_data_config_filename,
                 location_pipe=location_pipe,
                 t0_datapipe=t0_datapipe,
-                production=True,
             )
+
+            base_datapipe = DictDatasetIterDataPipe(
+                {k: v for k, v in base_datapipe_dict.items() if k != "config"},
+            ).map(split_dataset_dict_dp)
+
             batch_datapipe = base_datapipe.batch(batch_size).map(stack_np_examples_into_batch)
 
         n_workers = 0
