@@ -43,7 +43,7 @@ from .utils import (
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 WIND_MODEL_NAME = os.getenv("WIND_MODEL_NAME", default="openclimatefix/windnet_india")
 WIND_MODEL_VERSION = os.getenv(
-    "WIND_MODEL_VERSION", default="c6af802823edc5e87b22df680b41b0dcdb4869e1"
+    "WIND_MODEL_VERSION", default="5fdfc7e6995f491106a94978376d5b0ee1d2b371"
 )
 
 PV_MODEL_NAME = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
