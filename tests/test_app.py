@@ -1,10 +1,6 @@
 """
 Tests for functions in app.py
 """
-import logging
-logging.basicConfig(level=logging.INFO)
-import os
-os.environ["DB_URL"] = "postgresql://postgres:postgres@localhost:54545/postgres"
 import datetime as dt
 import multiprocessing as mp
 import uuid
