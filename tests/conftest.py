@@ -177,12 +177,12 @@ def nwp_data(tmp_path_factory, time_before_present):
         f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data.zarr"
     )
 
-    # Last t0 to at least 2 hours ago and floor to 3-hour interval
+    # Last t0 to at least 2 hours ago and floor to 88-hour interval
     t0_datetime_utc = (time_before_present(dt.timedelta(hours=0))
-                       .floor(dt.timedelta(hours=3)))
+                       .floor(dt.timedelta(hours=7)))
     t0_datetime_utc = t0_datetime_utc - dt.timedelta(hours=1)
     ds.init_time.values[:] = pd.date_range(
-        t0_datetime_utc - dt.timedelta(hours=3 * (len(ds.init_time) - 1)),
+        t0_datetime_utc - dt.timedelta(hours=12 * (len(ds.init_time) - 1)),
         t0_datetime_utc,
         freq=dt.timedelta(hours=3),
     )

@@ -48,7 +48,7 @@ WIND_MODEL_VERSION = os.getenv(
 
 PV_MODEL_NAME = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
 PV_MODEL_VERSION = os.getenv(
-    "PV_MODEL_VERSION", default="d194488203375e766253f0d2961010356de52eb9")
+    "PV_MODEL_VERSION", default="69e2d7fedf429f1e7a340f1b0efbab7ee5eaa270")
 
 log = logging.getLogger(__name__)
 
@@ -172,6 +172,11 @@ class PVNetModel:
 
             # Save generation data as netcdf file
             generation_da = self.generation_data["data"].to_xarray()
+            # Add the forecast timesteps to the generation, with 0 values
+            forecast_timesteps = pd.date_range(
+                start=generation_da.index.values[0], periods=197, freq="15min"
+            )
+            generation_da = generation_da.reindex(index=forecast_timesteps, fill_value=0)
             generation_da.to_netcdf(pv_netcdf_path, engine="h5netcdf")
 
             # Save metadata as csv
