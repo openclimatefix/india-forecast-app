@@ -5,7 +5,6 @@ import datetime as dt
 import multiprocessing as mp
 import uuid
 
-
 import pytest
 from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, SiteAssetType
 
