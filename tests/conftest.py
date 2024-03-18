@@ -129,6 +129,38 @@ def generation_db_values(db_session, sites, init_timestamp):
 
     return all_generations
 
+@pytest.fixture()
+def generation_db_values_only_wind(db_session, sites, init_timestamp):
+    """Create some fake generations"""
+
+    n = 100  # 5 hours of readings
+    start_times = [init_timestamp - dt.timedelta(minutes=x*3) for x in range(n)]
+
+    # remove some of the most recent readings (to simulate missing timestamps)
+    del start_times[20]
+    del start_times[8]
+    del start_times[3]
+
+    # Random power values in the range 0-10000kw
+    power_values = [random.random()*10000 for _ in range(len(start_times))]
+
+    all_generations = []
+    for site in sites:
+        for i in range(0, len(start_times)):
+            if site.asset_type.name == "wind":
+                generation = GenerationSQL(
+                    site_uuid=site.site_uuid,
+                    generation_power_kw=power_values[i],
+                    start_utc=start_times[i],
+                    end_utc=start_times[i] + dt.timedelta(minutes=3),
+                )
+                all_generations.append(generation)
+
+    db_session.add_all(all_generations)
+    db_session.commit()
+
+    return all_generations
+
 
 @pytest.fixture()
 def forecast_values():
