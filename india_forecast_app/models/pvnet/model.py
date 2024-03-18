@@ -43,7 +43,7 @@ from .utils import (
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 WIND_MODEL_NAME = os.getenv("WIND_MODEL_NAME", default="openclimatefix/windnet_india")
 WIND_MODEL_VERSION = os.getenv(
-    "WIND_MODEL_VERSION", default="5fdfc7e6995f491106a94978376d5b0ee1d2b371"
+    "WIND_MODEL_VERSION", default="19a2c5d2f123659006ac08dcdd3c1ccab208654d"
 )
 
 PV_MODEL_NAME = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
@@ -220,7 +220,7 @@ class PVNetModel:
                 config_filename=populated_data_config_filename,
                 location_pipe=location_pipe,
                 t0_datapipe=t0_datapipe,
-                upsample_nwp=True,
+                upsample_nwp=False,
             )
 
             base_datapipe = DictDatasetIterDataPipe(
