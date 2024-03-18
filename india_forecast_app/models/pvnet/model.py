@@ -172,6 +172,11 @@ class PVNetModel:
 
             # Save generation data as netcdf file
             generation_da = self.generation_data["data"].to_xarray()
+            # Add the forecast timesteps to the generation, with 0 values
+            forecast_timesteps = pd.date_range(
+                start=generation_da.index.values[0], periods=197, freq="15min"
+            )
+            generation_da = generation_da.reindex(index=forecast_timesteps, fill_value=0)
             generation_da.to_netcdf(pv_netcdf_path, engine="h5netcdf")
 
             # Save metadata as csv
