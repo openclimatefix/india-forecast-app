@@ -184,7 +184,7 @@ def nwp_data(tmp_path_factory, time_before_present):
     ds.init_time.values[:] = pd.date_range(
         t0_datetime_utc - dt.timedelta(hours=12 * (len(ds.init_time) - 1)),
         t0_datetime_utc,
-        freq=dt.timedelta(hours=12),
+        freq=dt.timedelta(hours=3),
     )
 
     # force lat and lon to be in 0.1 steps
