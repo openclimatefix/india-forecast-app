@@ -177,6 +177,11 @@ class PVNetModel:
                 start=generation_da.index.values[0], periods=197, freq="15min"
             )
             generation_da = generation_da.reindex(index=forecast_timesteps, fill_value=0)
+
+            # if generation_da is still empty make nans
+            if len(generation_da) == 0:
+                generation_da = pd.DataFrame(index=forecast_timesteps, columns=['0'], data=np.nan)
+
             generation_da.to_netcdf(pv_netcdf_path, engine="h5netcdf")
 
             # Save metadata as csv
