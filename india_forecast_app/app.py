@@ -301,9 +301,9 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                 )
                 sucessful_runs += 1
 
-        if sucessful_runs == 2:
+        if sucessful_runs == len(sites):
             log.info("All forecasts completed successfully")
-        elif sucessful_runs == 1:
+        elif 0 < sucessful_runs < len(sites):
             assert Exception("Some forecasts failed")
         else:
             assert Exception("All forecasts failed")
