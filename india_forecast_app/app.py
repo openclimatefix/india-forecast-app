@@ -271,6 +271,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                 models[asset_type] = get_model(asset_type, timestamp, generation_data)
                 log.info(f"{asset_type} model loaded")
 
+        sucessful_runs = 0
         for site in sites:
             # 3. Run model for each site
             site_id = site.site_uuid
@@ -298,6 +299,14 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                     forecast=forecast,
                     write_to_db=write_to_db,
                 )
+                sucessful_runs += 1
+
+        if sucessful_runs == 2:
+            log.info("All forecasts completed successfully")
+        elif sucessful_runs == 1:
+            assert Exception("Some forecasts failed")
+        else:
+            assert Exception("All forecasts failed")
 
 
 if __name__ == "__main__":
