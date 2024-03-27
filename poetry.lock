@@ -3786,14 +3786,14 @@ blosc2 = "*"
 numpy = "*"
 
 [[package]]
-name = "ocf-datapipes"
-version = "3.3.6"
+name = "ocf_datapipes"
+version = "3.3.7"
 description = "Pytorch Datapipes built for use in Open Climate Fix's forecasting work"
 optional = false
 python-versions = "*"
 files = [
-    {file = "ocf_datapipes-3.3.6-py3-none-any.whl", hash = "sha256:7b941efe7499afdf4118378eb3bfd6e369826aaa691a1988418a22fd9c111271"},
-    {file = "ocf_datapipes-3.3.6.tar.gz", hash = "sha256:0c9cfceacb5ff138c34bc2fdb6e98bf585a354b44ce3ce81f3aa3f63c060fc5c"},
+    {file = "ocf_datapipes-3.3.7-py3-none-any.whl", hash = "sha256:ab78424ea41c9c4048b9502bc401be5de34a073ce91b1dfb49cb71a83706f39f"},
+    {file = "ocf_datapipes-3.3.7.tar.gz", hash = "sha256:b0701dc52763b6530d2ed1505f061468f23c49a8efaf8e80afbff9b9335b57b5"},
 ]
 
 [package.dependencies]
@@ -6926,4 +6926,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "e08eca356c5c65f8179c794d4babcddfe0dc24f30fbf885ebb517ed6d86df6bf"
+content-hash = "e73ec30ac040ee30e56f0595e55bb7fd74fed757ddbf52f55d47b34793fa794a"
