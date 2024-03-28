@@ -127,7 +127,9 @@ class PVNetModel:
             # Smooth with a 1 hour rolling window
             # Only smooth the wind else we introduce too much of a lag in the solar going up and down
             values_df["forecast_power_kw"] = (
-                values_df["forecast_power_kw"].rolling(4, min_periods=1).mean().astype(int)
+                values_df["forecast_power_kw"]
+                .rolling(4, min_periods=1).mean()
+                .astype(int)
             )
 
         # remove any negative values
