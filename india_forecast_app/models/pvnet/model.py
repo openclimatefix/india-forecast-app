@@ -123,10 +123,12 @@ class PVNetModel:
             ]
         )  # index 3 is the 50th percentile)
 
-        # smooth with a 1 hour rolling window
-        values_df["forecast_power_kw"] = (
-            values_df["forecast_power_kw"].rolling(4, min_periods=1).mean().astype(int)
-        )
+        if self.asset_type=="wind":
+            # Smooth with a 1 hour rolling window
+            # Only smooth the wind else we introduce too much of a lag in the solar going up and down
+            values_df["forecast_power_kw"] = (
+                values_df["forecast_power_kw"].rolling(4, min_periods=1).mean().astype(int)
+            )
 
         # remove any negative values
         values_df["forecast_power_kw"] = values_df["forecast_power_kw"].clip(lower=0.0)
