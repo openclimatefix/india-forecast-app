@@ -1,2 +1,2 @@
 """India Forecast App"""
-__version__ = "0.1.39"
+__version__ = "0.1.40"
