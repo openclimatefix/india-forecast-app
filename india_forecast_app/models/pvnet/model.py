@@ -131,7 +131,8 @@ class PVNetModel:
             generation_da = generation_da.sel(time=self.t0)["0"].values
             # Feather in the difference between this value and the next forecasted values
             for idx, smooth_value in enumerate([0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1]):
-                values_df["forecast_power_kw"][idx] -= values_df["forecast_power_kw"][idx] - (generation_da * smooth_value) 
+                values_df["forecast_power_kw"][idx] -= values_df["forecast_power_kw"][idx] \
+                - (generation_da * smooth_value) 
             # Smooth with a 1 hour rolling window
             # Only smooth the wind else we introduce too much of a lag in the solar 
             # going up and down throughout the day
