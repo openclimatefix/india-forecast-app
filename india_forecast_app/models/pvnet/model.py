@@ -129,12 +129,21 @@ class PVNetModel:
             # Check if the generation exists, if so, take the value at t0 and 
             # feather it in over the next 8 timesteps (2 hours)
             if len(generation_da) > 0 and self.t0 in generation_da.index.values:
-                generation_da = generation_da.sel(index=self.t0)["0"].values # Last one
-                if generation_da != 0 and not np.isnan(generation_da):
-                    # Feather in the difference between this value and the next forecasted values
-                    for idx, smooth_value in enumerate([0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1]):
-                        values_df["forecast_power_kw"][idx] -= (values_df["forecast_power_kw"][idx]\
-                        - generation_da) * smooth_value 
+                final_gen_points = 0
+                final_gen_index = 0
+                for gen_idx in range(len(generation_da.index.values), -1, -1):
+                    current_gen = generation_da.sel(index=gen_idx)["0"].values
+                    if not np.isnan(current_gen) and current_gen > 0:
+                        final_gen_points = current_gen
+                        break
+                    final_gen_index += 1
+                #generation_da = generation_da.sel(index=self.t0)["0"].values # Last one
+                #if generation_da != 0 and not np.isnan(generation_da):
+                # Feather in the difference between this value and the next forecasted values
+                smooth_values = [0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+                for idx in range(8):
+                    values_df["forecast_power_kw"][idx] -= (values_df["forecast_power_kw"][idx]\
+                    - final_gen_points) * smooth_values[final_gen_index+idx]
             # Smooth with a 1 hour rolling window
             # Only smooth the wind else we introduce too much of a lag in the solar 
             # going up and down throughout the day
