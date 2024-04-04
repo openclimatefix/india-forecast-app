@@ -131,7 +131,7 @@ class PVNetModel:
             if len(generation_da) > 0 and self.t0 in generation_da.index.values:
                 final_gen_points = 0
                 final_gen_index = 0
-                for gen_idx in range(len(generation_da.index.values), -1, -1):
+                for gen_idx in range(len(generation_da.index.values)-1, -1, -1):
                     current_gen = generation_da.isel(index=gen_idx)["0"].values
                     if not np.isnan(current_gen) and current_gen > 0:
                         final_gen_points = current_gen
