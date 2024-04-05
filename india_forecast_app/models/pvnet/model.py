@@ -140,7 +140,8 @@ class PVNetModel:
                         final_gen_points = current_gen
                         break
                     final_gen_index += 1
-                log.info(f"The final generation valyes is {final_gen_points} at index {final_gen_index}")
+                log.info(f"The final generation valyes is {final_gen_points}"\
+                f" at index {final_gen_index}")
                 #generation_da = generation_da.sel(index=self.t0)["0"].values # Last one
                 #if generation_da != 0 and not np.isnan(generation_da):
                 # Feather in the difference between this value and the next forecasted values
