@@ -124,6 +124,9 @@ class PVNetModel:
         )  # index 3 is the 50th percentile)
 
         if self.asset_type=="wind":
+
+            log.info("Smoothing the wind forecast to the lastest value of generation")
+
             # Feather in the last generation, if it exists
             generation_da = self.generation_data["data"].to_xarray()
             # Check if the generation exists, if so, take the value at t0 and 
@@ -137,13 +140,16 @@ class PVNetModel:
                         final_gen_points = current_gen
                         break
                     final_gen_index += 1
+                log.info(f"The final generation valyes is {final_gen_points} at index {final_gen_index}")
                 #generation_da = generation_da.sel(index=self.t0)["0"].values # Last one
                 #if generation_da != 0 and not np.isnan(generation_da):
                 # Feather in the difference between this value and the next forecasted values
                 smooth_values = [0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+                log.debug(f"Previous values are {values_df['forecast_power_kw']}")
                 for idx in range(8):
                     values_df["forecast_power_kw"][idx] -= (values_df["forecast_power_kw"][idx]\
                     - final_gen_points) * smooth_values[final_gen_index+idx]
+                log.debug(f"New values are {values_df['forecast_power_kw']}")
             # Smooth with a 1 hour rolling window
             # Only smooth the wind else we introduce too much of a lag in the solar 
             # going up and down throughout the day
