@@ -137,10 +137,12 @@ class PVNetModel:
                 for gen_idx in range(len(generation_da.index.values)-1, -1, -1):
                     current_gen = generation_da.isel(index=gen_idx)["0"].values
                     if not np.isnan(current_gen) and current_gen > 0:
-                        final_gen_points = current_gen
+                        final_gen_points = current_gen * 1000.
+                        # Convert to KW back from MW
+                        # Orig conversion is line 112 in app.py
                         break
                     final_gen_index += 1
-                log.info(f"The final generation valyes is {final_gen_points}"\
+                log.info(f"The final generation values is {final_gen_points}"\
                 f" at index {final_gen_index}")
                 #generation_da = generation_da.sel(index=self.t0)["0"].values # Last one
                 #if generation_da != 0 and not np.isnan(generation_da):
