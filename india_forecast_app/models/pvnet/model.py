@@ -99,6 +99,10 @@ class PVNetModel:
                 device_batch = copy_batch_to_device(batch_to_tensor(batch), DEVICE)
                 preds = self.model(device_batch).detach().cpu().numpy()
 
+                # get sun elevation values and if less 0, set to 0
+                sun_elevation = batch["sun_elevation"].detach().cpu().numpy()
+                preds[sun_elevation < 0] = 0
+
                 # Store predictions
                 normed_preds += [preds]
 
@@ -123,7 +127,6 @@ class PVNetModel:
             ]
         )  # index 3 is the 50th percentile)
 
-        
         log.info("Feathering the forecast to the lastest value of generation")
 
         # Feather in the last generation, if it exists
@@ -148,10 +151,15 @@ class PVNetModel:
             # Feather in the difference between this value and the next forecasted values
             smooth_values = [0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
             log.debug(f"Previous values are {values_df['forecast_power_kw']}")
+            zero_values = values_df["forecast_power_kw"] == 0
             for idx in range(8):
                 values_df["forecast_power_kw"][idx] -= (values_df["forecast_power_kw"][idx]\
                 - final_gen_points) * smooth_values[final_gen_index+idx]
             log.debug(f"New values are {values_df['forecast_power_kw']}")
+
+            if self.asset_type == 'solar':
+                # make sure previous zero values are still zero
+                values_df["forecast_power_kw"][zero_values] = 0
                 
         if self.asset_type=="wind":
             # Smooth with a 1 hour rolling window
