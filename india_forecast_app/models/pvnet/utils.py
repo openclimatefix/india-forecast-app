@@ -4,6 +4,9 @@ import logging
 import fsspec
 import xarray as xr
 import yaml
+import numpy as np
+
+from ocf_datapipes.batch import BatchKey
 
 from .consts import nwp_path, pv_metadata_path, pv_netcdf_path, wind_metadata_path, wind_netcdf_path
 
@@ -111,3 +114,26 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
     ds.to_zarr(dest_nwp_path, mode="a")
 
 
+def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
+    """
+    Set all predictions to zero for night time values
+    """
+    # get sun elevation values and if less 0, set to 0
+    if BatchKey.wind_solar_elevation in batch.keys():
+        key = BatchKey.wind_solar_elevation
+        t0_key = BatchKey.wind_t0_idx
+    elif BatchKey.pv_solar_elevation in batch.keys():
+        key = BatchKey.pv_solar_elevation
+        t0_key = BatchKey.pv_t0_idx
+    else:
+        log.warning(f'Could not find "wind_solar_elevation" or "pv_solar_elevation" '
+                    f'key in {BatchKey.keys()}')
+        raise Exception('Could not find "wind_solar_elevation" or "pv_solar_elevation" ')
+    sun_elevation = batch[key].detach().cpu().numpy()
+    # expand dimension from (1,197) to (1,197,7), 7 is due to the number plevels
+    sun_elevation = np.repeat(sun_elevation[:, :, np.newaxis], 7, axis=2)
+    # only take future time steps
+    sun_elevation = sun_elevation[:, batch[t0_key] + 1:, :]
+    preds[sun_elevation < sun_elevation_limit] = 0
+
+    return preds

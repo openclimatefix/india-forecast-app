@@ -35,6 +35,7 @@ from .utils import (
     populate_data_config_sources,
     process_and_cache_nwp,
     worker_init_fn,
+    set_night_time_zeros
 )
 
 # Global settings for running the model
@@ -99,9 +100,8 @@ class PVNetModel:
                 device_batch = copy_batch_to_device(batch_to_tensor(batch), DEVICE)
                 preds = self.model(device_batch).detach().cpu().numpy()
 
-                # get sun elevation values and if less 0, set to 0
-                sun_elevation = batch["sun_elevation"].detach().cpu().numpy()
-                preds[sun_elevation < 0] = 0
+                # filter out night time
+                preds = set_night_time_zeros(batch, preds)
 
                 # Store predictions
                 normed_preds += [preds]
@@ -338,3 +338,5 @@ class PVNetModel:
 
         log.info(f"Loading model: {self.name} - {self.version}")
         return PVNetBaseModel.from_pretrained(self.name, revision=self.version).to(DEVICE)
+
+
