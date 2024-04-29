@@ -35,7 +35,7 @@ from .utils import (
     populate_data_config_sources,
     process_and_cache_nwp,
     worker_init_fn,
-    set_night_time_zeros
+    set_night_time_zeros,
 )
 
 # Global settings for running the model
@@ -48,8 +48,7 @@ WIND_MODEL_VERSION = os.getenv(
 )
 
 PV_MODEL_NAME = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
-PV_MODEL_VERSION = os.getenv(
-    "PV_MODEL_VERSION", default="86e64e5bd9a2d0b709c9a8a1a5343835802b0a0f")
+PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION", default="86e64e5bd9a2d0b709c9a8a1a5343835802b0a0f")
 
 log = logging.getLogger(__name__)
 
@@ -131,44 +130,61 @@ class PVNetModel:
 
         # Feather in the last generation, if it exists
         generation_da = self.generation_data["data"].to_xarray()
-        
-        # Check if the generation exists, if so, take the value at t0 and 
+
+        # Check if the generation exists, if so, take the value at t0 and
         # feather it in over the next 8 timesteps (2 hours)
         if self.t0 in generation_da.index.values:
             final_gen_points = 0
             final_gen_index = 0
-            for gen_idx in range(len(generation_da.index.values)-1, -1, -1):
+            for gen_idx in range(len(generation_da.index.values) - 1, -1, -1):
                 current_gen = generation_da.isel(index=gen_idx)["0"].values
                 if not np.isnan(current_gen) and current_gen > 0:
-                    final_gen_points = current_gen * 1000.
+                    final_gen_points = current_gen * 1000.0
                     # Convert to KW back from MW
                     # Orig conversion is line 112 in app.py
                     break
                 final_gen_index += 1
-            log.info(f"The final generation values is {final_gen_points}"\
-            f" at index {final_gen_index}")
+            log.info(
+                f"The final generation values is {final_gen_points}" f" at index {final_gen_index}"
+            )
 
             # Feather in the difference between this value and the next forecasted values
-            smooth_values = [0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+            smooth_values = [
+                0.8,
+                0.7,
+                0.6,
+                0.5,
+                0.4,
+                0.3,
+                0.2,
+                0.1,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ]
             log.debug(f"Previous values are {values_df['forecast_power_kw']}")
             zero_values = values_df["forecast_power_kw"] == 0
             for idx in range(8):
-                values_df["forecast_power_kw"][idx] -= (values_df["forecast_power_kw"][idx]\
-                - final_gen_points) * smooth_values[final_gen_index+idx]
+                values_df["forecast_power_kw"][idx] -= (
+                    values_df["forecast_power_kw"][idx] - final_gen_points
+                ) * smooth_values[final_gen_index + idx]
             log.debug(f"New values are {values_df['forecast_power_kw']}")
 
-            if self.asset_type == 'solar':
+            if self.asset_type == "solar":
                 # make sure previous zero values are still zero
                 values_df["forecast_power_kw"][zero_values] = 0
-                
-        if self.asset_type=="wind":
+
+        if self.asset_type == "wind":
             # Smooth with a 1 hour rolling window
-            # Only smooth the wind else we introduce too much of a lag in the solar 
+            # Only smooth the wind else we introduce too much of a lag in the solar
             # going up and down throughout the day
             values_df["forecast_power_kw"] = (
-                values_df["forecast_power_kw"]
-                .rolling(4, min_periods=1).mean()
-                .astype(int)
+                values_df["forecast_power_kw"].rolling(4, min_periods=1).mean().astype(int)
             )
 
         # remove any negative values
@@ -205,13 +221,13 @@ class PVNetModel:
             generation_da = self.generation_data["data"].to_xarray()
             # Add the forecast timesteps to the generation, with 0 values
             forecast_timesteps = pd.date_range(
-                start=self.t0 - pd.Timedelta('1H'), periods=197, freq="15min"
+                start=self.t0 - pd.Timedelta("1H"), periods=197, freq="15min"
             )
             generation_da = generation_da.reindex(index=forecast_timesteps, fill_value=0.00001)
 
             # if generation_da is still empty make nans
             if len(generation_da) == 0:
-                generation_df = pd.DataFrame(index=forecast_timesteps, columns=['0'], data=0.0001)
+                generation_df = pd.DataFrame(index=forecast_timesteps, columns=["0"], data=0.0001)
                 generation_da = generation_df.to_xarray()
             generation_da.to_netcdf(wind_netcdf_path, engine="h5netcdf")
 
@@ -227,13 +243,13 @@ class PVNetModel:
             generation_da = self.generation_data["data"].to_xarray()
             # Add the forecast timesteps to the generation, with 0 values
             forecast_timesteps = pd.date_range(
-                start=self.t0 - pd.Timedelta('1H'), periods=197, freq="15min"
+                start=self.t0 - pd.Timedelta("1H"), periods=197, freq="15min"
             )
             generation_da = generation_da.reindex(index=forecast_timesteps, fill_value=0.00001)
 
             # if generation_da is still empty make nans
             if len(generation_da) == 0:
-                generation_df = pd.DataFrame(index=forecast_timesteps, columns=['0'], data=0.0001)
+                generation_df = pd.DataFrame(index=forecast_timesteps, columns=["0"], data=0.0001)
                 generation_da = generation_df.to_xarray()
 
             generation_da.to_netcdf(pv_netcdf_path, engine="h5netcdf")
@@ -338,5 +354,3 @@ class PVNetModel:
 
         log.info(f"Loading model: {self.name} - {self.version}")
         return PVNetBaseModel.from_pretrained(self.name, revision=self.version).to(DEVICE)
-
-

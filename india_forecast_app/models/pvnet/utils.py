@@ -2,10 +2,9 @@
 import logging
 
 import fsspec
+import numpy as np
 import xarray as xr
 import yaml
-import numpy as np
-
 from ocf_datapipes.batch import BatchKey
 
 from .consts import nwp_path, pv_metadata_path, pv_netcdf_path, wind_metadata_path, wind_netcdf_path
@@ -40,17 +39,9 @@ def populate_data_config_sources(input_path, output_path):
         config = yaml.load(infile, Loader=yaml.FullLoader)
 
     production_paths = {
-        "wind": {
-            "filename": wind_netcdf_path,
-            "metadata_filename": wind_metadata_path
-        },
-        "pv": {
-            "filename": pv_netcdf_path,
-            "metadata_filename": pv_metadata_path
-        },
-        "nwp": {
-            "ecmwf": nwp_path
-        }
+        "wind": {"filename": wind_netcdf_path, "metadata_filename": wind_metadata_path},
+        "pv": {"filename": pv_netcdf_path, "metadata_filename": pv_metadata_path},
+        "nwp": {"ecmwf": nwp_path},
     }
 
     if "nwp" in config["input_data"]:
@@ -64,20 +55,22 @@ def populate_data_config_sources(input_path, output_path):
     if "wind" in config["input_data"]:
         wind_config = config["input_data"]["wind"]
         assert "wind" in production_paths, "Missing production path: wind"
-        wind_config["wind_files_groups"][0]["wind_filename"] = production_paths["wind"]['filename']
-        wind_config["wind_files_groups"][0]["wind_metadata_filename"] = (
-            production_paths)["wind"]['metadata_filename']
+        wind_config["wind_files_groups"][0]["wind_filename"] = production_paths["wind"]["filename"]
+        wind_config["wind_files_groups"][0]["wind_metadata_filename"] = (production_paths)["wind"][
+            "metadata_filename"
+        ]
 
     if "pv" in config["input_data"]:
         pv_config = config["input_data"]["pv"]
         assert "pv" in production_paths, "Missing production path: pv"
-        pv_config["pv_files_groups"][0]["pv_filename"] = production_paths["pv"]['filename']
-        pv_config["pv_files_groups"][0]["pv_metadata_filename"] = (
-            production_paths)["pv"]['metadata_filename']
+        pv_config["pv_files_groups"][0]["pv_filename"] = production_paths["pv"]["filename"]
+        pv_config["pv_files_groups"][0]["pv_metadata_filename"] = (production_paths)["pv"][
+            "metadata_filename"
+        ]
 
     log.debug(config)
 
-    with open(output_path, 'w') as outfile:
+    with open(output_path, "w") as outfile:
         yaml.dump(config, outfile, default_flow_style=False)
 
 
@@ -100,15 +93,15 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
     variables = list(ds.variable.values)
     new_variables = []
     for var in variables:
-        if 't' == var:
-            new_variables.append('t2m')
+        if "t" == var:
+            new_variables.append("t2m")
             log.debug(f"Renamed t to t2m in NWP data {ds.variable.values}")
-        elif 'clt' == var:
-            new_variables.append('tcc')
+        elif "clt" == var:
+            new_variables.append("tcc")
             log.debug(f"Renamed clt to tcc in NWP data {ds.variable.values}")
         else:
             new_variables.append(var)
-    ds.__setitem__('variable', new_variables)
+    ds.__setitem__("variable", new_variables)
 
     # Save destination path
     ds.to_zarr(dest_nwp_path, mode="a")
@@ -126,14 +119,16 @@ def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
         key = BatchKey.pv_solar_elevation
         t0_key = BatchKey.pv_t0_idx
     else:
-        log.warning(f'Could not find "wind_solar_elevation" or "pv_solar_elevation" '
-                    f'key in {BatchKey.keys()}')
+        log.warning(
+            f'Could not find "wind_solar_elevation" or "pv_solar_elevation" '
+            f"key in {BatchKey.keys()}"
+        )
         raise Exception('Could not find "wind_solar_elevation" or "pv_solar_elevation" ')
     sun_elevation = batch[key].detach().cpu().numpy()
     # expand dimension from (1,197) to (1,197,7), 7 is due to the number plevels
     sun_elevation = np.repeat(sun_elevation[:, :, np.newaxis], 7, axis=2)
     # only take future time steps
-    sun_elevation = sun_elevation[:, batch[t0_key] + 1:, :]
+    sun_elevation = sun_elevation[:, batch[t0_key] + 1 :, :]
     preds[sun_elevation < sun_elevation_limit] = 0
 
     return preds
