@@ -1,10 +1,12 @@
-from india_forecast_app.models.pvnet.utils import set_night_time_zeros
+""" Tests for utils for pvnet"""
 import numpy as np
-
 from ocf_datapipes.batch import BatchKey
+
+from india_forecast_app.models.pvnet.utils import set_night_time_zeros
 
 
 def test_set_night_time_zeros():
+    """ Test for setting night time zeros"""
     # set up preds (1,14,7)
     preds = np.random.rand(1, 5, 7)
 

@@ -5,7 +5,7 @@ SRC = india_forecast_app scripts tests
 
 .PHONY: lint
 lint:
-	poetry run ruff $(SRC) -v
+	poetry run ruff $(SRC)
 
 .PHONY: format
 format:
