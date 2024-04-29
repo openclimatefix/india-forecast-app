@@ -121,10 +121,14 @@ def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
     else:
         log.warning(
             f'Could not find "wind_solar_elevation" or "pv_solar_elevation" '
-            f"key in {BatchKey.keys()}"
+            f"key in {batch.keys()}"
         )
         raise Exception('Could not find "wind_solar_elevation" or "pv_solar_elevation" ')
-    sun_elevation = batch[key].detach().cpu().numpy()
+
+    sun_elevation = batch[key]
+    if not isinstance(sun_elevation, np.ndarray):
+        sun_elevation = sun_elevation.detach().cpu().numpy()
+
     # expand dimension from (1,197) to (1,197,7), 7 is due to the number plevels
     sun_elevation = np.repeat(sun_elevation[:, :, np.newaxis], 7, axis=2)
     # only take future time steps
