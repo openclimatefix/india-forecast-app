@@ -221,7 +221,7 @@ Format should be YYYY-MM-DD-HH-mm. Defaults to "now".',
 )
 @click.option(
     "--log-level",
-    default="info",
+    default="debug",
     help="Set the python logging log level",
     show_default=True,
 )
