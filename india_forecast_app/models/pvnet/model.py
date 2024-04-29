@@ -34,8 +34,8 @@ from .consts import (
 from .utils import (
     populate_data_config_sources,
     process_and_cache_nwp,
-    worker_init_fn,
     set_night_time_zeros,
+    worker_init_fn,
 )
 
 # Global settings for running the model
