@@ -5,7 +5,6 @@ import fsspec
 import numpy as np
 import xarray as xr
 import yaml
-
 from ocf_datapipes.batch import BatchKey
 
 from .consts import nwp_path, pv_metadata_path, pv_netcdf_path, wind_metadata_path, wind_netcdf_path
