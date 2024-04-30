@@ -100,7 +100,8 @@ class PVNetModel:
                 preds = self.model(device_batch).detach().cpu().numpy()
 
                 # filter out night time
-                preds = set_night_time_zeros(batch, preds)
+                if self.asset_type == "pv":
+                    preds = set_night_time_zeros(batch, preds)
 
                 # Store predictions
                 normed_preds += [preds]
