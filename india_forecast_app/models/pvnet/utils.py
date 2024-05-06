@@ -90,15 +90,15 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
             ds[v].encoding.clear()
 
     # Rename t variable to t2m
-    variables = list(ds.variables.values)
+    variables = list(ds.variable.values)
     new_variables = []
     for var in variables:
         if "t" == var:
             new_variables.append("t2m")
-            log.debug(f"Renamed t to t2m in NWP data {ds.variables.values}")
+            log.debug(f"Renamed t to t2m in NWP data {ds.variable.values}")
         elif "clt" == var:
             new_variables.append("tcc")
-            log.debug(f"Renamed clt to tcc in NWP data {ds.variables.values}")
+            log.debug(f"Renamed clt to tcc in NWP data {ds.variable.values}")
         else:
             new_variables.append(var)
     ds.__setitem__("variable", new_variables)
