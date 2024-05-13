@@ -149,7 +149,8 @@ class PVNetModel:
                         break
                     final_gen_index += 1
                 log.info(
-                    f"The final generation values is {final_gen_points}" f" at index {final_gen_index}"
+                    f"The final generation values is {final_gen_points}"
+                    f" at index {final_gen_index}"
                 )
 
                 # Feather in the difference between this value and the next forecasted values
