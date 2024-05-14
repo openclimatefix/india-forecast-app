@@ -2,6 +2,56 @@
 
 Runs wind and PV forecasts for India and saves to database
 
+## The model
+
+The ML model is from [PVnet](https://github.com/openclimatefix/PVNet) and uses [ocf_datapipes](https://github.com/openclimatefix/ocf_datapipes) for the data processing
+For both Wind and Solar we use ECMWF data and predict 48 hours into the future. 
+
+### Wind
+
+The latest change is to use a patch size of 84x84, an increase from 64x64. 
+This is to allow for more context in the image and to allow for the model to learn more about the wind patterns.
+
+The validation error is ~ 7.15% (normalized using the maximum wind generation)
+
+- wandb [link](https://wandb.ai/openclimatefix/india/runs/xdlew7ib)
+- hugging face [link](https://huggingface.co/openclimatefix/windnet_india)
+
+The weather variables are currently
+- t2m
+- u10
+- u100
+- u200
+- v10
+- v100
+- v200
+
+We add some model smoothing
+- feathering [feathering](https://github.com/openclimatefix/india-forecast-app/blob/main/india_forecast_app/models/pvnet/model.py#L131) close to current generation: 
+- [smoothing](https://github.com/openclimatefix/india-forecast-app/blob/main/india_forecast_app/models/pvnet/model.py#L188) over 1 hour rolling window
+
+
+### PV
+
+The validation error is ~ 2.28% (normalized using the maximum solar generation)
+
+- wandb [link](https://wandb.ai/openclimatefix/pvnet_india2.1/runs/o4xpvzrc)
+- hugging face [link](https://huggingface.co/openclimatefix/pvnet_india)
+
+The weather variables are
+- hcc
+- lcc
+- mcc
+- prate
+- sde
+- sr
+- t2m
+- tcc
+- u10
+- v10
+- dlwrf
+- dswrf
+
 ## Install dependencies (requires [poetry](https://python-poetry.org/))
 
 ```
