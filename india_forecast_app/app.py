@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 
 import india_forecast_app
 from india_forecast_app.models import PVNetModel
+from india_forecast_app.sentry import traces_sampler
 
 log = logging.getLogger(__name__)
 version = india_forecast_app.__version__
@@ -27,7 +28,7 @@ version = india_forecast_app.__version__
 sentry_sdk.init(
     dsn=os.getenv("SENTRY_DSN"),
     environment=os.getenv("ENVIRONMENT", "local"),
-    traces_sampler=0.0 if os.getenv("ENVIRONMENT", "local") == "local" else 0.05
+    traces_sampler=traces_sampler
 )
 
 
