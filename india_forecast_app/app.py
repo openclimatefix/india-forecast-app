@@ -10,6 +10,7 @@ import sys
 import click
 import numpy as np
 import pandas as pd
+import sentry_sdk
 from pvsite_datamodel import DatabaseConnection
 from pvsite_datamodel.read import get_pv_generation_by_sites, get_sites_by_country
 from pvsite_datamodel.sqlmodels import SiteAssetType, SiteSQL
@@ -18,9 +19,17 @@ from sqlalchemy.orm import Session
 
 import india_forecast_app
 from india_forecast_app.models import PVNetModel
+from india_forecast_app.sentry import traces_sampler
 
 log = logging.getLogger(__name__)
 version = india_forecast_app.__version__
+
+
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN"),
+    environment=os.getenv("ENVIRONMENT", "local"),
+    traces_sampler=traces_sampler
+)
 
 
 def get_sites(db_session: Session) -> list[SiteSQL]:
