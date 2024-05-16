@@ -322,8 +322,4 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
 
 
 if __name__ == "__main__":
-    try:
-        app()
-    except Exception as e:
-        sentry_sdk.capture_exception(e)
-        raise e
+    app()
