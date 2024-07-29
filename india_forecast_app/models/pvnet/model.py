@@ -11,19 +11,20 @@ import tempfile
 import numpy as np
 import pandas as pd
 import torch
-from ocf_datapipes.batch import stack_np_examples_into_batch
+from ocf_datapipes.batch import stack_np_examples_into_batch, batch_to_tensor, copy_batch_to_device
 from ocf_datapipes.training.pvnet_site import construct_sliced_data_pipeline as pv_base_pipeline
 from ocf_datapipes.training.windnet import DictDatasetIterDataPipe, split_dataset_dict_dp
 from ocf_datapipes.training.windnet import construct_sliced_data_pipeline as wind_base_pipeline
 from ocf_datapipes.utils import Location
-from pvnet.data.utils import batch_to_tensor, copy_batch_to_device
+# from pvnet.data.utils import batch_to_tensor, copy_batch_to_device
 from pvnet.models.base_model import BaseModel as PVNetBaseModel
 from pvsite_datamodel.sqlmodels import SiteAssetType
 from torch.utils.data import DataLoader
 from torch.utils.data.datapipes.iter import IterableWrapper
 
 from .consts import (
-    nwp_path,
+    nwp_ecmwf_path,
+    nwp_gfs_path,
     pv_metadata_path,
     pv_netcdf_path,
     pv_path,
@@ -45,7 +46,7 @@ from .utils import (
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 WIND_MODEL_NAME = os.getenv("WIND_MODEL_NAME", default="openclimatefix/windnet_india")
 WIND_MODEL_VERSION = os.getenv(
-    "WIND_MODEL_VERSION", default="c77e2c792df6b1b8112db08cd6219602aa3d413e"
+    "WIND_MODEL_VERSION", default="2371dc18685a8983167fafd3c81c55ed6e5f713f"
 )
 
 PV_MODEL_NAME = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
@@ -99,7 +100,6 @@ class PVNetModel:
                 # Run batch through model
                 device_batch = copy_batch_to_device(batch_to_tensor(batch), DEVICE)
                 preds = self.model(device_batch).detach().cpu().numpy()
-
                 # filter out night time
                 if self.asset_type == SiteAssetType.pv:
                     preds = set_night_time_zeros(batch, preds)
@@ -117,6 +117,9 @@ class PVNetModel:
             [self.t0 + dt.timedelta(minutes=15 * (i + 1)) for i in range(n_times)]
         )
 
+        # index of the 50th percentile, assumed number of p values odd and in order
+        middle_plevel_index = normed_preds.shape[2]//2
+
         values_df = pd.DataFrame(
             [
                 {
@@ -124,9 +127,9 @@ class PVNetModel:
                     "end_utc": valid_times[i] + dt.timedelta(minutes=15),
                     "forecast_power_kw": int(v * capacity_kw),
                 }
-                for i, v in enumerate(normed_preds[0, :, 3])
+                for i, v in enumerate(normed_preds[0, :, middle_plevel_index])
             ]
-        )  # index 3 is the 50th percentile)
+        )
 
         if self.asset_type == "wind":
 
@@ -209,14 +212,17 @@ class PVNetModel:
             pass
 
         # Load remote zarr source
-        nwp_source_file_path = os.environ["NWP_ZARR_PATH"]
+        nwp_ecmwf_source_file_path = os.environ["NWP_ECMWF_ZARR_PATH"]
+        nwp_gfs_source_file_path = os.environ["NWP_GFS_ZARR_PATH"]
 
+        nwp_source_file_paths = [nwp_ecmwf_source_file_path, nwp_gfs_source_file_path]
+        nwp_paths = [nwp_ecmwf_path, nwp_gfs_path]
         # Remove local cached zarr if already exists
-        shutil.rmtree(nwp_path, ignore_errors=True)
-
-        # Process/cache remote zarr locally
-        process_and_cache_nwp(nwp_source_file_path, nwp_path)
-
+        for nwp_path in nwp_paths:
+            shutil.rmtree(nwp_path, ignore_errors=True)
+        for nwp_source_file_path, nwp_path in zip(nwp_source_file_paths, nwp_paths):
+            # Process/cache remote zarr locally
+            process_and_cache_nwp(nwp_source_file_path, nwp_path)
         if self.asset_type == "wind":
             # Clear local cached wind data if already exists
             shutil.rmtree(wind_path, ignore_errors=True)
@@ -358,4 +364,4 @@ class PVNetModel:
         """Load model"""
 
         log.info(f"Loading model: {self.name} - {self.version}")
-        return PVNetBaseModel.from_pretrained(self.name, revision=self.version).to(DEVICE)
+        return PVNetBaseModel.from_pretrained(model_id=self.name, revision=self.version).to(DEVICE)

@@ -58,7 +58,7 @@ def test_get_generation_data(db_session, sites, generation_db_values, init_times
 
 
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_get_model(db_session, asset_type, sites, nwp_data, generation_db_values, init_timestamp):
+def test_get_model(db_session, asset_type, sites, nwp_data, nwp_gfs_data, generation_db_values, init_timestamp):
     """Test for getting valid model"""
 
     gen_sites = [s for s in sites if s.asset_type.name == asset_type]
@@ -71,7 +71,7 @@ def test_get_model(db_session, asset_type, sites, nwp_data, generation_db_values
 
 
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_run_model(db_session, asset_type, sites, nwp_data, generation_db_values, init_timestamp):
+def test_run_model(db_session, asset_type, sites, nwp_data, nwp_gfs_data, generation_db_values, init_timestamp):
     """Test for running PV and wind models"""
 
     gen_sites = [s for s in sites if s.asset_type.name == asset_type]
@@ -109,7 +109,7 @@ def test_save_forecast(db_session, sites, forecast_values):
 
 
 @pytest.mark.parametrize("write_to_db", [True, False])
-def test_app(write_to_db, db_session, sites, nwp_data, generation_db_values):
+def test_app(write_to_db, db_session, sites, nwp_data, nwp_gfs_data, generation_db_values):
     """Test for running app from command line"""
 
     init_n_forecasts = db_session.query(ForecastSQL).count()
@@ -130,7 +130,7 @@ def test_app(write_to_db, db_session, sites, nwp_data, generation_db_values):
         assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values
 
 
-def test_app_no_pv_data(db_session, sites, nwp_data, generation_db_values_only_wind):
+def test_app_no_pv_data(db_session, sites, nwp_data, nwp_gfs_data, generation_db_values_only_wind):
     """Test for running app from command line"""
 
     init_n_forecasts = db_session.query(ForecastSQL).count()
