@@ -282,11 +282,6 @@ def nwp_gfs_data(tmp_path_factory, time_before_present):
         coords=[ds[c] for c in ds.xindexes],
     )
 
-    # data_var = ds['gfs']
-
-    # # Use .to_dataset() to split the data variable based on 'channel'
-    # new_ds = data_var.to_dataset(dim='variable')    
-
     # AS NWP data is loaded by the app from environment variable,
     # save out data and set paths as environmental variables
     temp_nwp_path_gfs = f"{tmp_path_factory.mktemp('data')}/nwp_gfs.zarr"

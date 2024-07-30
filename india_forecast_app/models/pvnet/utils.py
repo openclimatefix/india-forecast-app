@@ -108,7 +108,7 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
     # Hack to resolve some NWP data format differences between providers
     elif is_gfs:
         data_var = ds[list(ds.data_vars.keys())[0]]
-        # # Use .to_dataset() to split the data variable based on 'channel'
+        # # Use .to_dataset() to split the data variable based on 'variable' dim
         ds = data_var.to_dataset(dim='variable') 
         ds = ds.rename({"t2m": "t"})
     # Save destination path
