@@ -11,7 +11,7 @@ import tempfile
 import numpy as np
 import pandas as pd
 import torch
-from ocf_datapipes.batch import stack_np_examples_into_batch, batch_to_tensor, copy_batch_to_device
+from ocf_datapipes.batch import batch_to_tensor, copy_batch_to_device, stack_np_examples_into_batch
 from ocf_datapipes.training.pvnet_site import construct_sliced_data_pipeline as pv_base_pipeline
 from ocf_datapipes.training.windnet import DictDatasetIterDataPipe, split_dataset_dict_dp
 from ocf_datapipes.training.windnet import construct_sliced_data_pipeline as wind_base_pipeline
@@ -219,7 +219,7 @@ class PVNetModel:
         # Remove local cached zarr if already exists
         for nwp_path in nwp_paths:
             shutil.rmtree(nwp_path, ignore_errors=True)
-        for nwp_source_file_path, nwp_path in zip(nwp_source_file_paths, nwp_paths):
+        for nwp_source_file_path, nwp_path in zip(nwp_source_file_paths, nwp_paths, strict=False):
             # Process/cache remote zarr locally
             process_and_cache_nwp(nwp_source_file_path, nwp_path)
         if self.asset_type == "wind":

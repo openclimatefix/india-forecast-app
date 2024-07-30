@@ -7,7 +7,14 @@ import xarray as xr
 import yaml
 from ocf_datapipes.batch import BatchKey
 
-from .consts import nwp_ecmwf_path, nwp_gfs_path, pv_metadata_path, pv_netcdf_path, wind_metadata_path, wind_netcdf_path
+from .consts import (
+    nwp_ecmwf_path,
+    nwp_gfs_path,
+    pv_metadata_path,
+    pv_netcdf_path,
+    wind_metadata_path,
+    wind_netcdf_path,
+)
 
 log = logging.getLogger(__name__)
 
