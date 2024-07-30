@@ -209,10 +209,10 @@ def nwp_data(tmp_path_factory, time_before_present):
         f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data.zarr"
     )
 
-    # Last t0 to at least 2 hours ago and floor to 88-hour interval
+    # Last t0 to at least 6 hours ago and floor to 12-hour interval
     t0_datetime_utc = (time_before_present(dt.timedelta(hours=0))
-                       .floor(dt.timedelta(hours=7)))
-    t0_datetime_utc = t0_datetime_utc - dt.timedelta(hours=1)
+                    .floor('12h'))
+    t0_datetime_utc = t0_datetime_utc - dt.timedelta(hours=6)
     ds.init_time.values[:] = pd.date_range(
         t0_datetime_utc - dt.timedelta(hours=12 * (len(ds.init_time) - 1)),
         t0_datetime_utc,
@@ -240,6 +240,51 @@ def nwp_data(tmp_path_factory, time_before_present):
 
     # AS NWP data is loaded by the app from environment variable,
     # save out data and set paths as environmental variables
-    temp_nwp_path = f"{tmp_path_factory.mktemp('data')}/nwp.zarr"
-    os.environ["NWP_ZARR_PATH"] = temp_nwp_path
-    ds.to_zarr(temp_nwp_path)
+    temp_nwp_path_ecmwf = f"{tmp_path_factory.mktemp('data')}/nwp_ecmwf.zarr"
+    os.environ["NWP_ECMWF_ZARR_PATH"] = temp_nwp_path_ecmwf
+    ds.to_zarr(temp_nwp_path_ecmwf)
+
+@pytest.fixture(scope="session")
+def nwp_gfs_data(tmp_path_factory, time_before_present):
+    """Dummy NWP data"""
+
+    # Load dataset which only contains coordinates, but no data
+    ds = xr.open_zarr(
+        f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data_gfs.zarr"
+    )
+
+
+    # Last t0 to at least 6 hours ago and floor to 3-hour interval
+    t0_datetime_utc = (time_before_present(dt.timedelta(hours=0))
+                    .floor('3h'))
+    t0_datetime_utc = t0_datetime_utc - dt.timedelta(hours=6)
+    ds.init_time_utc.values[:] = pd.date_range(
+        t0_datetime_utc - dt.timedelta(hours=12 * (len(ds.init_time_utc) - 1)),
+        t0_datetime_utc,
+        freq=dt.timedelta(hours=3),
+    )
+    # force lat and lon to be in 0.1 steps
+    ds.latitude.values[:] = [35.0 - i*0.1 for i in range(len(ds.latitude))]
+    ds.longitude.values[:] = [65.0 + i * 0.1 for i in range(len(ds.longitude))]
+
+    # This is important to avoid saving errors
+    for v in list(ds.coords.keys()):
+        if ds.coords[v].dtype == object:
+            ds[v].encoding.clear()
+
+    for v in list(ds.variables.keys()):
+        if ds[v].dtype == object:
+            ds[v].encoding.clear()
+
+
+    ds["gfs"] = xr.DataArray(
+        np.zeros([len(ds[c]) for c in ds.xindexes]),
+        coords=[ds[c] for c in ds.xindexes],
+    )
+
+    # AS NWP data is loaded by the app from environment variable,
+    # save out data and set paths as environmental variables
+    temp_nwp_path_gfs = f"{tmp_path_factory.mktemp('data')}/nwp_gfs.zarr"
+
+    os.environ["NWP_GFS_ZARR_PATH"] = temp_nwp_path_gfs
+    ds.to_zarr(temp_nwp_path_gfs)

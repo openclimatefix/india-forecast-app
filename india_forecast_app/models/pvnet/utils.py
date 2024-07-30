@@ -7,7 +7,14 @@ import xarray as xr
 import yaml
 from ocf_datapipes.batch import BatchKey
 
-from .consts import nwp_path, pv_metadata_path, pv_netcdf_path, wind_metadata_path, wind_netcdf_path
+from .consts import (
+    nwp_ecmwf_path,
+    nwp_gfs_path,
+    pv_metadata_path,
+    pv_netcdf_path,
+    wind_metadata_path,
+    wind_netcdf_path,
+)
 
 log = logging.getLogger(__name__)
 
@@ -41,7 +48,7 @@ def populate_data_config_sources(input_path, output_path):
     production_paths = {
         "wind": {"filename": wind_netcdf_path, "metadata_filename": wind_metadata_path},
         "pv": {"filename": pv_netcdf_path, "metadata_filename": pv_metadata_path},
-        "nwp": {"ecmwf": nwp_path},
+        "nwp": {"ecmwf": nwp_ecmwf_path, "gfs": nwp_gfs_path},
     }
 
     if "nwp" in config["input_data"]:
@@ -51,7 +58,6 @@ def populate_data_config_sources(input_path, output_path):
                 assert "nwp" in production_paths, "Missing production path: nwp"
                 assert nwp_source in production_paths["nwp"], f"Missing NWP path: {nwp_source}"
                 nwp_config[nwp_source]["nwp_zarr_path"] = production_paths["nwp"][nwp_source]
-
     if "wind" in config["input_data"]:
         wind_config = config["input_data"]["wind"]
         assert "wind" in production_paths, "Missing production path: wind"
@@ -59,7 +65,6 @@ def populate_data_config_sources(input_path, output_path):
         wind_config["wind_files_groups"][0]["wind_metadata_filename"] = (production_paths)["wind"][
             "metadata_filename"
         ]
-
     if "pv" in config["input_data"]:
         pv_config = config["input_data"]["pv"]
         assert "pv" in production_paths, "Missing production path: pv"
@@ -79,6 +84,7 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
 
     # Load dataset from source
     ds = xr.open_zarr(source_nwp_path)
+    
 
     # This is important to avoid saving errors
     for v in list(ds.coords.keys()):
@@ -89,20 +95,29 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
         if ds[v].dtype == object:
             ds[v].encoding.clear()
 
-    # Rename t variable to t2m
-    variables = list(ds.variable.values)
-    new_variables = []
-    for var in variables:
-        if "t" == var:
-            new_variables.append("t2m")
-            log.debug(f"Renamed t to t2m in NWP data {ds.variable.values}")
-        elif "clt" == var:
-            new_variables.append("tcc")
-            log.debug(f"Renamed clt to tcc in NWP data {ds.variable.values}")
-        else:
-            new_variables.append(var)
-    ds.__setitem__("variable", new_variables)
+    is_gfs = "gfs" in source_nwp_path.lower()
 
+    if not is_gfs: # this is for ECMWF NWP
+        # Rename t variable to t2m
+        variables = list(ds.variable.values)
+        new_variables = []
+        for var in variables:
+            if "t" == var:
+                new_variables.append("t2m")
+                log.debug(f"Renamed t to t2m in NWP data {ds.variable.values}")
+            elif "clt" == var:
+                new_variables.append("tcc")
+                log.debug(f"Renamed clt to tcc in NWP data {ds.variable.values}")
+            else:
+                new_variables.append(var)
+        ds.__setitem__("variable", new_variables)
+    
+    # Hack to resolve some NWP data format differences between providers
+    elif is_gfs:
+        data_var = ds[list(ds.data_vars.keys())[0]]
+        # # Use .to_dataset() to split the data variable based on 'variable' dim
+        ds = data_var.to_dataset(dim='variable') 
+        ds = ds.rename({"t2m": "t"})
     # Save destination path
     ds.to_zarr(dest_nwp_path, mode="a")
 
