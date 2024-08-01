@@ -70,6 +70,7 @@ def sites(db_session):
     # PV site
     site = SiteSQL(
         client_site_id=1,
+        client_site_name="test_site_ruvnl",
         latitude=20.59,
         longitude=78.96,
         capacity_kw=20000,
@@ -83,6 +84,7 @@ def sites(db_session):
     # Wind site
     site = SiteSQL(
         client_site_id=2,
+        client_site_name="test_site_ruvnl",
         latitude=26.4499,
         longitude=72.6399,
         capacity_kw=10000,
