@@ -42,8 +42,13 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
     Returns:
             A list of SiteSQL objects
     """
+    
+    client = os.getenv("CLIENT_NAME", "ruvnl")
+    log.info(f"Getting sites for client: {client}")
 
-    sites = get_sites_by_country(db_session, country="india")
+    sites = get_sites_by_country(db_session, country="india", client_name=client)
+
+    log.info(f"Found {len(sites)} sites for {client} in India")
     return sites
 
 
