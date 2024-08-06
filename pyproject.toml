@@ -10,11 +10,11 @@ python = "^3.11"
 click = "^8.1.7"
 pvsite-datamodel = "^1.0.32"
 pandas = "1.5.3"
-pvnet = "3.0.50"
+pvnet = "3.0.51"
 pytz = "^2024.1"
 numpy = "^1.26.4"
 huggingface-hub = "0.20.3"
-ocf-datapipes = "3.3.39"
+ocf-datapipes = "3.3.40"
 pyogrio = "0.8.0" # 0.9.0 seems to cause an error at the moment
 torch = [
      {url="https://download.pytorch.org/whl/cpu/torch-2.2.1%2Bcpu-cp311-cp311-linux_x86_64.whl", markers="platform_system == \"Linux\" and platform_machine == \"x86_64\""},
