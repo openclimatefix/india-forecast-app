@@ -3798,13 +3798,13 @@ numpy = "*"
 
 [[package]]
 name = "ocf-datapipes"
-version = "3.3.40"
+version = "3.3.41"
 description = "Pytorch Datapipes built for use in Open Climate Fix's forecasting work"
 optional = false
 python-versions = "*"
 files = [
-    {file = "ocf_datapipes-3.3.40-py3-none-any.whl", hash = "sha256:5ca1b9e0f31e371ff9598155cfcd217bb5fc5ca467a6a281d02b6a8615e5f082"},
-    {file = "ocf_datapipes-3.3.40.tar.gz", hash = "sha256:7f20d53625f5eb03d31e1c6c256515b50e006d8b488ff3d19383b11fd57f6e86"},
+    {file = "ocf_datapipes-3.3.41-py3-none-any.whl", hash = "sha256:4b54b40798b1b0bf5b28947e17d22868c0ca490faf481b9fde2b673a4e604f46"},
+    {file = "ocf_datapipes-3.3.41.tar.gz", hash = "sha256:c8a27bfd4e076fd10c8a0466707b79ce710035342bd677053d78d351fdfc9708"},
 ]
 
 [package.dependencies]
@@ -4462,13 +4462,13 @@ requests = "*"
 
 [[package]]
 name = "pvnet"
-version = "3.0.51"
+version = "3.0.52"
 description = "PVNet"
 optional = false
 python-versions = "*"
 files = [
-    {file = "PVNet-3.0.51-py3-none-any.whl", hash = "sha256:b7b2e559fffe575ab0a5b6b7273ab8bff63bb9db4e14d2f360b63a63d78c95cf"},
-    {file = "pvnet-3.0.51.tar.gz", hash = "sha256:2ca45aa4eee6502fffe48fad99a94fa1ea9d8accd94a5c521f8b045e942be089"},
+    {file = "PVNet-3.0.52-py3-none-any.whl", hash = "sha256:d2fbfaa93950b608a605d0a0b09b059c5d752ab3a41489ac97f62df8b437daa5"},
+    {file = "pvnet-3.0.52.tar.gz", hash = "sha256:40b727da937d1ff27e084a1a922aaca2045b8cf74cff6d5999e537cec070c8d5"},
 ]
 
 [package.dependencies]
@@ -7017,4 +7017,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "14690d6d65230d956b08c07c61c45e032add917abe102553040fa2f3336b0d1f"
+content-hash = "b655d796e2855b225b05b263850d1f40d1362b966c7107ea183f1b0e12d528ae"
