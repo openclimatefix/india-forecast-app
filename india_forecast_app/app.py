@@ -328,7 +328,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                     forecast=forecast,
                     write_to_db=write_to_db,
                     ml_model_name=models[asset_type].name,
-                    ml_model_version=f"{models[asset_type].version}_app={version}",
+                    ml_model_version=version,
                 )
                 sucessful_runs += 1
 
