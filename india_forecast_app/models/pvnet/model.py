@@ -282,7 +282,7 @@ class PVNetModel:
 
         # Pull the data config from huggingface
         data_config_filename = PVNetBaseModel.get_data_config(
-            self.name,
+            self.id,
             revision=self.version,
         )
 
@@ -370,5 +370,5 @@ class PVNetModel:
     def _load_model(self):
         """Load model"""
 
-        log.info(f"Loading model: {self.name} - {self.version}")
+        log.info(f"Loading model: {self.id} - {self.version} ({self.name})")
         return PVNetBaseModel.from_pretrained(model_id=self.id, revision=self.version).to(DEVICE)
