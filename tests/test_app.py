@@ -6,7 +6,7 @@ import multiprocessing as mp
 import uuid
 
 import pytest
-from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, SiteAssetType
+from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, MLModelSQL, SiteAssetType
 
 from india_forecast_app.app import (
     app,
@@ -104,10 +104,13 @@ def test_save_forecast(db_session, sites, forecast_values):
         "values": forecast_values,
     }
 
-    save_forecast(db_session, forecast, write_to_db=True)
+    save_forecast(
+        db_session, forecast, write_to_db=True, ml_model_name="test", ml_model_version="0.0.0"
+    )
 
     assert db_session.query(ForecastSQL).count() == 1
     assert db_session.query(ForecastValueSQL).count() == 10
+    assert db_session.query(MLModelSQL).count() == 1
 
 
 @pytest.mark.parametrize("write_to_db", [True, False])
@@ -127,6 +130,7 @@ def test_app(write_to_db, db_session, sites, nwp_data, nwp_gfs_data, generation_
     if write_to_db:
         assert db_session.query(ForecastSQL).count() == init_n_forecasts + 2
         assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (2 * 192)
+        assert db_session.query(MLModelSQL).count() == 2
     else:
         assert db_session.query(ForecastSQL).count() == init_n_forecasts
         assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values

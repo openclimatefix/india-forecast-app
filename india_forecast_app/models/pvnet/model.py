@@ -43,12 +43,14 @@ from .utils import (
 
 # Model will use GPU if available
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-WIND_MODEL_NAME = os.getenv("WIND_MODEL_NAME", default="openclimatefix/windnet_india")
+WIND_MODEL_NAME = os.getenv("WIND_MODEL_NAME", default="windnet_india")
+WIND_MODEL_ID = os.getenv("WIND_MODEL_ID", default="openclimatefix/windnet_india")
 WIND_MODEL_VERSION = os.getenv(
     "WIND_MODEL_VERSION", default="f03760a8a79db63d1e2f599ae4a1d421bd99e436"
 )
 
-PV_MODEL_NAME = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
+PV_MODEL_NAME = os.getenv("PV_MODEL_ID", default="pvnet_india")
+PV_MODEL_ID = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
 PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION", default="86e64e5bd9a2d0b709c9a8a1a5343835802b0a0f")
 
 log = logging.getLogger(__name__)
@@ -64,6 +66,12 @@ class PVNetModel:
         """Model name"""
 
         return WIND_MODEL_NAME if self.asset_type == "wind" else PV_MODEL_NAME
+
+    @property
+    def id(self):
+        """Model name"""
+
+        return WIND_MODEL_ID if self.asset_type == "wind" else PV_MODEL_ID
 
     @property
     def version(self):
@@ -274,7 +282,7 @@ class PVNetModel:
 
         # Pull the data config from huggingface
         data_config_filename = PVNetBaseModel.get_data_config(
-            self.name,
+            self.id,
             revision=self.version,
         )
 
@@ -362,5 +370,5 @@ class PVNetModel:
     def _load_model(self):
         """Load model"""
 
-        log.info(f"Loading model: {self.name} - {self.version}")
-        return PVNetBaseModel.from_pretrained(model_id=self.name, revision=self.version).to(DEVICE)
+        log.info(f"Loading model: {self.id} - {self.version} ({self.name})")
+        return PVNetBaseModel.from_pretrained(model_id=self.id, revision=self.version).to(DEVICE)

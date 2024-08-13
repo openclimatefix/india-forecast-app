@@ -6,6 +6,7 @@ import datetime as dt
 import logging
 import os
 import sys
+from typing import Optional
 
 import click
 import numpy as np
@@ -184,7 +185,13 @@ def run_model(model, site_id: str, timestamp: dt.datetime):
     return forecast
 
 
-def save_forecast(db_session: Session, forecast, write_to_db: bool):
+def save_forecast(
+    db_session: Session,
+    forecast,
+    write_to_db: bool,
+    ml_model_name: Optional[str] = None,
+    ml_model_version: Optional[str] = None,
+):
     """
     Saves a forecast for a given site & timestamp
 
@@ -192,6 +199,8 @@ def save_forecast(db_session: Session, forecast, write_to_db: bool):
             db_session: A SQLAlchemy session
             forecast: a forecast dict containing forecast meta and predicted values
             write_to_db: If true, forecast values are written to db, otherwise to stdout
+            ml_model_name: Name of the ML model used for the forecast
+            ml_model_version: Version of the ML model used for the forecast
 
     Raises:
             IOError: An error if database save fails
@@ -208,7 +217,13 @@ def save_forecast(db_session: Session, forecast, write_to_db: bool):
     ).astype("int")
 
     if write_to_db:
-        insert_forecast_values(db_session, forecast_meta, forecast_values_df)
+        insert_forecast_values(
+            db_session,
+            forecast_meta,
+            forecast_values_df,
+            ml_model_name=ml_model_name,
+            ml_model_version=ml_model_version,
+        )
 
     output = f'Forecast for site_id={forecast_meta["site_uuid"]},\
                timestamp={forecast_meta["timestamp_utc"]},\
@@ -312,6 +327,8 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                     session,
                     forecast=forecast,
                     write_to_db=write_to_db,
+                    ml_model_name=models[asset_type].name,
+                    ml_model_version=version,
                 )
                 sucessful_runs += 1
 
