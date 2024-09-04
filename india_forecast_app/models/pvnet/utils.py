@@ -1,25 +1,23 @@
 """Useful functions for setting up PVNet model"""
 import logging
+import os
+import random
+from datetime import UTC, datetime, timedelta
 
 import fsspec
 import numpy as np
 import xarray as xr
 import yaml
 from ocf_datapipes.batch import BatchKey
-import os
-
-import pandas as pd
-from datetime import datetime, timedelta, UTC
-import random
 
 from .consts import (
     nwp_ecmwf_path,
     nwp_gfs_path,
     pv_metadata_path,
     pv_netcdf_path,
+    satellite_path,
     wind_metadata_path,
     wind_netcdf_path,
-    satellite_path
 )
 
 log = logging.getLogger(__name__)
@@ -168,12 +166,15 @@ def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
 
 # This section is to be deleted after generation data for ad sites is available
 class FakeGenerationData:
+    """Class to generate Fake data"""
     def __init__(self, start_utc, generation_power_kw):
+        """ Initiate fake data """
         self.start_utc = start_utc
         self.generation_power_kw = generation_power_kw
 
 
 def generate_fake_generation_data():
+    """Generate fake 15 minutely generation data from delta minus 1 hour to now"""
     end_time = datetime.now(UTC).replace(second=0, microsecond=0, minute=0) + timedelta(minutes=15)
     start_time = end_time - timedelta(hours=1)
     

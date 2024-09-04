@@ -12,6 +12,7 @@ import click
 import numpy as np
 import pandas as pd
 import sentry_sdk
+from models.pvnet.utils import generate_fake_generation_data
 from pvsite_datamodel import DatabaseConnection
 from pvsite_datamodel.read import get_pv_generation_by_sites, get_sites_by_country
 from pvsite_datamodel.sqlmodels import SiteAssetType, SiteSQL
@@ -21,7 +22,6 @@ from sqlalchemy.orm import Session
 import india_forecast_app
 from india_forecast_app.models import PVNetModel
 from india_forecast_app.sentry import traces_sampler
-from models.pvnet.utils import generate_fake_generation_data
 
 log = logging.getLogger(__name__)
 version = india_forecast_app.__version__
@@ -219,7 +219,6 @@ def save_forecast(
     forecast_values_df["horizon_minutes"] = (
         (forecast_values_df["start_utc"] - forecast_meta["timestamp_utc"]) / pd.Timedelta("60s")
     ).astype("int")
-
     if write_to_db:
         insert_forecast_values(
             db_session,

@@ -28,15 +28,15 @@ from .consts import (
     pv_netcdf_path,
     pv_path,
     root_data_path,
+    satellite_path,
     wind_metadata_path,
     wind_netcdf_path,
     wind_path,
-    satellite_path
 )
 from .utils import (
+    download_satellite_data,
     populate_data_config_sources,
     process_and_cache_nwp,
-    download_satellite_data,
     set_night_time_zeros,
     worker_init_fn,
 )
@@ -57,7 +57,8 @@ PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION", default="86e64e5bd9a2d0b709c9a8
 
 PV_MODEL_NAME_AD = os.getenv("PV_MODEL_ID", default="pvnet_ad_sites")
 PV_MODEL_ID_AD = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_ad_sites")
-PV_MODEL_VERSION_AD = os.getenv("PV_MODEL_VERSION", default="54cd0e5d215d1f2970f14c17ea2d085efa8630e5")
+PV_MODEL_VERSION_AD = os.getenv("PV_MODEL_VERSION", 
+                                default="54cd0e5d215d1f2970f14c17ea2d085efa8630e5")
 
 log = logging.getLogger(__name__)
 
@@ -70,19 +71,25 @@ class PVNetModel:
     @property
     def name(self):
         """Model name"""
-        return WIND_MODEL_NAME if self.asset_type == "wind" else PV_MODEL_NAME if self.client == "ruvnl" else PV_MODEL_NAME_AD 
+        return (WIND_MODEL_NAME if self.asset_type == "wind" 
+                else PV_MODEL_NAME if self.client == "ruvnl" 
+                else PV_MODEL_NAME_AD)
         
 
     @property
     def id(self):
         """Model id"""
-        return WIND_MODEL_ID if self.asset_type == "wind" else PV_MODEL_ID if self.client == "ruvnl" else PV_MODEL_ID_AD 
+        return (WIND_MODEL_ID if self.asset_type == "wind" 
+                else PV_MODEL_ID if self.client == "ruvnl" 
+                else PV_MODEL_ID_AD)
 
         
     @property
     def version(self):
         """Model version"""
-        return WIND_MODEL_VERSION if self.asset_type == "wind" else PV_MODEL_VERSION if self.client == "ruvnl" else PV_MODEL_VERSION_AD
+        return (WIND_MODEL_VERSION if self.asset_type == "wind" 
+                else PV_MODEL_VERSION if self.client == "ruvnl" 
+                else PV_MODEL_VERSION_AD)
 
     def __init__(
         self, asset_type: str, timestamp: dt.datetime, generation_data: dict[str, pd.DataFrame]
@@ -291,7 +298,6 @@ class PVNetModel:
             self.generation_data["metadata"].to_csv(pv_metadata_path, index=False)
 
     def _create_dataloader(self):
-
         """Setup dataloader with prepared data sources"""
 
         log.info("Creating dataloader")
@@ -395,6 +401,8 @@ class PVNetModel:
         """Load model"""
         log.info(f"Loading model: {self.id} - {self.version} ({self.name})")
         if self.client == "ruvnl":
-            return PVNetBaseModel.from_pretrained(model_id=self.id, revision=self.version).to(DEVICE)
+            return PVNetBaseModel.from_pretrained(model_id=self.id, 
+                                                  revision=self.version).to(DEVICE)
         # if accessing a private repo for ad sites pass the HF token
-        return PVNetBaseModel.from_pretrained(model_id=self.id, revision=self.version, token=self.hf_token).to(DEVICE)
+        return PVNetBaseModel.from_pretrained(model_id=self.id, revision=self.version,
+                                               token=self.hf_token).to(DEVICE)
