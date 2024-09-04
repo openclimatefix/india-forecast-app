@@ -31,17 +31,19 @@ from .consts import (
     wind_metadata_path,
     wind_netcdf_path,
     wind_path,
+    satellite_path
 )
 from .utils import (
     populate_data_config_sources,
     process_and_cache_nwp,
+    download_satellite_data,
     set_night_time_zeros,
     worker_init_fn,
 )
 
 # Global settings for running the model
 
-# Model will use GPU if available
+# Model will use GPU if available 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 WIND_MODEL_NAME = os.getenv("WIND_MODEL_NAME", default="windnet_india")
 WIND_MODEL_ID = os.getenv("WIND_MODEL_ID", default="openclimatefix/windnet_india")
@@ -52,6 +54,10 @@ WIND_MODEL_VERSION = os.getenv(
 PV_MODEL_NAME = os.getenv("PV_MODEL_ID", default="pvnet_india")
 PV_MODEL_ID = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
 PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION", default="86e64e5bd9a2d0b709c9a8a1a5343835802b0a0f")
+
+PV_MODEL_NAME_AD = os.getenv("PV_MODEL_ID", default="pvnet_ad_sites")
+PV_MODEL_ID_AD = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_ad_sites")
+PV_MODEL_VERSION_AD = os.getenv("PV_MODEL_VERSION", default="54cd0e5d215d1f2970f14c17ea2d085efa8630e5")
 
 log = logging.getLogger(__name__)
 
@@ -64,20 +70,19 @@ class PVNetModel:
     @property
     def name(self):
         """Model name"""
-
-        return WIND_MODEL_NAME if self.asset_type == "wind" else PV_MODEL_NAME
+        return WIND_MODEL_NAME if self.asset_type == "wind" else PV_MODEL_NAME if self.client == "ruvnl" else PV_MODEL_NAME_AD 
+        
 
     @property
     def id(self):
-        """Model name"""
+        """Model id"""
+        return WIND_MODEL_ID if self.asset_type == "wind" else PV_MODEL_ID if self.client == "ruvnl" else PV_MODEL_ID_AD 
 
-        return WIND_MODEL_ID if self.asset_type == "wind" else PV_MODEL_ID
-
+        
     @property
     def version(self):
         """Model version"""
-
-        return WIND_MODEL_VERSION if self.asset_type == "wind" else PV_MODEL_VERSION
+        return WIND_MODEL_VERSION if self.asset_type == "wind" else PV_MODEL_VERSION if self.client == "ruvnl" else PV_MODEL_VERSION_AD
 
     def __init__(
         self, asset_type: str, timestamp: dt.datetime, generation_data: dict[str, pd.DataFrame]
@@ -87,6 +92,9 @@ class PVNetModel:
         self.asset_type = asset_type
         self.t0 = timestamp
         log.info(f"Model initialised at t0={self.t0}")
+
+        self.client = os.getenv("CLIENT_NAME", "ruvnl")
+        self.hf_token = os.getenv("HF_TOKEN", None)
 
         # Setup the data, dataloader, and model
         self.generation_data = generation_data
@@ -222,6 +230,9 @@ class PVNetModel:
         nwp_ecmwf_source_file_path = os.environ["NWP_ECMWF_ZARR_PATH"]
         nwp_gfs_source_file_path = os.environ["NWP_GFS_ZARR_PATH"]
 
+        use_satellite = os.getenv("USE_SATELLITE", "true").lower() == "true"
+        satellite_source_file_path = os.get_env("SATELLITE_ZARR_PATH", None)
+
         nwp_source_file_paths = [nwp_ecmwf_source_file_path, nwp_gfs_source_file_path]
         nwp_paths = [nwp_ecmwf_path, nwp_gfs_path]
         # Remove local cached zarr if already exists
@@ -230,6 +241,10 @@ class PVNetModel:
         for nwp_source_file_path, nwp_path in zip(nwp_source_file_paths, nwp_paths, strict=False):
             # Process/cache remote zarr locally
             process_and_cache_nwp(nwp_source_file_path, nwp_path)
+        if use_satellite:
+            shutil.rmtree(satellite_path, ignore_errors=True)
+            download_satellite_data(satellite_source_file_path)
+
         if self.asset_type == "wind":
             # Clear local cached wind data if already exists
             shutil.rmtree(wind_path, ignore_errors=True)
@@ -276,16 +291,25 @@ class PVNetModel:
             self.generation_data["metadata"].to_csv(pv_metadata_path, index=False)
 
     def _create_dataloader(self):
+
         """Setup dataloader with prepared data sources"""
 
         log.info("Creating dataloader")
-
+    
         # Pull the data config from huggingface
-        data_config_filename = PVNetBaseModel.get_data_config(
-            self.id,
-            revision=self.version,
-        )
 
+        # Use token if required
+        if self.client == "ad":
+            data_config_filename = PVNetBaseModel.get_data_config(
+                self.id,
+                revision=self.version,
+                token=self.hf_token
+            )
+        else:
+            data_config_filename = PVNetBaseModel.get_data_config(
+                    self.id,
+                    revision=self.version
+                )
         # Populate the data config with production data paths
         temp_dir = tempfile.TemporaryDirectory()
         populated_data_config_filename = f"{temp_dir.name}/data_config.yaml"
@@ -369,6 +393,8 @@ class PVNetModel:
 
     def _load_model(self):
         """Load model"""
-
         log.info(f"Loading model: {self.id} - {self.version} ({self.name})")
-        return PVNetBaseModel.from_pretrained(model_id=self.id, revision=self.version).to(DEVICE)
+        if self.client == "ruvnl":
+            return PVNetBaseModel.from_pretrained(model_id=self.id, revision=self.version).to(DEVICE)
+        # if accessing a private repo for ad sites pass the HF token
+        return PVNetBaseModel.from_pretrained(model_id=self.id, revision=self.version, token=self.hf_token).to(DEVICE)

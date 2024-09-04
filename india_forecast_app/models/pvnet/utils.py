@@ -6,6 +6,11 @@ import numpy as np
 import xarray as xr
 import yaml
 from ocf_datapipes.batch import BatchKey
+import os
+
+import pandas as pd
+from datetime import datetime, timedelta, UTC
+import random
 
 from .consts import (
     nwp_ecmwf_path,
@@ -14,6 +19,7 @@ from .consts import (
     pv_netcdf_path,
     wind_metadata_path,
     wind_netcdf_path,
+    satellite_path
 )
 
 log = logging.getLogger(__name__)
@@ -121,6 +127,14 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
     # Save destination path
     ds.to_zarr(dest_nwp_path, mode="a")
 
+def download_satellite_data(satellite_source_file_path: str) -> None:
+    """Download the sat data"""
+
+    # download satellite data
+    fs = fsspec.open(satellite_source_file_path).fs
+    if fs.exists(satellite_source_file_path):
+        fs.get(satellite_source_file_path, "sat_5_min.zarr.zip")
+        os.system(f"unzip -qq sat_5_min.zarr.zip -d {satellite_path}")
 
 def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
     """
@@ -151,3 +165,25 @@ def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
     preds[sun_elevation < sun_elevation_limit] = 0
 
     return preds
+
+# This section is to be deleted after generation data for ad sites is available
+class FakeGenerationData:
+    def __init__(self, start_utc, generation_power_kw):
+        self.start_utc = start_utc
+        self.generation_power_kw = generation_power_kw
+
+
+def generate_fake_generation_data():
+    end_time = datetime.now(UTC).replace(second=0, microsecond=0, minute=0) + timedelta(minutes=15)
+    start_time = end_time - timedelta(hours=1)
+    
+    generation_data = []
+    current_time = start_time
+    
+    while current_time < end_time:
+        # Simulate power generation between 0 and 200,000 kW
+        power_kw = random.uniform(0, 200000)
+        generation_data.append(FakeGenerationData(current_time, power_kw))
+        current_time += timedelta(minutes=15)
+    
+    return generation_data
