@@ -237,8 +237,8 @@ class PVNetModel:
         nwp_ecmwf_source_file_path = os.environ["NWP_ECMWF_ZARR_PATH"]
         nwp_gfs_source_file_path = os.environ["NWP_GFS_ZARR_PATH"]
 
-        use_satellite = os.getenv("USE_SATELLITE", "true").lower() == "true"
-        satellite_source_file_path = os.get_env("SATELLITE_ZARR_PATH", None)
+        use_satellite = os.getenv("USE_SATELLITE", "false").lower() == "true"
+        satellite_source_file_path = os.getenv("SATELLITE_ZARR_PATH", None)
 
         nwp_source_file_paths = [nwp_ecmwf_source_file_path, nwp_gfs_source_file_path]
         nwp_paths = [nwp_ecmwf_path, nwp_gfs_path]

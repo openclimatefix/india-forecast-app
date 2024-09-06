@@ -3,6 +3,7 @@ Tests for functions in app.py
 """
 import datetime as dt
 import multiprocessing as mp
+import os
 import uuid
 
 import pytest
@@ -40,6 +41,7 @@ def test_get_sites(db_session, sites):
 def test_get_generation_data(db_session, sites, generation_db_values, init_timestamp):
     """Test for correct generation data"""
 
+    os.environ["CLIENT_NAME"] = "ruvnl"
     # Test only checks for wind data as solar data not ready yet
     gen_sites = [s for s in sites if s.asset_type == SiteAssetType.wind]  # 1 site
     gen_data = get_generation_data(db_session, gen_sites, timestamp=init_timestamp)
