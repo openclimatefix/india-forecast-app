@@ -43,7 +43,7 @@ from .utils import (
 
 # Global settings for running the model
 
-# Model will use GPU if available 
+# Model will use GPU if available
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 WIND_MODEL_NAME = os.getenv("WIND_MODEL_NAME", default="windnet_india")
 WIND_MODEL_ID = os.getenv("WIND_MODEL_ID", default="openclimatefix/windnet_india")
@@ -102,7 +102,7 @@ class PVNetModel:
 
         self.client = os.getenv("CLIENT_NAME", "ruvnl")
         self.hf_token = os.getenv("HUGGINGFACE_TOKEN", None)
-        
+
         # Setup the data, dataloader, and model
         self.generation_data = generation_data
         self._prepare_data_sources()
