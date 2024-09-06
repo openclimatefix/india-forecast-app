@@ -125,3 +125,28 @@ def _basic_wind_yield_fn(timeUnix: int, scale_factor_kw: int = 3e6) -> float:
     output = min(float(scale_factor_kw), scale_factor_kw * random.random())
 
     return output
+
+
+# This section is to be deleted after generation data for ad sites is available
+class FakeGenerationData:
+    """Class to generate Fake data"""
+    def __init__(self, start_utc, generation_power_kw):
+        """ Initiate fake data """
+        self.start_utc = start_utc
+        self.generation_power_kw = generation_power_kw
+
+def generate_fake_generation_data():
+    """Generate fake 15 minutely generation data from delta minus 1 hour to now"""
+    end_time = pd.Timestamp(dt.datetime.now(tz=None)).floor(dt.timedelta(minutes=15))
+    start_time = end_time - dt.timedelta(hours=1)
+    
+    generation_data = []
+    current_time = start_time
+    
+    while current_time < end_time:
+        # Add fake power data 
+        power_kw = 100000
+        generation_data.append(FakeGenerationData(current_time, power_kw))
+        current_time += dt.timedelta(minutes=15)
+    
+    return generation_data

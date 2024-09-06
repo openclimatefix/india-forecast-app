@@ -1,8 +1,6 @@
 """Useful functions for setting up PVNet model"""
 import logging
 import os
-import random
-from datetime import UTC, datetime, timedelta
 
 import fsspec
 import numpy as np
@@ -163,28 +161,3 @@ def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
     preds[sun_elevation < sun_elevation_limit] = 0
 
     return preds
-
-# This section is to be deleted after generation data for ad sites is available
-class FakeGenerationData:
-    """Class to generate Fake data"""
-    def __init__(self, start_utc, generation_power_kw):
-        """ Initiate fake data """
-        self.start_utc = start_utc
-        self.generation_power_kw = generation_power_kw
-
-
-def generate_fake_generation_data():
-    """Generate fake 15 minutely generation data from delta minus 1 hour to now"""
-    end_time = datetime.now(UTC).replace(second=0, microsecond=0, minute=0) + timedelta(minutes=15)
-    start_time = end_time - timedelta(hours=1)
-    
-    generation_data = []
-    current_time = start_time
-    
-    while current_time < end_time:
-        # Simulate power generation between 0 and 200,000 kW
-        power_kw = random.uniform(0, 200000)
-        generation_data.append(FakeGenerationData(current_time, power_kw))
-        current_time += timedelta(minutes=15)
-    
-    return generation_data

@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 
 import india_forecast_app
 from india_forecast_app.models import PVNetModel
-from india_forecast_app.models.pvnet.utils import generate_fake_generation_data
+from india_forecast_app.models.dummy import generate_fake_generation_data
 from india_forecast_app.sentry import traces_sampler
 
 log = logging.getLogger(__name__)
@@ -88,7 +88,6 @@ def get_generation_data(
     if len(generation_data) == 0 and os.environ["CLIENT_NAME"] != "ad":
         log.warning("No generation found for the specified sites/period")
         generation_df = pd.DataFrame()
-
 
     else:
         # To be removed later

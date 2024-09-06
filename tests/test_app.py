@@ -3,7 +3,6 @@ Tests for functions in app.py
 """
 import datetime as dt
 import multiprocessing as mp
-import os
 import uuid
 
 import pytest
@@ -38,10 +37,10 @@ def test_get_sites(db_session, sites):
         assert sites[1].asset_type.name == "wind"
 
 
-def test_get_generation_data(db_session, sites, generation_db_values, init_timestamp):
+def test_get_generation_data(db_session, sites, generation_db_values, init_timestamp,
+                             client_env_var):
     """Test for correct generation data"""
 
-    os.environ["CLIENT_NAME"] = "ruvnl"
     # Test only checks for wind data as solar data not ready yet
     gen_sites = [s for s in sites if s.asset_type == SiteAssetType.wind]  # 1 site
     gen_data = get_generation_data(db_session, gen_sites, timestamp=init_timestamp)
@@ -80,7 +79,6 @@ def test_run_model(db_session, asset_type, sites, nwp_data, nwp_gfs_data,
 
     gen_sites = [s for s in sites if s.asset_type.name == asset_type]
     gen_data = get_generation_data(db_session, sites=gen_sites, timestamp=init_timestamp)
-
     model_cls = PVNetModel if asset_type == "wind" else DummyModel
     model = model_cls(asset_type, timestamp=init_timestamp, generation_data=gen_data)
     forecast = run_model(model=model, site_id=str(uuid.uuid4()), timestamp=init_timestamp)

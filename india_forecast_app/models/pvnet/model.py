@@ -57,8 +57,8 @@ PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION", default="86e64e5bd9a2d0b709c9a8
 
 PV_MODEL_NAME_AD = os.getenv("PV_MODEL_ID", default="pvnet_ad_sites")
 PV_MODEL_ID_AD = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_ad_sites")
-PV_MODEL_VERSION_AD = os.getenv("PV_MODEL_VERSION", 
-                                default="54cd0e5d215d1f2970f14c17ea2d085efa8630e5")
+PV_MODEL_VERSION_AD = os.getenv("PV_MODEL_VERSION",
+                                default="2fb8adb8fb036142daac3a096280860978650335")
 
 log = logging.getLogger(__name__)
 
@@ -101,8 +101,8 @@ class PVNetModel:
         log.info(f"Model initialised at t0={self.t0}")
 
         self.client = os.getenv("CLIENT_NAME", "ruvnl")
-        self.hf_token = os.getenv("HF_TOKEN", None)
-
+        self.hf_token = os.getenv("HUGGINGFACE_TOKEN", None)
+        
         # Setup the data, dataloader, and model
         self.generation_data = generation_data
         self._prepare_data_sources()
