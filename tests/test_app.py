@@ -37,8 +37,7 @@ def test_get_sites(db_session, sites):
         assert sites[1].asset_type.name == "wind"
 
 
-def test_get_generation_data(db_session, sites, generation_db_values, init_timestamp,
-                             client_env_var):
+def test_get_generation_data(db_session, sites, generation_db_values, init_timestamp):
     """Test for correct generation data"""
 
     # Test only checks for wind data as solar data not ready yet

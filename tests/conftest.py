@@ -290,8 +290,3 @@ def nwp_gfs_data(tmp_path_factory, time_before_present):
 
     os.environ["NWP_GFS_ZARR_PATH"] = temp_nwp_path_gfs
     ds.to_zarr(temp_nwp_path_gfs)
-
-@pytest.fixture(scope="session")
-def client_env_var():
-    """Sets client label"""
-    os.environ["CLIENT_NAME"] = "ruvnl"
