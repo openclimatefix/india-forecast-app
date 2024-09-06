@@ -301,21 +301,15 @@ class PVNetModel:
         """Setup dataloader with prepared data sources"""
 
         log.info("Creating dataloader")
-    
+
         # Pull the data config from huggingface
 
-        # Use token if required
-        if self.client == "ad":
-            data_config_filename = PVNetBaseModel.get_data_config(
-                self.id,
-                revision=self.version,
-                token=self.hf_token
-            )
-        else:
-            data_config_filename = PVNetBaseModel.get_data_config(
-                    self.id,
-                    revision=self.version
-                )
+        data_config_filename = PVNetBaseModel.get_data_config(
+            self.id,
+            revision=self.version,
+            token=self.hf_token
+        )
+
         # Populate the data config with production data paths
         temp_dir = tempfile.TemporaryDirectory()
         populated_data_config_filename = f"{temp_dir.name}/data_config.yaml"
@@ -373,8 +367,6 @@ class PVNetModel:
                 .map(stack_np_examples_into_batch)
             )
 
-            # batch_datapipe = base_datapipe.batch(batch_size).map(stack_np_examples_into_batch)
-
         n_workers = 0
 
         # Set up dataloader for parallel loading
@@ -400,9 +392,6 @@ class PVNetModel:
     def _load_model(self):
         """Load model"""
         log.info(f"Loading model: {self.id} - {self.version} ({self.name})")
-        if self.client == "ruvnl":
-            return PVNetBaseModel.from_pretrained(model_id=self.id, 
-                                                  revision=self.version).to(DEVICE)
-        # if accessing a private repo for ad sites pass the HF token
+        
         return PVNetBaseModel.from_pretrained(model_id=self.id, revision=self.version,
                                                token=self.hf_token).to(DEVICE)
