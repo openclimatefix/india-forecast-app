@@ -48,12 +48,12 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 WIND_MODEL_NAME = os.getenv("WIND_MODEL_NAME", default="windnet_india")
 WIND_MODEL_ID = os.getenv("WIND_MODEL_ID", default="openclimatefix/windnet_india")
 WIND_MODEL_VERSION = os.getenv(
-    "WIND_MODEL_VERSION", default="f03760a8a79db63d1e2f599ae4a1d421bd99e436"
+    "WIND_MODEL_VERSION", default="ae07c15de064e1d03cf4bc02618b65c6d5b17e8e"
 )
 
 PV_MODEL_NAME = os.getenv("PV_MODEL_ID", default="pvnet_india")
 PV_MODEL_ID = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
-PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION", default="86e64e5bd9a2d0b709c9a8a1a5343835802b0a0f")
+PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION", default="d71104620f0b0bdd3eeb63cafecd2a49032ae0f7")
 
 PV_MODEL_NAME_AD = os.getenv("PV_MODEL_ID", default="pvnet_ad_sites")
 PV_MODEL_ID_AD = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_ad_sites")
