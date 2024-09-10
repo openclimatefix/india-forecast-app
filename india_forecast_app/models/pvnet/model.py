@@ -58,7 +58,7 @@ PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION", default="d71104620f0b0bdd3eeb63
 PV_MODEL_NAME_AD = os.getenv("PV_MODEL_ID", default="pvnet_ad_sites")
 PV_MODEL_ID_AD = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_ad_sites")
 PV_MODEL_VERSION_AD = os.getenv("PV_MODEL_VERSION",
-                                default="2fb8adb8fb036142daac3a096280860978650335")
+                                default="62e4297e0b506c6878450937929726d30d355c0e")
 
 log = logging.getLogger(__name__)
 
