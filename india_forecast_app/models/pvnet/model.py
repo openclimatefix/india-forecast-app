@@ -263,6 +263,7 @@ class PVNetModel:
             forecast_timesteps = pd.date_range(
                 start=self.t0 - pd.Timedelta("1H"), periods=197, freq="15min"
             )
+
             generation_da = generation_da.reindex(index=forecast_timesteps, fill_value=0.00001)
 
             # if generation_da is still empty make nans
@@ -282,16 +283,22 @@ class PVNetModel:
             # Save generation data as netcdf file
             generation_da = self.generation_data["data"].to_xarray()
             # Add the forecast timesteps to the generation, with 0 values
-            forecast_timesteps = pd.date_range(
+            # TODO: Remove the hardcoding of delta time and the periods
+            # Should be taken from config instead
+            if self.client == "ruvnl":
+                forecast_timesteps = pd.date_range(
                 start=self.t0 - pd.Timedelta("1H"), periods=197, freq="15min"
             )
+            elif self.client =="ad":
+                forecast_timesteps = pd.date_range(
+                    start=self.t0 - pd.Timedelta("3H"), periods=46, freq="15min"
+                )
             generation_da = generation_da.reindex(index=forecast_timesteps, fill_value=0.00001)
 
             # if generation_da is still empty make nans
             if len(generation_da) == 0:
                 generation_df = pd.DataFrame(index=forecast_timesteps, columns=["0"], data=0.0001)
                 generation_da = generation_df.to_xarray()
-
             generation_da.to_netcdf(pv_netcdf_path, engine="h5netcdf")
 
             # Save metadata as csv
