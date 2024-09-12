@@ -72,7 +72,11 @@ def get_generation_data(
 
     site_uuids = [s.site_uuid for s in sites]
     #TODO change this from  hardcoded to site and config related variable
-    start = timestamp - dt.timedelta(hours=3)
+    client = os.getenv("CLIENT_NAME", "ruvnl")
+    if client == "ruvnl":
+        start = timestamp - dt.timedelta(hours=1)
+    elif client == "ad":
+        start = timestamp - dt.timedelta(hours=3)
     # pad by 1 second to ensure get_pv_generation_by_sites returns correct data
     end = timestamp + dt.timedelta(seconds=1)
 
@@ -212,7 +216,7 @@ def save_forecast(
     forecast_values_df["horizon_minutes"] = (
         (forecast_values_df["start_utc"] - forecast_meta["timestamp_utc"]) / pd.Timedelta("60s")
     ).astype("int")
-    
+
     if write_to_db:
         insert_forecast_values(
             db_session,
