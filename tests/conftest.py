@@ -95,6 +95,20 @@ def sites(db_session):
     db_session.add(site)
     sites.append(site)
 
+    # Ad site
+    site = SiteSQL(
+        client_site_id=3,
+        client_site_name="test_site_ad",
+        latitude=26.4499,
+        longitude=72.6399,
+        capacity_kw=25000,
+        ml_id=2,
+        asset_type="pv",
+        country="india",
+    )
+    db_session.add(site)
+    sites.append(site)
+
     db_session.commit()
 
     return sites
@@ -246,6 +260,7 @@ def nwp_data(tmp_path_factory, time_before_present):
     os.environ["NWP_ECMWF_ZARR_PATH"] = temp_nwp_path_ecmwf
     ds.to_zarr(temp_nwp_path_ecmwf)
 
+
 @pytest.fixture(scope="session")
 def nwp_gfs_data(tmp_path_factory, time_before_present):
     """Dummy NWP data"""
@@ -254,7 +269,6 @@ def nwp_gfs_data(tmp_path_factory, time_before_present):
     ds = xr.open_zarr(
         f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data_gfs.zarr"
     )
-
 
     # Last t0 to at least 6 hours ago and floor to 3-hour interval
     t0_datetime_utc = (time_before_present(dt.timedelta(hours=0))
@@ -290,3 +304,63 @@ def nwp_gfs_data(tmp_path_factory, time_before_present):
 
     os.environ["NWP_GFS_ZARR_PATH"] = temp_nwp_path_gfs
     ds.to_zarr(temp_nwp_path_gfs)
+
+
+@pytest.fixture(scope="session")
+def satellite_data(tmp_path_factory, time_before_present):
+    """Dummy NWP data"""
+
+    # Load dataset which only contains coordinates, but no data
+    ds = xr.open_zarr(
+        f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data.zarr"
+    )
+
+    # Last t0 to at least 6 hours ago and floor to 12-hour interval
+    t0_datetime_utc = (time_before_present(dt.timedelta(hours=0)).floor('3h'))
+    t0_datetime_utc = t0_datetime_utc - dt.timedelta(hours=6)
+    ds.init_time.values[:] = pd.date_range(
+        t0_datetime_utc - dt.timedelta(hours=12 * (len(ds.init_time) - 1)),
+        t0_datetime_utc,
+        freq=dt.timedelta(hours=3),
+    )
+
+    # rename name step as target_time
+    ds = ds.rename_vars({"step": "target_time"})
+    ds = ds.rename_dims({"step": "target_time"})
+    # add init time to target time and reassign target time coordiante
+    target_time = ds.init_time + ds.target_time
+    ds = ds.assign_coords(target_time=("target_time", target_time.values[0]))
+    # drop init time
+    ds = ds.drop_vars("init_time")
+
+    # rename first variable channel
+    variable = ds.variable.values
+    satellite_variables = ['IR_016', 'IR_039', 'IR_087', 'IR_097', 'IR_108', 'IR_120', 'IR_134', 'VIS006', 'VIS008', 'WV_062', 'WV_073']
+    ds = ds.assign_coords(variable=("variable", satellite_variables))
+
+    # This is important to avoid saving errors
+    for v in list(ds.coords.keys()):
+        if ds.coords[v].dtype == object:
+            ds[v].encoding.clear()
+
+    for v in list(ds.variables.keys()):
+        if ds[v].dtype == object:
+            ds[v].encoding.clear()
+
+    # Add data to dataset
+    ds["data"] = xr.DataArray(
+        np.zeros([len(ds[c]) for c in ds.xindexes]),
+        coords=[ds[c] for c in ds.xindexes],
+    )
+
+    # AS NWP data is loaded by the app from environment variable,
+    # save out data and set paths as environmental variables
+    temp_nwp_path_ecmwf = f"{tmp_path_factory.mktemp('data')}/satellite.zarr"
+    os.environ["SATELLITE_ZARR_PATH"] = temp_nwp_path_ecmwf
+    ds.to_zarr(temp_nwp_path_ecmwf)
+
+
+@pytest.fixture(scope="session")
+def client_ad():
+    os.environ['CLIENT_NAME'] = 'ad'
+

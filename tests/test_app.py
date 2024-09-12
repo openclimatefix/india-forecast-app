@@ -10,6 +10,7 @@ from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, MLModelSQL
 
 from india_forecast_app.app import (
     app,
+    app_click,
     get_generation_data,
     get_model,
     get_sites,
@@ -58,7 +59,7 @@ def test_get_generation_data(db_session, sites, generation_db_values, init_times
 
 
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_get_model(db_session, asset_type, sites, nwp_data, nwp_gfs_data, 
+def test_get_model(db_session, asset_type, sites, nwp_data, nwp_gfs_data,
                    generation_db_values, init_timestamp):
     """Test for getting valid model"""
 
@@ -123,7 +124,7 @@ def test_app(write_to_db, db_session, sites, nwp_data, nwp_gfs_data, generation_
     if write_to_db:
         args.append("--write-to-db")
 
-    result = run_click_script(app, args)
+    result = run_click_script(app_click, args)
     assert result.exit_code == 0
 
     if write_to_db:
@@ -144,8 +145,17 @@ def test_app_no_pv_data(db_session, sites, nwp_data, nwp_gfs_data, generation_db
     args = ["--date", dt.datetime.now(tz=dt.UTC).strftime("%Y-%m-%d-%H-%M")]
     args.append("--write-to-db")
 
-    result = run_click_script(app, args)
+    result = run_click_script(app_click, args)
     assert result.exit_code == 0
 
     assert db_session.query(ForecastSQL).count() == init_n_forecasts + 2
     assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (2 * 192)
+
+
+def test_app_client_ad(db_session, sites, nwp_data, nwp_gfs_data, generation_db_values, client_ad):
+    """Test for running app from command line"""
+
+    app(timestamp=dt.datetime.now(tz=dt.UTC))
+
+
+
