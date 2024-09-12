@@ -2,6 +2,7 @@ FROM python:3.11-slim as base
 
 RUN apt-get update
 RUN apt-get install -y git
+RUN apt-get install unzip
 
 ENV PYTHONFAULTHANDLER=1 \
 	PYTHONHASHSEED=random \
