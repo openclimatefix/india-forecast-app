@@ -2,6 +2,7 @@ FROM python:3.11-slim as base
 
 RUN apt-get update
 RUN apt-get install -y git
+RUN apt-get install unzip
 
 ENV PYTHONFAULTHANDLER=1 \
 	PYTHONHASHSEED=random \
@@ -13,9 +14,6 @@ FROM base as builder
 
 RUN apt-get update
 RUN apt-get install -y gdal-bin libgdal-dev g++
-
-# add unzip
-RUN apt-get install unzip
 
 ENV PIP_DEFAULT_TIMEOUT=100 \
 	PIP_DISABLE_PIP_VERSION_CHECK=1 \
