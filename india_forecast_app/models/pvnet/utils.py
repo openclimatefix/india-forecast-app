@@ -128,14 +128,20 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
     # Save destination path
     ds.to_zarr(dest_nwp_path, mode="a")
 
+
 def download_satellite_data(satellite_source_file_path: str) -> None:
     """Download the sat data"""
 
     # download satellite data
     fs = fsspec.open(satellite_source_file_path).fs
     if fs.exists(satellite_source_file_path):
+        log.info(f"Downloading satellite data from {satellite_source_file_path} "
+                 f"to sat_15_min.zarr.zip")
         fs.get(satellite_source_file_path, "sat_15_min.zarr.zip")
+        log.info(f"Unzipping sat_15_min.zarr.zip to {satellite_path}")
         os.system(f"unzip -qq sat_15_min.zarr.zip -d {satellite_path}")
+    else:
+        log.error(f"Could not find satellite data at {satellite_source_file_path}")
 
 def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
     """
