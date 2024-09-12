@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "india_forecast_app"
-version = "0.1.60"
+version = "0.1.61"
 description = "Runs wind and PV forecasts for India and saves to database"
 authors = ["Chris Briggs <confusedmatrix@gmail.com>"]
 readme = "README.md"
