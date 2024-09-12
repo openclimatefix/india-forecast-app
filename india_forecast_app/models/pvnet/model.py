@@ -28,11 +28,13 @@ from .consts import (
     pv_netcdf_path,
     pv_path,
     root_data_path,
+    satellite_path,
     wind_metadata_path,
     wind_netcdf_path,
     wind_path,
 )
 from .utils import (
+    download_satellite_data,
     populate_data_config_sources,
     process_and_cache_nwp,
     set_night_time_zeros,
@@ -46,12 +48,17 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 WIND_MODEL_NAME = os.getenv("WIND_MODEL_NAME", default="windnet_india")
 WIND_MODEL_ID = os.getenv("WIND_MODEL_ID", default="openclimatefix/windnet_india")
 WIND_MODEL_VERSION = os.getenv(
-    "WIND_MODEL_VERSION", default="f03760a8a79db63d1e2f599ae4a1d421bd99e436"
+    "WIND_MODEL_VERSION", default="ae07c15de064e1d03cf4bc02618b65c6d5b17e8e"
 )
 
 PV_MODEL_NAME = os.getenv("PV_MODEL_ID", default="pvnet_india")
 PV_MODEL_ID = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_india")
-PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION", default="86e64e5bd9a2d0b709c9a8a1a5343835802b0a0f")
+PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION", default="d71104620f0b0bdd3eeb63cafecd2a49032ae0f7")
+
+PV_MODEL_NAME_AD = os.getenv("PV_MODEL_ID", default="pvnet_ad_sites")
+PV_MODEL_ID_AD = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_ad_sites")
+PV_MODEL_VERSION_AD = os.getenv("PV_MODEL_VERSION",
+                                default="62e4297e0b506c6878450937929726d30d355c0e")
 
 log = logging.getLogger(__name__)
 
@@ -64,20 +71,25 @@ class PVNetModel:
     @property
     def name(self):
         """Model name"""
-
-        return WIND_MODEL_NAME if self.asset_type == "wind" else PV_MODEL_NAME
+        return (WIND_MODEL_NAME if self.asset_type == "wind" 
+                else PV_MODEL_NAME if self.client == "ruvnl" 
+                else PV_MODEL_NAME_AD)
+        
 
     @property
     def id(self):
-        """Model name"""
+        """Model id"""
+        return (WIND_MODEL_ID if self.asset_type == "wind" 
+                else PV_MODEL_ID if self.client == "ruvnl" 
+                else PV_MODEL_ID_AD)
 
-        return WIND_MODEL_ID if self.asset_type == "wind" else PV_MODEL_ID
-
+        
     @property
     def version(self):
         """Model version"""
-
-        return WIND_MODEL_VERSION if self.asset_type == "wind" else PV_MODEL_VERSION
+        return (WIND_MODEL_VERSION if self.asset_type == "wind" 
+                else PV_MODEL_VERSION if self.client == "ruvnl" 
+                else PV_MODEL_VERSION_AD)
 
     def __init__(
         self, asset_type: str, timestamp: dt.datetime, generation_data: dict[str, pd.DataFrame]
@@ -87,6 +99,9 @@ class PVNetModel:
         self.asset_type = asset_type
         self.t0 = timestamp
         log.info(f"Model initialised at t0={self.t0}")
+
+        self.client = os.getenv("CLIENT_NAME", "ruvnl")
+        self.hf_token = os.getenv("HUGGINGFACE_TOKEN", None)
 
         # Setup the data, dataloader, and model
         self.generation_data = generation_data
@@ -222,6 +237,9 @@ class PVNetModel:
         nwp_ecmwf_source_file_path = os.environ["NWP_ECMWF_ZARR_PATH"]
         nwp_gfs_source_file_path = os.environ["NWP_GFS_ZARR_PATH"]
 
+        use_satellite = os.getenv("USE_SATELLITE", "false").lower() == "true"
+        satellite_source_file_path = os.getenv("SATELLITE_ZARR_PATH", None)
+
         nwp_source_file_paths = [nwp_ecmwf_source_file_path, nwp_gfs_source_file_path]
         nwp_paths = [nwp_ecmwf_path, nwp_gfs_path]
         # Remove local cached zarr if already exists
@@ -230,6 +248,10 @@ class PVNetModel:
         for nwp_source_file_path, nwp_path in zip(nwp_source_file_paths, nwp_paths, strict=False):
             # Process/cache remote zarr locally
             process_and_cache_nwp(nwp_source_file_path, nwp_path)
+        if use_satellite:
+            shutil.rmtree(satellite_path, ignore_errors=True)
+            download_satellite_data(satellite_source_file_path)
+
         if self.asset_type == "wind":
             # Clear local cached wind data if already exists
             shutil.rmtree(wind_path, ignore_errors=True)
@@ -241,6 +263,7 @@ class PVNetModel:
             forecast_timesteps = pd.date_range(
                 start=self.t0 - pd.Timedelta("1H"), periods=197, freq="15min"
             )
+
             generation_da = generation_da.reindex(index=forecast_timesteps, fill_value=0.00001)
 
             # if generation_da is still empty make nans
@@ -260,16 +283,22 @@ class PVNetModel:
             # Save generation data as netcdf file
             generation_da = self.generation_data["data"].to_xarray()
             # Add the forecast timesteps to the generation, with 0 values
-            forecast_timesteps = pd.date_range(
+            # TODO: Remove the hardcoding of delta time and the periods
+            # Should be taken from config instead
+            if self.client == "ruvnl":
+                forecast_timesteps = pd.date_range(
                 start=self.t0 - pd.Timedelta("1H"), periods=197, freq="15min"
             )
+            elif self.client =="ad":
+                forecast_timesteps = pd.date_range(
+                    start=self.t0 - pd.Timedelta("3H"), periods=46, freq="15min"
+                )
             generation_da = generation_da.reindex(index=forecast_timesteps, fill_value=0.00001)
 
             # if generation_da is still empty make nans
             if len(generation_da) == 0:
                 generation_df = pd.DataFrame(index=forecast_timesteps, columns=["0"], data=0.0001)
                 generation_da = generation_df.to_xarray()
-
             generation_da.to_netcdf(pv_netcdf_path, engine="h5netcdf")
 
             # Save metadata as csv
@@ -281,9 +310,11 @@ class PVNetModel:
         log.info("Creating dataloader")
 
         # Pull the data config from huggingface
+
         data_config_filename = PVNetBaseModel.get_data_config(
             self.id,
             revision=self.version,
+            token=self.hf_token
         )
 
         # Populate the data config with production data paths
@@ -343,8 +374,6 @@ class PVNetModel:
                 .map(stack_np_examples_into_batch)
             )
 
-            # batch_datapipe = base_datapipe.batch(batch_size).map(stack_np_examples_into_batch)
-
         n_workers = 0
 
         # Set up dataloader for parallel loading
@@ -369,6 +398,7 @@ class PVNetModel:
 
     def _load_model(self):
         """Load model"""
-
         log.info(f"Loading model: {self.id} - {self.version} ({self.name})")
-        return PVNetBaseModel.from_pretrained(model_id=self.id, revision=self.version).to(DEVICE)
+        
+        return PVNetBaseModel.from_pretrained(model_id=self.id, revision=self.version,
+                                               token=self.hf_token).to(DEVICE)

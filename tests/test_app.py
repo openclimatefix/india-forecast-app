@@ -78,7 +78,6 @@ def test_run_model(db_session, asset_type, sites, nwp_data, nwp_gfs_data,
 
     gen_sites = [s for s in sites if s.asset_type.name == asset_type]
     gen_data = get_generation_data(db_session, sites=gen_sites, timestamp=init_timestamp)
-
     model_cls = PVNetModel if asset_type == "wind" else DummyModel
     model = model_cls(asset_type, timestamp=init_timestamp, generation_data=gen_data)
     forecast = run_model(model=model, site_id=str(uuid.uuid4()), timestamp=init_timestamp)

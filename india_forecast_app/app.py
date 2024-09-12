@@ -71,8 +71,12 @@ def get_generation_data(
     """
 
     site_uuids = [s.site_uuid for s in sites]
-
-    start = timestamp - dt.timedelta(hours=1)
+    #TODO change this from  hardcoded to site and config related variable
+    client = os.getenv("CLIENT_NAME", "ruvnl")
+    if client == "ruvnl":
+        start = timestamp - dt.timedelta(hours=1)
+    elif client == "ad":
+        start = timestamp - dt.timedelta(hours=3)
     # pad by 1 second to ensure get_pv_generation_by_sites returns correct data
     end = timestamp + dt.timedelta(seconds=1)
 
@@ -89,7 +93,6 @@ def get_generation_data(
         generation_df = pd.DataFrame()
 
     else:
-
         # Convert to dataframe
         generation_df = pd.DataFrame(
             [(g.start_utc, g.generation_power_kw, system_id) for g in generation_data],
@@ -125,8 +128,6 @@ def get_generation_data(
         # as this is current what ocf_datapipes expects
         col = generation_df.columns[0]
         generation_df[col] = generation_df[col].astype(float) / 1e3
-
-        print(generation_df)
 
     # Site metadata dataframe
     sites_df = pd.DataFrame(
@@ -264,11 +265,12 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
 
     if timestamp is None:
         # get the timestamp now rounded down the nearest 15 minutes
+        # TODO better to have explicity UTC time here?
         timestamp = pd.Timestamp.now(tz=None).floor("15min")
         log.info(f'Timestamp omitted - will generate forecasts for "now" ({timestamp})')
     else:
         timestamp = pd.Timestamp(timestamp).floor("15min")
-
+    
     # 0. Initialise DB connection
     url = os.environ["DB_URL"]
 

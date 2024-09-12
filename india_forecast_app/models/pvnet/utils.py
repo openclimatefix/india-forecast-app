@@ -1,5 +1,6 @@
 """Useful functions for setting up PVNet model"""
 import logging
+import os
 
 import fsspec
 import numpy as np
@@ -12,6 +13,7 @@ from .consts import (
     nwp_gfs_path,
     pv_metadata_path,
     pv_netcdf_path,
+    satellite_path,
     wind_metadata_path,
     wind_netcdf_path,
 )
@@ -49,6 +51,7 @@ def populate_data_config_sources(input_path, output_path):
         "wind": {"filename": wind_netcdf_path, "metadata_filename": wind_metadata_path},
         "pv": {"filename": pv_netcdf_path, "metadata_filename": pv_metadata_path},
         "nwp": {"ecmwf": nwp_ecmwf_path, "gfs": nwp_gfs_path},
+        "satellite": {"filepath": satellite_path}
     }
 
     if "nwp" in config["input_data"]:
@@ -72,6 +75,10 @@ def populate_data_config_sources(input_path, output_path):
         pv_config["pv_files_groups"][0]["pv_metadata_filename"] = (production_paths)["pv"][
             "metadata_filename"
         ]
+    if "satellite" in config["input_data"]:
+        satellite_config = config["input_data"]["satellite"]
+        assert "satellite" in production_paths, "Missing production path: satellite"
+        satellite_config["satellite_zarr_path"] = production_paths["satellite"]["filepath"]
 
     log.debug(config)
 
@@ -121,6 +128,14 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
     # Save destination path
     ds.to_zarr(dest_nwp_path, mode="a")
 
+def download_satellite_data(satellite_source_file_path: str) -> None:
+    """Download the sat data"""
+
+    # download satellite data
+    fs = fsspec.open(satellite_source_file_path).fs
+    if fs.exists(satellite_source_file_path):
+        fs.get(satellite_source_file_path, "sat_15_min.zarr.zip")
+        os.system(f"unzip -qq sat_15_min.zarr.zip -d {satellite_path}")
 
 def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
     """
