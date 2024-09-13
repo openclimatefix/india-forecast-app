@@ -340,7 +340,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool=False, log_level: str="
                     ml_model_name=models[asset_type].name,
                     ml_model_version=version,
                 )
-                sucessful_runs += 1
+                successful_runs += 1
 
         log.info(f"Completed forecasts for {successful_runs} runs for {len(sites)} sites")
         if successful_runs == len(sites):
