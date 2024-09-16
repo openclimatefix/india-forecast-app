@@ -266,7 +266,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     if timestamp is None:
         # get the timestamp now rounded down the nearest 15 minutes
         # TODO better to have explicity UTC time here?
-        timestamp = pd.Timestamp.now(tz=None).floor("15min")
+        timestamp = pd.Timestamp.now(tz='UTC').replace(tzinfo=None).floor("15min")
         log.info(f'Timestamp omitted - will generate forecasts for "now" ({timestamp})')
     else:
         timestamp = pd.Timestamp(timestamp).floor("15min")
