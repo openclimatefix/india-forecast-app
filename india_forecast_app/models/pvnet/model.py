@@ -243,10 +243,9 @@ class PVNetModel:
         nwp_source_file_paths = [nwp_ecmwf_source_file_path, nwp_gfs_source_file_path]
         nwp_paths = [nwp_ecmwf_path, nwp_gfs_path]
         # Remove local cached zarr if already exists
-        for nwp_path in nwp_paths:
-            shutil.rmtree(nwp_path, ignore_errors=True)
         for nwp_source_file_path, nwp_path in zip(nwp_source_file_paths, nwp_paths, strict=False):
             # Process/cache remote zarr locally
+            shutil.rmtree(nwp_path, ignore_errors=True)
             process_and_cache_nwp(nwp_source_file_path, nwp_path)
         if use_satellite:
             shutil.rmtree(satellite_path, ignore_errors=True)
