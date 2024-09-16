@@ -296,6 +296,10 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                 log.info(f"Reading latest historic {asset_type} generation data...")
                 generation_data = get_generation_data(session, asset_sites, timestamp)
 
+                if asset_type == "wind":
+                    # change from W to MW
+                    generation_data["data"] = generation_data["data"] / 1e6
+
                 log.debug(f"{generation_data['data']=}")
                 log.debug(f"{generation_data['metadata']=}")
 
