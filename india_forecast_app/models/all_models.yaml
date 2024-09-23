@@ -1,0 +1,27 @@
+# Here we define all the models that are available in the app
+models:
+  # RU client
+  - name: windnet_india
+    type: pvnet
+    asset_type: wind
+    id: openclimatefix/windnet_india
+    version: ae07c15de064e1d03cf4bc02618b65c6d5b17e8e
+  - name: pvnet_india
+    type: pvnet
+    id: openclimatefix/pvnet_india
+    version: d71104620f0b0bdd3eeb63cafecd2a49032ae0f7
+    asset_type: pv
+  # Ad client
+  - name: pvnet_ad_sites
+    type: pvnet
+    id: openclimatefix/pvnet_ad_sites
+    version: 20e7c3af76664ee2ac0e1502801749825ab8ed1f
+    client: ad
+    asset_type: pv
+  # this is just a dummy one
+  - name: dummy
+    type: dummy
+    id: models/dummy
+    version: 0.0.1
+    client: dummy
+    asset_type: pv

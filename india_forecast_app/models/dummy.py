@@ -24,7 +24,9 @@ class DummyModel:
             self,
             asset_type: str,
             timestamp: dt.datetime,
-            generation_data: dict[str, pd.DataFrame] = None
+            generation_data: dict[str, pd.DataFrame] = None,
+            hf_version: str = None,
+            hf_repo: str = None,
     ):
         """Initializer for the model"""
         self.asset_type = asset_type
