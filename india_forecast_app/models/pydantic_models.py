@@ -1,9 +1,10 @@
 """ A pydantic model for the ML models"""
 
-import fsspec
 from typing import List, Optional
-from pydantic import BaseModel, Field
+
+import fsspec
 from pyaml_env import parse_config
+from pydantic import BaseModel, Field
 
 
 class Model(BaseModel):
