@@ -93,7 +93,13 @@ def test_run_model(
     gen_sites = [s for s in sites if s.asset_type.name == asset_type]
     gen_data = get_generation_data(db_session, sites=gen_sites, timestamp=init_timestamp)
     model_cls = PVNetModel if asset_type == "wind" else DummyModel
-    model = model_cls(asset_type, timestamp=init_timestamp, generation_data=gen_data, hf_version=ml_model.version, hf_repo=ml_model.id)
+    model = model_cls(
+        asset_type,
+        timestamp=init_timestamp,
+        generation_data=gen_data,
+        hf_version=ml_model.version,
+        hf_repo=ml_model.id,
+    )
     forecast = run_model(model=model, site_id=str(uuid.uuid4()), timestamp=init_timestamp)
 
     assert isinstance(forecast, list)

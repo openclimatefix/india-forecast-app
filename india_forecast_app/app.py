@@ -22,7 +22,6 @@ import india_forecast_app
 from india_forecast_app.models import PVNetModel, get_all_models
 from india_forecast_app.sentry import traces_sampler
 
-
 log = logging.getLogger(__name__)
 version = india_forecast_app.__version__
 
@@ -163,7 +162,9 @@ def get_model(
     # Only Windnet and PVnet is now used
     model_cls = PVNetModel
 
-    model = model_cls(asset_type, timestamp, generation_data, hf_repo=hf_repo, hf_version=hf_version)
+    model = model_cls(
+        asset_type, timestamp, generation_data, hf_repo=hf_repo, hf_version=hf_version
+    )
     return model
 
 
