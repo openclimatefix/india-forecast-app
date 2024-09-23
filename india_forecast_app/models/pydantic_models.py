@@ -7,6 +7,8 @@ from pyaml_env import parse_config
 
 
 class Model(BaseModel):
+    """One ML Model"""
+
     name: str = Field(..., title="Model Name", description="The name of the model")
     type: Optional[str] = Field("pvnet", title="Model Type", description="The type of model")
     id: str = Field(
@@ -18,7 +20,9 @@ class Model(BaseModel):
         description="The version of the model, this is what git version to load from in HF",
     )
     client: str = Field(
-        "ruvnl", title="Client Abbreviation", description="The name of the client that the model is for"
+        "ruvnl",
+        title="Client Abbreviation",
+        description="The name of the client that the model is for",
     )
     asset_type: str = Field(
         "pv", title="Asset Type", description="The type of asset the model is for (pv or wind)"
@@ -26,6 +30,7 @@ class Model(BaseModel):
 
 
 class Models(BaseModel):
+    """ A group of ml models """
     models: List[Model] = Field(
         ..., title="Models", description="A list of models to use for the forecast"
     )
@@ -38,7 +43,8 @@ def get_all_models(client_abbreviation: Optional[str] = None):
 
     # load models from yaml file
     import os
-    filename = os.path.dirname(os.path.abspath(__file__)) + '/all_models.yaml'
+
+    filename = os.path.dirname(os.path.abspath(__file__)) + "/all_models.yaml"
 
     with fsspec.open(filename, mode="r") as stream:
         models = parse_config(data=stream)
@@ -48,4 +54,3 @@ def get_all_models(client_abbreviation: Optional[str] = None):
         models.models = [model for model in models.models if model.client == client_abbreviation]
 
     return models
-
