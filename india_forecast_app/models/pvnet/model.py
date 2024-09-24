@@ -383,7 +383,7 @@ class PVNetModel:
 
     def _load_model(self):
         """Load model"""
-        log.info(f"Loading model: {self.id} - {self.version} ({self.asset_type})")
+        log.info(f"Loading model: {self.id} - {self.version} ({self.name})")
 
         return PVNetBaseModel.from_pretrained(
             model_id=self.id, revision=self.version, token=self.hf_token
