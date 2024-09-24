@@ -75,6 +75,7 @@ def test_get_model(
         generation_data=gen_data,
         hf_version=ml_model.version,
         hf_repo=ml_model.id,
+        name='test'
     )
 
     assert hasattr(model, "version")
@@ -99,6 +100,7 @@ def test_run_model(
         generation_data=gen_data,
         hf_version=ml_model.version,
         hf_repo=ml_model.id,
+        name='test'
     )
     forecast = run_model(model=model, site_id=str(uuid.uuid4()), timestamp=init_timestamp)
 
