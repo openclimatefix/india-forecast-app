@@ -18,6 +18,7 @@ from india_forecast_app.app import (
 )
 from india_forecast_app.models.dummy import DummyModel
 from india_forecast_app.models.pvnet.model import PVNetModel
+from india_forecast_app.models.pydantic_models import get_all_models
 
 from ._utils import run_click_script
 
@@ -58,13 +59,24 @@ def test_get_generation_data(db_session, sites, generation_db_values, init_times
 
 
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_get_model(db_session, asset_type, sites, nwp_data, nwp_gfs_data, 
-                   generation_db_values, init_timestamp):
+def test_get_model(
+    db_session, asset_type, sites, nwp_data, nwp_gfs_data, generation_db_values, init_timestamp
+):
     """Test for getting valid model"""
+
+    all_models = get_all_models()
+    ml_model = [model for model in all_models.models if model.asset_type == asset_type][0]
 
     gen_sites = [s for s in sites if s.asset_type.name == asset_type]
     gen_data = get_generation_data(db_session, gen_sites, timestamp=init_timestamp)
-    model = get_model(asset_type, timestamp=init_timestamp, generation_data=gen_data)
+    model = get_model(
+        asset_type,
+        timestamp=init_timestamp,
+        generation_data=gen_data,
+        hf_version=ml_model.version,
+        hf_repo=ml_model.id,
+        name='test'
+    )
 
     assert hasattr(model, "version")
     assert isinstance(model.version, str)
@@ -72,14 +84,24 @@ def test_get_model(db_session, asset_type, sites, nwp_data, nwp_gfs_data,
 
 
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_run_model(db_session, asset_type, sites, nwp_data, nwp_gfs_data,
-                    generation_db_values, init_timestamp):
+def test_run_model(
+    db_session, asset_type, sites, nwp_data, nwp_gfs_data, generation_db_values, init_timestamp
+):
     """Test for running PV and wind models"""
 
+    all_models = get_all_models()
+    ml_model = [model for model in all_models.models if model.asset_type == asset_type][0]
     gen_sites = [s for s in sites if s.asset_type.name == asset_type]
     gen_data = get_generation_data(db_session, sites=gen_sites, timestamp=init_timestamp)
     model_cls = PVNetModel if asset_type == "wind" else DummyModel
-    model = model_cls(asset_type, timestamp=init_timestamp, generation_data=gen_data)
+    model = model_cls(
+        asset_type,
+        timestamp=init_timestamp,
+        generation_data=gen_data,
+        hf_version=ml_model.version,
+        hf_repo=ml_model.id,
+        name='test'
+    )
     forecast = run_model(model=model, site_id=str(uuid.uuid4()), timestamp=init_timestamp)
 
     assert isinstance(forecast, list)
