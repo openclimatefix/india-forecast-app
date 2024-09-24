@@ -300,9 +300,11 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
 
             asset_sites = pv_sites if model.asset_type == "pv" else wind_sites
             asset_type = model.asset_type
-            if len(asset_sites) > 0:
+
+            for site in asset_sites:
+
                 log.info(f"Reading latest historic {asset_type} generation data...")
-                generation_data = get_generation_data(session, asset_sites, timestamp)
+                generation_data = get_generation_data(session, [site], timestamp)
 
                 if asset_type == "wind":
                     # change from W to MW
@@ -325,7 +327,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                     {
                         "ml_model": ml_model,
                         "model_config": model,
-                        "site_uuid": asset_sites[0].site_uuid,
+                        "site_uuid": site.site_uuid,
                     }
                 )
                 log.info(f"{asset_type} model loaded")
