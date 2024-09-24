@@ -143,7 +143,12 @@ def get_generation_data(
 
 
 def get_model(
-    asset_type: str, timestamp: dt.datetime, generation_data, hf_repo: str, hf_version: str
+    asset_type: str,
+    timestamp: dt.datetime,
+    generation_data,
+    hf_repo: str,
+    hf_version: str,
+    name: str,
 ) -> PVNetModel:
     """
     Instantiates and returns the forecast model ready for running inference
@@ -154,6 +159,7 @@ def get_model(
             generation_data: Latest historic generation data
             hf_repo: ID of the ML model used for the forecast
             hf_version: Version of the ML model used for the forecast
+            name: Name of the ML model used for the forecast
 
     Returns:
             A forecasting model
@@ -163,7 +169,7 @@ def get_model(
     model_cls = PVNetModel
 
     model = model_cls(
-        asset_type, timestamp, generation_data, hf_repo=hf_repo, hf_version=hf_version
+        asset_type, timestamp, generation_data, hf_repo=hf_repo, hf_version=hf_version, name=name
     )
     return model
 
@@ -294,12 +300,12 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
         log.info(f"Found {len(wind_sites)} wind sites")
 
         # 2. Load data/models
-        all_models = get_all_models(client_abbreviation=os.getenv("CLIENT_NAME", "ruvnl"))
+        all_model_configs = get_all_models(client_abbreviation=os.getenv("CLIENT_NAME", "ruvnl"))
         models = []
-        for model in all_models.models:
+        for model_config in all_model_configs.models:
 
-            asset_sites = pv_sites if model.asset_type == "pv" else wind_sites
-            asset_type = model.asset_type
+            asset_sites = pv_sites if model_config.asset_type == "pv" else wind_sites
+            asset_type = model_config.asset_type
 
             for site in asset_sites:
 
@@ -313,33 +319,28 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                 log.debug(f"{generation_data['data']=}")
                 log.debug(f"{generation_data['metadata']=}")
 
-                log.info(f"Loading {asset_type} model {model.name}...")
+                log.info(f"Loading {asset_type} model {model_config.name}...")
                 ml_model = get_model(
                     asset_type,
                     timestamp,
                     generation_data,
-                    hf_repo=model.id,
-                    hf_version=model.version,
+                    hf_repo=model_config.id,
+                    hf_version=model_config.version,
+                    name=model_config.name,
                 )
+                ml_model.site_uuid = site.site_uuid
 
                 # TODO should we make this an object?
-                models.append(
-                    {
-                        "ml_model": ml_model,
-                        "model_config": model,
-                        "site_uuid": site.site_uuid,
-                    }
-                )
+                models.append(ml_model)
                 log.info(f"{asset_type} model loaded")
 
-        sucessful_runs = 0
+        successful_runs = 0
         for model in models:
             # 3. Run model for each site
-            site_id = model["site_uuid"]
-            asset_type = model["model_config"].asset_type
-            ml_model = model["ml_model"]
+            site_id = model.site_uuid
+            asset_type = model.asset_type
             log.info(f"Running {asset_type} model for site={site_id}...")
-            forecast_values = run_model(model=ml_model, site_id=site_id, timestamp=timestamp)
+            forecast_values = run_model(model=model, site_id=site_id, timestamp=timestamp)
 
             if forecast_values is None:
                 log.info(f"No forecast values for site_id={site_id}")
@@ -358,15 +359,15 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
                     session,
                     forecast=forecast,
                     write_to_db=write_to_db,
-                    ml_model_name=model["model_config"].name,
+                    ml_model_name=model.name,
                     ml_model_version=version,
                 )
-                sucessful_runs += 1
+                successful_runs += 1
 
-        log.info(f"Completed forecasts for {sucessful_runs} runs for {len(sites)} sites")
-        if sucessful_runs == len(sites):
+        log.info(f"Completed forecasts for {successful_runs} runs for {len(sites)} sites")
+        if successful_runs == len(sites):
             log.info("All forecasts completed successfully")
-        elif 0 < sucessful_runs < len(sites):
+        elif 0 < successful_runs < len(sites):
             raise Exception("Some forecasts failed")
         else:
             raise Exception("All forecasts failed")

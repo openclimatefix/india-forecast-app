@@ -76,12 +76,15 @@ class PVNetModel:
         generation_data: dict[str, pd.DataFrame],
         hf_repo: str,
         hf_version: str,
+        name: str
     ):
         """Initializer for the model"""
 
         self.asset_type = asset_type
         self.id = hf_repo
         self.version = hf_version
+        self.name = name
+        self.site_uuid = None
         self.t0 = timestamp
         log.info(f"Model initialised at t0={self.t0}")
 
