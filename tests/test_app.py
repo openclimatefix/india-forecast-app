@@ -4,12 +4,14 @@ Tests for functions in app.py
 import datetime as dt
 import multiprocessing as mp
 import uuid
+import os
 
 import pytest
 from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, MLModelSQL, SiteAssetType
 
 from india_forecast_app.app import (
     app,
+    app_click,
     get_generation_data,
     get_model,
     get_sites,
@@ -66,8 +68,7 @@ def test_get_model(
 
     all_models = get_all_models()
     ml_model = [model for model in all_models.models if model.asset_type == asset_type][0]
-
-    gen_sites = [s for s in sites if s.asset_type.name == asset_type]
+    gen_sites = [s for s in sites if s.asset_type.name == asset_type and s.client_site_name == "test_site_ruvnl"]
     gen_data = get_generation_data(db_session, gen_sites, timestamp=init_timestamp)
     model = get_model(
         asset_type,
@@ -91,7 +92,7 @@ def test_run_model(
 
     all_models = get_all_models()
     ml_model = [model for model in all_models.models if model.asset_type == asset_type][0]
-    gen_sites = [s for s in sites if s.asset_type.name == asset_type]
+    gen_sites = [s for s in sites if s.asset_type.name == asset_type and s.client_site_name == "test_site_ruvnl"]
     gen_data = get_generation_data(db_session, sites=gen_sites, timestamp=init_timestamp)
     model_cls = PVNetModel if asset_type == "wind" else DummyModel
     model = model_cls(
@@ -145,7 +146,7 @@ def test_app(write_to_db, db_session, sites, nwp_data, nwp_gfs_data, generation_
     if write_to_db:
         args.append("--write-to-db")
 
-    result = run_click_script(app, args)
+    result = run_click_script(app_click, args)
     assert result.exit_code == 0
 
     if write_to_db:
@@ -166,8 +167,19 @@ def test_app_no_pv_data(db_session, sites, nwp_data, nwp_gfs_data, generation_db
     args = ["--date", dt.datetime.now(tz=dt.UTC).strftime("%Y-%m-%d-%H-%M")]
     args.append("--write-to-db")
 
-    result = run_click_script(app, args)
+    result = run_click_script(app_click, args)
     assert result.exit_code == 0
 
     assert db_session.query(ForecastSQL).count() == init_n_forecasts + 2
     assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (2 * 192)
+
+@pytest.mark.requires_hf_token
+def test_app_client_ad(db_session, sites, nwp_data, nwp_gfs_data, generation_db_values, client_ad):
+    """Test for running app from command line"""
+
+    hf_token = os.getenv('HUGGINGFACE_TOKEN')
+    # Skip the test if the token is not available
+    if hf_token is None:
+        pytest.skip("Hugging Face token not set in environment variables, skipping test.")
+
+    app(timestamp=dt.datetime.now(tz=dt.UTC), )

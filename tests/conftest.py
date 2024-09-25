@@ -95,6 +95,20 @@ def sites(db_session):
     db_session.add(site)
     sites.append(site)
 
+    # Ad site
+    site = SiteSQL(
+        client_site_id=3,
+        client_site_name="test_site_ad",
+        latitude=26.4199,
+        longitude=72.6699,
+        capacity_kw=25000,
+        ml_id=2,
+        asset_type="pv",
+        country="india",
+    )
+    db_session.add(site)
+    sites.append(site)
+
     db_session.commit()
 
     return sites
@@ -290,3 +304,7 @@ def nwp_gfs_data(tmp_path_factory, time_before_present):
 
     os.environ["NWP_GFS_ZARR_PATH"] = temp_nwp_path_gfs
     ds.to_zarr(temp_nwp_path_gfs)
+
+@pytest.fixture(scope="session")
+def client_ad():
+    os.environ['CLIENT_NAME'] = 'ad'
