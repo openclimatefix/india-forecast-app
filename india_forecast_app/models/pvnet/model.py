@@ -57,8 +57,9 @@ PV_MODEL_VERSION = os.getenv("PV_MODEL_VERSION", default="d71104620f0b0bdd3eeb63
 
 PV_MODEL_NAME_AD = os.getenv("PV_MODEL_ID", default="pvnet_ad_sites")
 PV_MODEL_ID_AD = os.getenv("PV_MODEL_NAME", default="openclimatefix/pvnet_ad_sites")
-PV_MODEL_VERSION_AD = os.getenv("PV_MODEL_VERSION",
-                                default="62e4297e0b506c6878450937929726d30d355c0e")
+PV_MODEL_VERSION_AD = os.getenv(
+    "PV_MODEL_VERSION", default="20e7c3af76664ee2ac0e1502801749825ab8ed1f"
+)
 
 log = logging.getLogger(__name__)
 
@@ -68,35 +69,22 @@ class PVNetModel:
     Instantiates a PVNet model for inference
     """
 
-    @property
-    def name(self):
-        """Model name"""
-        return (WIND_MODEL_NAME if self.asset_type == "wind" 
-                else PV_MODEL_NAME if self.client == "ruvnl" 
-                else PV_MODEL_NAME_AD)
-        
-
-    @property
-    def id(self):
-        """Model id"""
-        return (WIND_MODEL_ID if self.asset_type == "wind" 
-                else PV_MODEL_ID if self.client == "ruvnl" 
-                else PV_MODEL_ID_AD)
-
-        
-    @property
-    def version(self):
-        """Model version"""
-        return (WIND_MODEL_VERSION if self.asset_type == "wind" 
-                else PV_MODEL_VERSION if self.client == "ruvnl" 
-                else PV_MODEL_VERSION_AD)
-
     def __init__(
-        self, asset_type: str, timestamp: dt.datetime, generation_data: dict[str, pd.DataFrame]
+        self,
+        asset_type: str,
+        timestamp: dt.datetime,
+        generation_data: dict[str, pd.DataFrame],
+        hf_repo: str,
+        hf_version: str,
+        name: str
     ):
         """Initializer for the model"""
 
         self.asset_type = asset_type
+        self.id = hf_repo
+        self.version = hf_version
+        self.name = name
+        self.site_uuid = None
         self.t0 = timestamp
         log.info(f"Model initialised at t0={self.t0}")
 
@@ -140,7 +128,7 @@ class PVNetModel:
         )
 
         # index of the 50th percentile, assumed number of p values odd and in order
-        middle_plevel_index = normed_preds.shape[2]//2
+        middle_plevel_index = normed_preds.shape[2] // 2
 
         values_df = pd.DataFrame(
             [
@@ -243,10 +231,9 @@ class PVNetModel:
         nwp_source_file_paths = [nwp_ecmwf_source_file_path, nwp_gfs_source_file_path]
         nwp_paths = [nwp_ecmwf_path, nwp_gfs_path]
         # Remove local cached zarr if already exists
-        for nwp_path in nwp_paths:
-            shutil.rmtree(nwp_path, ignore_errors=True)
         for nwp_source_file_path, nwp_path in zip(nwp_source_file_paths, nwp_paths, strict=False):
             # Process/cache remote zarr locally
+            shutil.rmtree(nwp_path, ignore_errors=True)
             process_and_cache_nwp(nwp_source_file_path, nwp_path)
         if use_satellite:
             shutil.rmtree(satellite_path, ignore_errors=True)
@@ -287,9 +274,9 @@ class PVNetModel:
             # Should be taken from config instead
             if self.client == "ruvnl":
                 forecast_timesteps = pd.date_range(
-                start=self.t0 - pd.Timedelta("1H"), periods=197, freq="15min"
-            )
-            elif self.client =="ad":
+                    start=self.t0 - pd.Timedelta("1H"), periods=197, freq="15min"
+                )
+            elif self.client == "ad":
                 forecast_timesteps = pd.date_range(
                     start=self.t0 - pd.Timedelta("3H"), periods=46, freq="15min"
                 )
@@ -312,9 +299,7 @@ class PVNetModel:
         # Pull the data config from huggingface
 
         data_config_filename = PVNetBaseModel.get_data_config(
-            self.id,
-            revision=self.version,
-            token=self.hf_token
+            self.id, revision=self.version, token=self.hf_token
         )
 
         # Populate the data config with production data paths
@@ -399,6 +384,7 @@ class PVNetModel:
     def _load_model(self):
         """Load model"""
         log.info(f"Loading model: {self.id} - {self.version} ({self.name})")
-        
-        return PVNetBaseModel.from_pretrained(model_id=self.id, revision=self.version,
-                                               token=self.hf_token).to(DEVICE)
+
+        return PVNetBaseModel.from_pretrained(
+            model_id=self.id, revision=self.version, token=self.hf_token
+        ).to(DEVICE)

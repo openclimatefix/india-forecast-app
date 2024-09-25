@@ -19,7 +19,7 @@ from pvsite_datamodel.write import insert_forecast_values
 from sqlalchemy.orm import Session
 
 import india_forecast_app
-from india_forecast_app.models import PVNetModel
+from india_forecast_app.models import PVNetModel, get_all_models
 from india_forecast_app.sentry import traces_sampler
 
 log = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ version = india_forecast_app.__version__
 sentry_sdk.init(
     dsn=os.getenv("SENTRY_DSN"),
     environment=os.getenv("ENVIRONMENT", "local"),
-    traces_sampler=traces_sampler
+    traces_sampler=traces_sampler,
 )
 
 
@@ -43,7 +43,7 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
     Returns:
             A list of SiteSQL objects
     """
-    
+
     client = os.getenv("CLIENT_NAME", "ruvnl")
     log.info(f"Getting sites for client: {client}")
 
@@ -71,7 +71,7 @@ def get_generation_data(
     """
 
     site_uuids = [s.site_uuid for s in sites]
-    #TODO change this from  hardcoded to site and config related variable
+    # TODO change this from  hardcoded to site and config related variable
     client = os.getenv("CLIENT_NAME", "ruvnl")
     if client == "ruvnl":
         start = timestamp - dt.timedelta(hours=1)
@@ -87,7 +87,7 @@ def get_generation_data(
 
     # hard code as for the moment
     system_id = int(0.0)
-    
+
     if len(generation_data) == 0:
         log.warning("No generation found for the specified sites/period")
         generation_df = pd.DataFrame()
@@ -124,10 +124,11 @@ def get_generation_data(
         generation_df.loc[timestamp] = np.nan
         generation_df = generation_df.interpolate(method="quadratic", fill_value="extrapolate")
 
-        # convert to megamwatts,
+        # convert to watts,
         # as this is current what ocf_datapipes expects
+        # This is because we normalize by the watts amount
         col = generation_df.columns[0]
-        generation_df[col] = generation_df[col].astype(float) / 1e3
+        generation_df[col] = generation_df[col].astype(float) * 1e3
 
     # Site metadata dataframe
     sites_df = pd.DataFrame(
@@ -141,7 +142,14 @@ def get_generation_data(
     return {"data": generation_df, "metadata": sites_df}
 
 
-def get_model(asset_type: str, timestamp: dt.datetime, generation_data) -> PVNetModel:
+def get_model(
+    asset_type: str,
+    timestamp: dt.datetime,
+    generation_data,
+    hf_repo: str,
+    hf_version: str,
+    name: str,
+) -> PVNetModel:
     """
     Instantiates and returns the forecast model ready for running inference
 
@@ -149,6 +157,9 @@ def get_model(asset_type: str, timestamp: dt.datetime, generation_data) -> PVNet
             asset_type: One or "pv" or "wind"
             timestamp: Datetime at which the forecast will be made
             generation_data: Latest historic generation data
+            hf_repo: ID of the ML model used for the forecast
+            hf_version: Version of the ML model used for the forecast
+            name: Name of the ML model used for the forecast
 
     Returns:
             A forecasting model
@@ -157,7 +168,9 @@ def get_model(asset_type: str, timestamp: dt.datetime, generation_data) -> PVNet
     # Only Windnet and PVnet is now used
     model_cls = PVNetModel
 
-    model = model_cls(asset_type, timestamp, generation_data)
+    model = model_cls(
+        asset_type, timestamp, generation_data, hf_repo=hf_repo, hf_version=hf_version, name=name
+    )
     return model
 
 
@@ -274,14 +287,13 @@ def app(timestamp: dt.datetime | None, write_to_db: bool=False, log_level: str="
     if timestamp is None:
         # get the timestamp now rounded down the nearest 15 minutes
         # TODO better to have explicity UTC time here?
-        timestamp = pd.Timestamp.now(tz=None).floor("15min")
+        timestamp = pd.Timestamp.now(tz="UTC").replace(tzinfo=None).floor("15min")
         log.info(f'Timestamp omitted - will generate forecasts for "now" ({timestamp})')
     else:
         timestamp = pd.Timestamp(timestamp).floor("15min")
-    
+
     # 0. Initialise DB connection
     url = os.environ["DB_URL"]
-
     db_conn = DatabaseConnection(url, echo=False)
 
     with db_conn.get_session() as session:
@@ -296,29 +308,47 @@ def app(timestamp: dt.datetime | None, write_to_db: bool=False, log_level: str="
         log.info(f"Found {len(wind_sites)} wind sites")
 
         # 2. Load data/models
-        models = {}
-        for asset_type in ["pv", "wind"]:
-            asset_sites = pv_sites if asset_type == "pv" else wind_sites
-            if len(asset_sites) > 0:
+        all_model_configs = get_all_models(client_abbreviation=os.getenv("CLIENT_NAME", "ruvnl"))
+        models = []
+        for model_config in all_model_configs.models:
+
+            asset_sites = pv_sites if model_config.asset_type == "pv" else wind_sites
+            asset_type = model_config.asset_type
+
+            for site in asset_sites:
+
                 log.info(f"Reading latest historic {asset_type} generation data...")
-                generation_data = get_generation_data(session, asset_sites, timestamp)
+                generation_data = get_generation_data(session, [site], timestamp)
+
+                if asset_type == "wind":
+                    # change from W to MW
+                    generation_data["data"] = generation_data["data"] / 1e6
 
                 log.debug(f"{generation_data['data']=}")
                 log.debug(f"{generation_data['metadata']=}")
 
-                log.info(f"Loading {asset_type} model...")
-                models[asset_type] = get_model(asset_type, timestamp, generation_data)
+                log.info(f"Loading {asset_type} model {model_config.name}...")
+                ml_model = get_model(
+                    asset_type,
+                    timestamp,
+                    generation_data,
+                    hf_repo=model_config.id,
+                    hf_version=model_config.version,
+                    name=model_config.name,
+                )
+                ml_model.site_uuid = site.site_uuid
+
+                # TODO should we make this an object?
+                models.append(ml_model)
                 log.info(f"{asset_type} model loaded")
 
         successful_runs = 0
-        for site in sites:
+        for model in models:
             # 3. Run model for each site
-            site_id = site.site_uuid
-            asset_type = site.asset_type.name
+            site_id = model.site_uuid
+            asset_type = model.asset_type
             log.info(f"Running {asset_type} model for site={site_id}...")
-            forecast_values = run_model(
-                model=models[asset_type], site_id=site_id, timestamp=timestamp
-            )
+            forecast_values = run_model(model=model, site_id=site_id, timestamp=timestamp)
 
             if forecast_values is None:
                 log.info(f"No forecast values for site_id={site_id}")
@@ -337,7 +367,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool=False, log_level: str="
                     session,
                     forecast=forecast,
                     write_to_db=write_to_db,
-                    ml_model_name=models[asset_type].name,
+                    ml_model_name=model.name,
                     ml_model_version=version,
                 )
                 successful_runs += 1
@@ -350,8 +380,7 @@ def app(timestamp: dt.datetime | None, write_to_db: bool=False, log_level: str="
         else:
             raise Exception("All forecasts failed")
 
-        log.info('Forecast finished')
-        raise 0
+        log.info("Forecast finished")
 
 
 if __name__ == "__main__":

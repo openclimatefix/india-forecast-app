@@ -24,11 +24,15 @@ class DummyModel:
             self,
             asset_type: str,
             timestamp: dt.datetime,
-            generation_data: dict[str, pd.DataFrame] = None
+            generation_data: dict[str, pd.DataFrame] = None,
+            hf_version: str = None,
+            hf_repo: str = None,
+            name: str = None,
     ):
         """Initializer for the model"""
         self.asset_type = asset_type
         self.to = timestamp
+        self.site_uuid = None
 
     def predict(self, site_id: str, timestamp: dt.datetime):
         """Make a prediction for the model"""
