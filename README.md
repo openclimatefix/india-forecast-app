@@ -76,6 +76,8 @@ make format
 make test
 ```
 
+⚠️ Note: one test for the AD model is skipped locally unless the HF token is set, this HF token can be found in AWS Secret Manager under {enviornment}/huggingface/token and then can be set via export HUGGINGFACE_TOKEN={token_value} in the repo to run the additional test. 
+
 ## Running the app locally
 Replace `{DB_URL}` with a postgres DB connection string (see below for setting up a ephemeral local DB)
 
