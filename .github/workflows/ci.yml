@@ -2,6 +2,9 @@ name: CI pipeline for India Forecast App
 
 on: push
 
+env:
+  HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN}}"
+
 jobs:
 
   lint_and_test:
