@@ -84,7 +84,6 @@ def get_generation_data(
     generation_data = get_pv_generation_by_sites(
         session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
     )
-
     # hard code as for the moment
     system_id = int(0.0)
 
@@ -268,7 +267,14 @@ Format should be YYYY-MM-DD-HH-mm. Defaults to "now".',
     help="Set the python logging log level",
     show_default=True,
 )
-def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
+def app_click(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
+    """
+    Main click function for running forecasts for sites in India
+    """
+
+    app(timestamp, write_to_db, log_level)
+
+def app(timestamp: dt.datetime | None, write_to_db: bool=False, log_level: str="info"):
     """
     Main function for running forecasts for sites in India
     """
@@ -376,4 +382,4 @@ def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
 
 
 if __name__ == "__main__":
-    app()
+    app_click()
