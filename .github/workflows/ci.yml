@@ -5,7 +5,7 @@ on: push
 jobs:
 
   lint_and_test:
-    uses: openclimatefix/.github/.github/workflows/poetry-python-test.yml@v1.8.3
+    uses: openclimatefix/.github/.github/workflows/poetry-python-test.yml@HF-token
     with:
       pytest_cov_dir: india_forecast_app
     secrets:
