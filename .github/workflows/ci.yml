@@ -2,15 +2,14 @@ name: CI pipeline for India Forecast App
 
 on: push
 
-env:
-  HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN}}"
-
 jobs:
 
   lint_and_test:
     uses: openclimatefix/.github/.github/workflows/poetry-python-test.yml@v1.8.3
     with:
       pytest_cov_dir: india_forecast_app
+    secrets:
+      HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
 
   release:
     needs: [lint_and_test]
