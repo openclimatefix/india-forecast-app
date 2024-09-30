@@ -16,6 +16,7 @@ from pvsite_datamodel import DatabaseConnection
 from pvsite_datamodel.sqlmodels import Base, GenerationSQL, SiteSQL
 from sqlalchemy import create_engine
 from testcontainers.postgres import PostgresContainer
+import zarr
 
 log = logging.getLogger(__name__)
 
@@ -225,10 +226,10 @@ def nwp_data(tmp_path_factory, time_before_present):
         f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data.zarr"
     )
 
-    # Last t0 to at least 6 hours ago and floor to 12-hour interval
+    # Last t0 to at least 8 hours ago and floor to 12-hour interval
     t0_datetime_utc = (time_before_present(dt.timedelta(hours=0))
                     .floor('12h'))
-    t0_datetime_utc = t0_datetime_utc - dt.timedelta(hours=6)
+    t0_datetime_utc = t0_datetime_utc - dt.timedelta(hours=8)
     ds.init_time.values[:] = pd.date_range(
         t0_datetime_utc - dt.timedelta(hours=12 * (len(ds.init_time) - 1)),
         t0_datetime_utc,
@@ -308,3 +309,50 @@ def nwp_gfs_data(tmp_path_factory, time_before_present):
 @pytest.fixture(scope="session")
 def client_ad():
     os.environ['CLIENT_NAME'] = 'ad'
+
+
+@pytest.fixture(scope="session")
+def satellite_data(tmp_path_factory, init_timestamp):
+    # Load dataset which only contains coordinates, but no data
+    ds = xr.open_zarr(
+        f"{os.path.dirname(os.path.abspath(__file__))}/test_data/non_hrv_shell.zarr"
+    )
+    # remove tim dim and geostationary dims and expand them
+    ds = ds.drop_vars(["time", "x_geostationary", "y_geostationary"])
+    n_hours = 3
+
+    # Add times so they lead up to present
+    t0_datetime_utc = init_timestamp - dt.timedelta(minutes=0)
+    times = pd.date_range(
+        t0_datetime_utc - dt.timedelta(hours=n_hours),
+        t0_datetime_utc,
+        freq=dt.timedelta(minutes=15),
+    )
+    ds = ds.expand_dims(time=times)
+
+    # Add data to dataset
+    ds["data"] = xr.DataArray(
+        np.zeros([len(ds[c]) for c in ds.xindexes]),
+        coords=[ds[c] for c in ds.xindexes],
+    )
+
+    #set geostationary cords for India
+    ds = ds.expand_dims(x_geostationary= np.arange(5000000.0, -5000000.0, -5000),
+                        y_geostationary= np.arange(-5000000.0, 5000000.0, 5000))
+
+
+    # Add stored attributes to DataArray
+    ds.data.attrs = ds.attrs["_data_attrs"]
+    del ds.attrs["_data_attrs"]
+
+    # In production sat zarr is zipped
+    temp_sat_path = f"{tmp_path_factory.mktemp('data')}/temp_sat.zarr.zip"
+
+    # save out data and set paths as environmental variables
+    os.environ["SATELLITE_ZARR_PATH"] = temp_sat_path
+    with zarr.storage.ZipStore(temp_sat_path, mode="x") as store:
+        ds.to_zarr(store)
+    
+@pytest.fixture(scope="function")
+def use_satellite():
+    os.environ['USE_SATELLITE'] = 'true'

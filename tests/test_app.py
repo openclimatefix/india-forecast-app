@@ -174,7 +174,7 @@ def test_app_no_pv_data(db_session, sites, nwp_data, nwp_gfs_data, generation_db
     assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (2 * 192)
 
 @pytest.mark.requires_hf_token
-def test_app_client_ad(db_session, sites, nwp_data, nwp_gfs_data, generation_db_values, client_ad):
+def test_app_client_ad(db_session, sites, nwp_data, nwp_gfs_data, satellite_data, use_satellite, generation_db_values, client_ad):
     """Test for running app from command line"""
 
     hf_token = os.getenv('HUGGINGFACE_TOKEN')
@@ -182,4 +182,4 @@ def test_app_client_ad(db_session, sites, nwp_data, nwp_gfs_data, generation_db_
     if hf_token is None:
         pytest.skip("Hugging Face token not set in environment variables, skipping test.")
 
-    app(timestamp=dt.datetime.now(tz=dt.UTC), )
+    app(timestamp=None)
