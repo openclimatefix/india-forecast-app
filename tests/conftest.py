@@ -2,7 +2,6 @@
 Fixtures for testing
 """
 
-
 import datetime as dt
 import logging
 import os
@@ -12,11 +11,11 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+import zarr
 from pvsite_datamodel import DatabaseConnection
 from pvsite_datamodel.sqlmodels import Base, GenerationSQL, SiteSQL
 from sqlalchemy import create_engine
 from testcontainers.postgres import PostgresContainer
-import zarr
 
 log = logging.getLogger(__name__)
 
@@ -120,7 +119,7 @@ def generation_db_values(db_session, sites, init_timestamp):
     """Create some fake generations"""
 
     n = 100  # 5 hours of readings
-    start_times = [init_timestamp - dt.timedelta(minutes=x*3) for x in range(n)]
+    start_times = [init_timestamp - dt.timedelta(minutes=x * 3) for x in range(n)]
 
     # remove some of the most recent readings (to simulate missing timestamps)
     del start_times[20]
@@ -128,7 +127,7 @@ def generation_db_values(db_session, sites, init_timestamp):
     del start_times[3]
 
     # Random power values in the range 0-10000kw
-    power_values = [random.random()*10000 for _ in range(len(start_times))]
+    power_values = [random.random() * 10000 for _ in range(len(start_times))]
 
     all_generations = []
     for site in sites:
@@ -146,12 +145,13 @@ def generation_db_values(db_session, sites, init_timestamp):
 
     return all_generations
 
+
 @pytest.fixture()
 def generation_db_values_only_wind(db_session, sites, init_timestamp):
     """Create some fake generations"""
 
     n = 100  # 5 hours of readings
-    start_times = [init_timestamp - dt.timedelta(minutes=x*3) for x in range(n)]
+    start_times = [init_timestamp - dt.timedelta(minutes=x * 3) for x in range(n)]
 
     # remove some of the most recent readings (to simulate missing timestamps)
     del start_times[20]
@@ -159,7 +159,7 @@ def generation_db_values_only_wind(db_session, sites, init_timestamp):
     del start_times[3]
 
     # Random power values in the range 0-10000kw
-    power_values = [random.random()*10000 for _ in range(len(start_times))]
+    power_values = [random.random() * 10000 for _ in range(len(start_times))]
 
     all_generations = []
     for site in sites:
@@ -192,7 +192,7 @@ def forecast_values():
     forecast_values = {
         "start_utc": start_utc,
         "end_utc": end_utc,
-        "forecast_power_kw": forecast_power_kw
+        "forecast_power_kw": forecast_power_kw,
     }
 
     return forecast_values
@@ -222,13 +222,10 @@ def nwp_data(tmp_path_factory, time_before_present):
     """Dummy NWP data"""
 
     # Load dataset which only contains coordinates, but no data
-    ds = xr.open_zarr(
-        f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data.zarr"
-    )
+    ds = xr.open_zarr(f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data.zarr")
 
     # Last t0 to at least 8 hours ago and floor to 12-hour interval
-    t0_datetime_utc = (time_before_present(dt.timedelta(hours=0))
-                    .floor('12h'))
+    t0_datetime_utc = time_before_present(dt.timedelta(hours=0)).floor("12h")
     t0_datetime_utc = t0_datetime_utc - dt.timedelta(hours=8)
     ds.init_time.values[:] = pd.date_range(
         t0_datetime_utc - dt.timedelta(hours=12 * (len(ds.init_time) - 1)),
@@ -237,7 +234,7 @@ def nwp_data(tmp_path_factory, time_before_present):
     )
 
     # force lat and lon to be in 0.1 steps
-    ds.latitude.values[:] = [35.0 - i*0.1 for i in range(len(ds.latitude))]
+    ds.latitude.values[:] = [35.0 - i * 0.1 for i in range(len(ds.latitude))]
     ds.longitude.values[:] = [65.0 + i * 0.1 for i in range(len(ds.longitude))]
 
     # This is important to avoid saving errors
@@ -261,6 +258,7 @@ def nwp_data(tmp_path_factory, time_before_present):
     os.environ["NWP_ECMWF_ZARR_PATH"] = temp_nwp_path_ecmwf
     ds.to_zarr(temp_nwp_path_ecmwf)
 
+
 @pytest.fixture(scope="session")
 def nwp_gfs_data(tmp_path_factory, time_before_present):
     """Dummy NWP data"""
@@ -270,10 +268,8 @@ def nwp_gfs_data(tmp_path_factory, time_before_present):
         f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data_gfs.zarr"
     )
 
-
     # Last t0 to at least 6 hours ago and floor to 3-hour interval
-    t0_datetime_utc = (time_before_present(dt.timedelta(hours=0))
-                    .floor('3h'))
+    t0_datetime_utc = time_before_present(dt.timedelta(hours=0)).floor("3h")
     t0_datetime_utc = t0_datetime_utc - dt.timedelta(hours=6)
     ds.init_time_utc.values[:] = pd.date_range(
         t0_datetime_utc - dt.timedelta(hours=12 * (len(ds.init_time_utc) - 1)),
@@ -281,7 +277,7 @@ def nwp_gfs_data(tmp_path_factory, time_before_present):
         freq=dt.timedelta(hours=3),
     )
     # force lat and lon to be in 0.1 steps
-    ds.latitude.values[:] = [35.0 - i*0.1 for i in range(len(ds.latitude))]
+    ds.latitude.values[:] = [35.0 - i * 0.1 for i in range(len(ds.latitude))]
     ds.longitude.values[:] = [65.0 + i * 0.1 for i in range(len(ds.longitude))]
 
     # This is important to avoid saving errors
@@ -292,7 +288,6 @@ def nwp_gfs_data(tmp_path_factory, time_before_present):
     for v in list(ds.variables.keys()):
         if ds[v].dtype == object:
             ds[v].encoding.clear()
-
 
     ds["gfs"] = xr.DataArray(
         np.zeros([len(ds[c]) for c in ds.xindexes]),
@@ -306,18 +301,19 @@ def nwp_gfs_data(tmp_path_factory, time_before_present):
     os.environ["NWP_GFS_ZARR_PATH"] = temp_nwp_path_gfs
     ds.to_zarr(temp_nwp_path_gfs)
 
+
 @pytest.fixture(scope="session")
 def client_ad():
-    os.environ['CLIENT_NAME'] = 'ad'
+    """Set ad client env var"""
+    os.environ["CLIENT_NAME"] = "ad"
 
 
 @pytest.fixture(scope="session")
 def satellite_data(tmp_path_factory, init_timestamp):
+    """Dummy Satellite data"""
     # Load dataset which only contains coordinates, but no data
-    ds = xr.open_zarr(
-        f"{os.path.dirname(os.path.abspath(__file__))}/test_data/non_hrv_shell.zarr"
-    )
-    # remove tim dim and geostationary dims and expand them
+    ds = xr.open_zarr(f"{os.path.dirname(os.path.abspath(__file__))}/test_data/non_hrv_shell.zarr")
+    # remove time dim and geostationary dims and expand them
     ds = ds.drop_vars(["time", "x_geostationary", "y_geostationary"])
     n_hours = 3
 
@@ -330,16 +326,17 @@ def satellite_data(tmp_path_factory, init_timestamp):
     )
     ds = ds.expand_dims(time=times)
 
+    # set geostationary cords for India
+    ds = ds.expand_dims(
+        x_geostationary=np.arange(5000000.0, -5000000.0, -5000),
+        y_geostationary=np.arange(-5000000.0, 5000000.0, 5000),
+    )
+
     # Add data to dataset
     ds["data"] = xr.DataArray(
         np.zeros([len(ds[c]) for c in ds.xindexes]),
         coords=[ds[c] for c in ds.xindexes],
     )
-
-    #set geostationary cords for India
-    ds = ds.expand_dims(x_geostationary= np.arange(5000000.0, -5000000.0, -5000),
-                        y_geostationary= np.arange(-5000000.0, 5000000.0, 5000))
-
 
     # Add stored attributes to DataArray
     ds.data.attrs = ds.attrs["_data_attrs"]
@@ -352,7 +349,9 @@ def satellite_data(tmp_path_factory, init_timestamp):
     os.environ["SATELLITE_ZARR_PATH"] = temp_sat_path
     with zarr.storage.ZipStore(temp_sat_path, mode="x") as store:
         ds.to_zarr(store)
-    
+
+
 @pytest.fixture(scope="function")
 def use_satellite():
-    os.environ['USE_SATELLITE'] = 'true'
+    """Set use satellite env var"""
+    os.environ["USE_SATELLITE"] = "true"
