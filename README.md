@@ -1,5 +1,7 @@
 <h1 align="center">india-forecast-app</h1>
 
+[![ease of contribution: hard](https://img.shields.io/badge/ease%20of%20contribution:%20hard-bb2629)](https://github.com/openclimatefix/ocf-meta-repo?tab=readme-ov-file#how-easy-is-it-to-get-involved)
+
 Runs wind and PV forecasts for India and saves to database
 
 ## The model
