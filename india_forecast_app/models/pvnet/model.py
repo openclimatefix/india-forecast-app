@@ -225,6 +225,7 @@ class PVNetModel:
             download_satellite_data(satellite_source_file_path)
 
         if self.asset_type == "wind":
+            log.info("Preparing wind data sources")
             # Clear local cached wind data if already exists
             shutil.rmtree(wind_path, ignore_errors=True)
             os.mkdir(wind_path)
@@ -248,6 +249,7 @@ class PVNetModel:
             self.generation_data["metadata"].to_csv(wind_metadata_path, index=False)
 
         if self.asset_type == "pv":
+            log.info("Preparing PV data sources")
             # Clear local cached wind data if already exists
             shutil.rmtree(pv_path, ignore_errors=True)
             os.mkdir(pv_path)

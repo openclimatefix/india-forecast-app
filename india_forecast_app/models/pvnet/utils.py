@@ -89,9 +89,10 @@ def populate_data_config_sources(input_path, output_path):
 def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
     """Reads zarr file, renames t variable to t2m and saves zarr to new destination"""
 
+    log.info(f'Processing and caching NWP data for {source_nwp_path}')
+
     # Load dataset from source
     ds = xr.open_zarr(source_nwp_path)
-    
 
     # This is important to avoid saving errors
     for v in list(ds.coords.keys()):
