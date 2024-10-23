@@ -85,7 +85,7 @@ def get_generation_data(
         session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
     )
     # hard code as for the moment
-    system_id = 1
+    system_id = sites[0].ml_id
 
     if len(generation_data) == 0:
         log.warning("No generation found for the specified sites/period")
@@ -128,9 +128,6 @@ def get_generation_data(
         # This is because we normalize by the watts amount
         col = generation_df.columns[0]
         generation_df[col] = generation_df[col].astype(float) * 1e3\
-
-        # rename columns 0 to power_kw
-        generation_df.rename({col:"power_kw"}, axis=1, inplace=True)
 
     # Site metadata dataframe
     sites_df = pd.DataFrame(

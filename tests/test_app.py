@@ -51,7 +51,7 @@ def test_get_generation_data(db_session, sites, generation_db_values, init_times
 
     # Check for 5 (non-null) generation values
     assert len(gen_df) == 5
-    assert not gen_df["power_kw"].isnull().any()  # 0 is the ml_id/system_id of the wind site
+    assert not gen_df["0"].isnull().any()  # 0 is the ml_id/system_id of the wind site
 
     # Check first and last timestamps are correct
     assert gen_df.index[0] == init_timestamp - dt.timedelta(hours=1)
