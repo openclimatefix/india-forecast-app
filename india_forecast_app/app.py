@@ -85,7 +85,7 @@ def get_generation_data(
         session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
     )
     # hard code as for the moment
-    system_id = int(0.0)
+    system_id = sites[0].ml_id
 
     if len(generation_data) == 0:
         log.warning("No generation found for the specified sites/period")
@@ -273,6 +273,7 @@ def app_click(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     """
 
     app(timestamp, write_to_db, log_level)
+
 
 def app(timestamp: dt.datetime | None, write_to_db: bool=False, log_level: str="info"):
     """
