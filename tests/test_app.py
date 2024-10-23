@@ -11,8 +11,8 @@ import pytest
 from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, MLModelSQL, SiteAssetType
 
 from india_forecast_app.app import (
-    app_run,
     app,
+    app_run,
     get_generation_data,
     get_model,
     get_sites,
@@ -22,7 +22,6 @@ from india_forecast_app.app import (
 from india_forecast_app.models.dummy import DummyModel
 from india_forecast_app.models.pvnet.model import PVNetModel
 from india_forecast_app.models.pydantic_models import get_all_models
-
 from ._utils import run_click_script
 
 mp.set_start_method("spawn", force=True)
