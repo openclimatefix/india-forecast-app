@@ -84,12 +84,12 @@ def get_generation_data(
     generation_data = get_pv_generation_by_sites(
         session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
     )
-    # hard code as for the moment
-    system_id = int(0.0)
+    # get the ml id, this only works for one site right now
+    system_id = sites[0].ml_id
 
     if len(generation_data) == 0:
         log.warning("No generation found for the specified sites/period")
-        generation_df = pd.DataFrame()
+        generation_df = pd.DataFrame(columns=[str(system_id)])
 
     else:
         # Convert to dataframe
@@ -272,7 +272,8 @@ def app_click(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     Main click function for running forecasts for sites in India
     """
 
-    app(timestamp, write_to_db, log_level)
+    app(timestamp=timestamp, write_to_db=write_to_db, log_level=log_level)
+
 
 def app(timestamp: dt.datetime | None, write_to_db: bool=False, log_level: str="info"):
     """

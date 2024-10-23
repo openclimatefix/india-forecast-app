@@ -61,7 +61,7 @@ class PVNetModel:
         generation_data: dict[str, pd.DataFrame],
         hf_repo: str,
         hf_version: str,
-        name: str
+        name: str,
     ):
         """Initializer for the model"""
 
@@ -131,6 +131,7 @@ class PVNetModel:
             log.info("Feathering the forecast to the lastest value of generation")
 
             # Feather in the last generation, if it exists
+            system_id = str(self.generation_data["data"].columns[0])
             generation_da = self.generation_data["data"].to_xarray()
 
             # Check if the generation exists, if so, take the value at t0 and
@@ -139,7 +140,8 @@ class PVNetModel:
                 final_gen_points = 0
                 final_gen_index = 0
                 for gen_idx in range(len(generation_da.index.values) - 1, -1, -1):
-                    current_gen = generation_da.isel(index=gen_idx)["0"].values
+                    current_gen = generation_da.isel(index=gen_idx)
+                    current_gen = current_gen[system_id].values
                     if not np.isnan(current_gen) and current_gen > 0:
                         final_gen_points = current_gen * 1000.0
                         # Convert to KW back from MW
@@ -241,7 +243,10 @@ class PVNetModel:
 
             # if generation_da is still empty make nans
             if len(generation_da) == 0:
-                generation_df = pd.DataFrame(index=forecast_timesteps, columns=["0"], data=0.0001)
+                cols = [str(col) for col in self.generation_data["data"].columns]
+                generation_df = pd.DataFrame(
+                    index=forecast_timesteps, columns=cols, data=0.0001
+                )
                 generation_da = generation_df.to_xarray()
             generation_da.to_netcdf(wind_netcdf_path, engine="h5netcdf")
 
@@ -271,7 +276,8 @@ class PVNetModel:
 
             # if generation_da is still empty make nans
             if len(generation_da) == 0:
-                generation_df = pd.DataFrame(index=forecast_timesteps, columns=["0"], data=0.0001)
+                cols = [str(col) for col in self.generation_data["data"].columns]
+                generation_df = pd.DataFrame(index=forecast_timesteps, columns=cols, data=0.0001)
                 generation_da = generation_df.to_xarray()
             generation_da.to_netcdf(pv_netcdf_path, engine="h5netcdf")
 
