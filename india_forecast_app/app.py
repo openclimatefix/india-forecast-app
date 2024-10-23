@@ -272,7 +272,7 @@ def app_click(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     Main click function for running forecasts for sites in India
     """
 
-    app(timestamp, write_to_db, log_level)
+    app(timestamp=timestamp, write_to_db=write_to_db, log_level=log_level)
 
 
 def app(timestamp: dt.datetime | None, write_to_db: bool=False, log_level: str="info"):
