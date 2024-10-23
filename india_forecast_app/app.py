@@ -89,7 +89,7 @@ def get_generation_data(
 
     if len(generation_data) == 0:
         log.warning("No generation found for the specified sites/period")
-        generation_df = pd.DataFrame()
+        generation_df = pd.DataFrame(columns=[system_id])
 
     else:
         # Convert to dataframe
@@ -130,7 +130,7 @@ def get_generation_data(
         generation_df[col] = generation_df[col].astype(float) * 1e3\
 
         # rename columns 0 to power_kw
-        generation_df.rename({col:"power_kw"}, inplace=True)
+        generation_df.rename({col:"power_kw"}, axis=1, inplace=True)
 
     # Site metadata dataframe
     sites_df = pd.DataFrame(
