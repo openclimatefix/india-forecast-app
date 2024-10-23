@@ -85,7 +85,7 @@ def get_generation_data(
         session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
     )
     # hard code as for the moment
-    system_id = int(sites[0].ml_id)
+    system_id = 1
 
     if len(generation_data) == 0:
         log.warning("No generation found for the specified sites/period")
