@@ -89,7 +89,7 @@ def get_generation_data(
 
     if len(generation_data) == 0:
         log.warning("No generation found for the specified sites/period")
-        generation_df = pd.DataFrame(columns=[system_id])
+        generation_df = pd.DataFrame(columns=[str(system_id)])
 
     else:
         # Convert to dataframe
