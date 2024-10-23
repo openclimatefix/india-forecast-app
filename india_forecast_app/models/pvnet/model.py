@@ -242,8 +242,9 @@ class PVNetModel:
 
             # if generation_da is still empty make nans
             if len(generation_da) == 0:
+                cols = [str(col) for col in generation_da.columns]
                 generation_df = pd.DataFrame(
-                    index=forecast_timesteps, columns=generation_da.columns, data=0.0001
+                    index=forecast_timesteps, columns=cols, data=0.0001
                 )
                 generation_da = generation_df.to_xarray()
             generation_da.to_netcdf(wind_netcdf_path, engine="h5netcdf")
