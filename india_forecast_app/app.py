@@ -84,7 +84,7 @@ def get_generation_data(
     generation_data = get_pv_generation_by_sites(
         session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
     )
-    # hard code as for the moment
+    # get the ml id, this only works for one site right now
     system_id = sites[0].ml_id
 
     if len(generation_data) == 0:
