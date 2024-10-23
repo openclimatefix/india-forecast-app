@@ -84,7 +84,7 @@ def get_generation_data(
     generation_data = get_pv_generation_by_sites(
         session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
     )
-    # hard code as for the moment
+    # hard code as for the moment, we shold change this
     system_id = int(0.0)
 
     if len(generation_data) == 0:
