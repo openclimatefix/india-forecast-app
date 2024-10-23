@@ -267,15 +267,15 @@ Format should be YYYY-MM-DD-HH-mm. Defaults to "now".',
     help="Set the python logging log level",
     show_default=True,
 )
-def app_click(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
+def app(timestamp: dt.datetime | None, write_to_db: bool, log_level: str):
     """
     Main click function for running forecasts for sites in India
     """
 
-    app(timestamp=timestamp, write_to_db=write_to_db, log_level=log_level)
+    app_run(timestamp=timestamp, write_to_db=write_to_db, log_level=log_level)
 
 
-def app(timestamp: dt.datetime | None, write_to_db: bool=False, log_level: str="info"):
+def app_run(timestamp: dt.datetime | None, write_to_db: bool=False, log_level: str= "info"):
     """
     Main function for running forecasts for sites in India
     """
@@ -383,4 +383,4 @@ def app(timestamp: dt.datetime | None, write_to_db: bool=False, log_level: str="
 
 
 if __name__ == "__main__":
-    app_click()
+    app()

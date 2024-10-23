@@ -11,8 +11,8 @@ import pytest
 from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, MLModelSQL, SiteAssetType
 
 from india_forecast_app.app import (
+    app_run,
     app,
-    app_click,
     get_generation_data,
     get_model,
     get_sites,
@@ -155,7 +155,7 @@ def test_app(write_to_db, db_session, sites, nwp_data, nwp_gfs_data, generation_
     if write_to_db:
         args.append("--write-to-db")
 
-    result = run_click_script(app_click, args)
+    result = run_click_script(app, args)
     assert result.exit_code == 0
 
     if write_to_db:
@@ -176,7 +176,7 @@ def test_app_no_pv_data(db_session, sites, nwp_data, nwp_gfs_data, generation_db
     args = ["--date", dt.datetime.now(tz=dt.UTC).strftime("%Y-%m-%d-%H-%M")]
     args.append("--write-to-db")
 
-    result = run_click_script(app_click, args)
+    result = run_click_script(app, args)
     assert result.exit_code == 0
 
     assert db_session.query(ForecastSQL).count() == init_n_forecasts + 2
@@ -201,4 +201,4 @@ def test_app_client_ad(
     if hf_token is None:
         pytest.skip("Hugging Face token not set in environment variables, skipping test.")
 
-    app(timestamp=None)
+    app_run(timestamp=None)
