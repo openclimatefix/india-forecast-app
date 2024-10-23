@@ -127,7 +127,10 @@ def get_generation_data(
         # as this is current what ocf_datapipes expects
         # This is because we normalize by the watts amount
         col = generation_df.columns[0]
-        generation_df[col] = generation_df[col].astype(float) * 1e3
+        generation_df[col] = generation_df[col].astype(float) * 1e3\
+
+        # rename columns 0 to power_kw
+        generation_df.rename({col:"power_kw"}, inplace=True)
 
     # Site metadata dataframe
     sites_df = pd.DataFrame(
