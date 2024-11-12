@@ -1,10 +1,11 @@
-from pvsite_datamodel.sqlmodels import ForecastValueSQL, GenerationSQL, ForecastSQL
-from sqlalchemy.sql import func
-from sqlalchemy import cast, INT, text
-
+""" Adjuster code, adjust forecast by last 7 days of ME"""
 from datetime import datetime, timedelta
-import pandas as pd
 from typing import Optional
+
+import pandas as pd
+from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, GenerationSQL
+from sqlalchemy import INT, cast, text
+from sqlalchemy.sql import func
 
 # Wad to get all the forecast for the last 7 days made, at this time.
 # And find the ME for each forecast horizon
@@ -37,8 +38,9 @@ def get_me_values(
     """
     Get the ME values for the last 7 days for a given hour, for a given hour creation time
 
-    args:
-    hour: the hour of whent he forecast is created
+    Args:
+    hour: the hour of when the forecast is created
+    site_uuid: the site this is for
     start_datetime:: the start datetime to filter on.
     session: sqlalchemy session
 
