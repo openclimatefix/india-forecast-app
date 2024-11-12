@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 import india_forecast_app
 from india_forecast_app.models import PVNetModel, get_all_models
 from india_forecast_app.sentry import traces_sampler
+from india_forecast_app.adjuster import get_me_values
 
 log = logging.getLogger(__name__)
 version = india_forecast_app.__version__
@@ -204,6 +205,7 @@ def save_forecast(
     write_to_db: bool,
     ml_model_name: Optional[str] = None,
     ml_model_version: Optional[str] = None,
+    use_adjuster: bool = True,
 ):
     """
     Saves a forecast for a given site & timestamp
@@ -237,6 +239,32 @@ def save_forecast(
             ml_model_name=ml_model_name,
             ml_model_version=ml_model_version,
         )
+
+    if use_adjuster:
+        log.info(f"Adjusting forecast for site_id={forecast_meta['site_uuid']}...")
+        me_values = get_me_values(db_session, forecast_meta["timestamp_utc"].hour)
+
+        log.info(f"ME values: {me_values}")
+
+        # TODO
+        # should we put some sort of limits on the adjuster
+        # perhaps 10% of capacity?
+
+        # join forecast_values_df with me_values on horizon_minutes
+        forecast_values_df_adjust = forecast_values_df.copy()
+        forecast_values_df_adjust = forecast_values_df_adjust.merge(me_values, on="horizon_minutes", how="left")
+
+        # adjust forecast_power_kw by ME values
+        forecast_values_df_adjust["forecast_power_kw"] = forecast_values_df_adjust["forecast_power_kw"] - forecast_values_df_adjust["me_kw"]
+
+        if write_to_db:
+            insert_forecast_values(
+                db_session,
+                forecast_meta,
+                forecast_values_df_adjust,
+                ml_model_name=f'{ml_model_name}_adjust',
+                ml_model_version=ml_model_version,
+            )
 
     output = f'Forecast for site_id={forecast_meta["site_uuid"]},\
                timestamp={forecast_meta["timestamp_utc"]},\
