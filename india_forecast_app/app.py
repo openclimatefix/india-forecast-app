@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import sentry_sdk
 from pvsite_datamodel import DatabaseConnection
-from pvsite_datamodel.read import get_pv_generation_by_sites, get_sites_by_country
+from pvsite_datamodel.read import get_pv_generation_by_sites, get_sites_by_country, get_site_by_uuid
 from pvsite_datamodel.sqlmodels import SiteAssetType, SiteSQL
 from pvsite_datamodel.write import insert_forecast_values
 from sqlalchemy.orm import Session
@@ -242,27 +242,45 @@ def save_forecast(
 
     if use_adjuster:
         log.info(f"Adjusting forecast for site_id={forecast_meta['site_uuid']}...")
-        me_values = get_me_values(db_session, forecast_meta["timestamp_utc"].hour)
+        me_values = get_me_values(
+            db_session, forecast_meta["timestamp_utc"].hour, site_uuid=forecast_meta["site_uuid"]
+        )
 
         log.info(f"ME values: {me_values}")
 
-        # TODO
-        # should we put some sort of limits on the adjuster
-        # perhaps 10% of capacity?
+        # clip me values by 10% of the capacity
+        site = get_site_by_uuid(db_session, forecast_meta["site_uuid"])
+        capacity = site.capacity_kw
+        me_values["me_kw"].clip(lower=-0.1 * capacity, upper=0.1 * capacity, inplace=True)
 
         # join forecast_values_df with me_values on horizon_minutes
         forecast_values_df_adjust = forecast_values_df.copy()
-        forecast_values_df_adjust = forecast_values_df_adjust.merge(me_values, on="horizon_minutes", how="left")
+        forecast_values_df_adjust = forecast_values_df_adjust.merge(
+            me_values, on="horizon_minutes", how="left"
+        )
+
+        # if me_kw is null, set to 0
+        forecast_values_df_adjust["me_kw"].fillna(0, inplace=True)
 
         # adjust forecast_power_kw by ME values
-        forecast_values_df_adjust["forecast_power_kw"] = forecast_values_df_adjust["forecast_power_kw"] - forecast_values_df_adjust["me_kw"]
+        forecast_values_df_adjust["forecast_power_kw"] = (
+            forecast_values_df_adjust["forecast_power_kw"] - forecast_values_df_adjust["me_kw"]
+        )
+
+        # drop me_kw column
+        forecast_values_df_adjust.drop(columns=["me_kw"], inplace=True)
+
+        # clip negative values to 0
+        forecast_values_df_adjust["forecast_power_kw"].clip(lower=0, inplace=True)
+
+        log.info(forecast_values_df_adjust)
 
         if write_to_db:
             insert_forecast_values(
                 db_session,
                 forecast_meta,
                 forecast_values_df_adjust,
-                ml_model_name=f'{ml_model_name}_adjust',
+                ml_model_name=f"{ml_model_name}_adjust",
                 ml_model_version=ml_model_version,
             )
 

@@ -1,5 +1,6 @@
 from pvsite_datamodel.sqlmodels import ForecastValueSQL, GenerationSQL, ForecastSQL
 from sqlalchemy.sql import func
+from sqlalchemy import cast, INT, text
 
 from datetime import datetime, timedelta
 import pandas as pd
@@ -30,7 +31,9 @@ group by horizon_minutes
 """
 
 
-def get_me_values(session, hour: int, start_datetime: Optional[datetime] = None) -> pd.DataFrame:
+def get_me_values(
+    session, hour: int, site_uuid: str, start_datetime: Optional[datetime] = None
+) -> pd.DataFrame:
     """
     Get the ME values for the last 7 days for a given hour, for a given hour creation time
 
@@ -51,15 +54,24 @@ def get_me_values(session, hour: int, start_datetime: Optional[datetime] = None)
 
     # join
     query = query.join(ForecastSQL)
-    query = query.filter(GenerationSQL.start_utc == ForecastValueSQL.start_utc)
+
+    # round Generation start_utc and join to forecast start_utc
+    start_utc_minute_rounded = (
+        cast(func.date_part("minute", GenerationSQL.start_utc), INT)
+        / 15
+        * text("interval '15 min'")
+    )
+    start_utc_hour = func.date_trunc("hour", GenerationSQL.start_utc)
+    generation_start_utc = start_utc_hour + start_utc_minute_rounded
+    query = query.filter(generation_start_utc == ForecastValueSQL.start_utc)
 
     # only include the last 7 days
     query = query.filter(ForecastValueSQL.start_utc >= start_datetime)
     query = query.filter(GenerationSQL.start_utc >= start_datetime)
 
     # filter on site
-    query = query.filter(ForecastSQL.site_uuid == "adaf6be8-4e30-4c98-ac27-964447e9c8e6")
-    query = query.filter(GenerationSQL.site_uuid == "adaf6be8-4e30-4c98-ac27-964447e9c8e6")
+    query = query.filter(ForecastSQL.site_uuid == site_uuid)
+    query = query.filter(GenerationSQL.site_uuid == site_uuid)
 
     # filter on created_utc
     query = query.filter((func.extract("hour", ForecastSQL.created_utc) == hour))
@@ -75,4 +87,3 @@ def get_me_values(session, hour: int, start_datetime: Optional[datetime] = None)
     me_df = pd.DataFrame(me, columns=["me_kw", "horizon_minutes"])
 
     return me_df
-
