@@ -6,6 +6,7 @@ import datetime as dt
 import logging
 import os
 import random
+from uuid import uuid4
 
 import numpy as np
 import pandas as pd
@@ -13,7 +14,8 @@ import pytest
 import xarray as xr
 import zarr
 from pvsite_datamodel import DatabaseConnection
-from pvsite_datamodel.sqlmodels import Base, GenerationSQL, SiteSQL
+from pvsite_datamodel.read.model import get_or_create_model
+from pvsite_datamodel.sqlmodels import Base, ForecastSQL, ForecastValueSQL, GenerationSQL, SiteSQL
 from sqlalchemy import create_engine
 from testcontainers.postgres import PostgresContainer
 
@@ -196,6 +198,43 @@ def forecast_values():
     }
 
     return forecast_values
+
+
+@pytest.fixture()
+def forecasts(db_session, sites):
+    """Make fake forecasts"""
+    init_timestamp = pd.Timestamp(dt.datetime.now(tz=None)).floor(dt.timedelta(minutes=15))
+
+    n = 24 * 4  # 24 hours of readings of 15
+    start_times = [init_timestamp - dt.timedelta(minutes=x * 15) for x in range(n)]
+    start_times = start_times[::-1]
+
+    for site in sites:
+        forecast_uuid = uuid4()
+        model = get_or_create_model(db_session, "test", "0.0.0")
+        forecast = ForecastSQL(
+            site_uuid=site.site_uuid,
+            timestamp_utc=start_times[-1],
+            forecast_version="0.0.0",
+            created_utc=start_times[-1],
+            forecast_uuid=forecast_uuid,
+        )
+        db_session.add(forecast)
+
+        forecast_values = []
+        for i in range(0, len(start_times)):
+            forecast_value = ForecastValueSQL(
+                horizon_minutes=i * 15,
+                forecast_power_kw=random.random() * 10000,
+                start_utc=start_times[i],
+                end_utc=start_times[i] + dt.timedelta(minutes=15),
+                ml_model_uuid=model.model_uuid,
+                forecast_uuid=forecast_uuid,
+                created_utc=start_times[-1],
+            )
+            forecast_values.append(forecast_value)
+
+        db_session.add_all(forecast_values)
 
 
 @pytest.fixture(scope="session")

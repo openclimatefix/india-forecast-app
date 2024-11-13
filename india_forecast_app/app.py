@@ -19,6 +19,7 @@ from pvsite_datamodel.write import insert_forecast_values
 from sqlalchemy.orm import Session
 
 import india_forecast_app
+from india_forecast_app.adjuster import adjust_forecast_with_adjuster
 from india_forecast_app.models import PVNetModel, get_all_models
 from india_forecast_app.sentry import traces_sampler
 
@@ -204,6 +205,7 @@ def save_forecast(
     write_to_db: bool,
     ml_model_name: Optional[str] = None,
     ml_model_version: Optional[str] = None,
+    use_adjuster: bool = True,
 ):
     """
     Saves a forecast for a given site & timestamp
@@ -214,6 +216,7 @@ def save_forecast(
             write_to_db: If true, forecast values are written to db, otherwise to stdout
             ml_model_name: Name of the ML model used for the forecast
             ml_model_version: Version of the ML model used for the forecast
+            use_adjuster: Make new model, adjusted by last 7 days of ME values
 
     Raises:
             IOError: An error if database save fails
@@ -237,6 +240,23 @@ def save_forecast(
             ml_model_name=ml_model_name,
             ml_model_version=ml_model_version,
         )
+
+    if use_adjuster:
+        log.info(f"Adjusting forecast for site_id={forecast_meta['site_uuid']}...")
+        forecast_values_df_adjust = adjust_forecast_with_adjuster(
+            db_session, forecast_meta, forecast_values_df, ml_model_name=ml_model_name
+        )
+
+        log.info(forecast_values_df_adjust)
+
+        if write_to_db:
+            insert_forecast_values(
+                db_session,
+                forecast_meta,
+                forecast_values_df_adjust,
+                ml_model_name=f"{ml_model_name}_adjust",
+                ml_model_version=ml_model_version,
+            )
 
     output = f'Forecast for site_id={forecast_meta["site_uuid"]},\
                timestamp={forecast_meta["timestamp_utc"]},\

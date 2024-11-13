@@ -54,6 +54,17 @@ The weather variables are
 - dlwrf
 - dswrf
 
+### Adjuster
+
+As well as the main ml model, we also calculate a new model. 
+This new model tweaks the original model and adjusts it based 
+on its performance over the last 7 days. 
+
+The model takes the initial results from ml model, 
+then looks up the ME over the last 7 days, 
+and then adjusts the forecast values accordingly. 
+This should get rid of any systematic errors. 
+
 ## Install dependencies (requires [poetry](https://python-poetry.org/))
 
 ```

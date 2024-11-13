@@ -139,9 +139,9 @@ def test_save_forecast(db_session, sites, forecast_values):
         db_session, forecast, write_to_db=True, ml_model_name="test", ml_model_version="0.0.0"
     )
 
-    assert db_session.query(ForecastSQL).count() == 1
-    assert db_session.query(ForecastValueSQL).count() == 10
-    assert db_session.query(MLModelSQL).count() == 1
+    assert db_session.query(ForecastSQL).count() == 2
+    assert db_session.query(ForecastValueSQL).count() == 10*2
+    assert db_session.query(MLModelSQL).count() == 2
 
 
 @pytest.mark.parametrize("write_to_db", [True, False])
@@ -159,9 +159,9 @@ def test_app(write_to_db, db_session, sites, nwp_data, nwp_gfs_data, generation_
     assert result.exit_code == 0
 
     if write_to_db:
-        assert db_session.query(ForecastSQL).count() == init_n_forecasts + 2
-        assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (2 * 192)
-        assert db_session.query(MLModelSQL).count() == 2
+        assert db_session.query(ForecastSQL).count() == init_n_forecasts + 2*2
+        assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (2*2 * 192)
+        assert db_session.query(MLModelSQL).count() == 2*2
     else:
         assert db_session.query(ForecastSQL).count() == init_n_forecasts
         assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values
@@ -179,8 +179,8 @@ def test_app_no_pv_data(db_session, sites, nwp_data, nwp_gfs_data, generation_db
     result = run_click_script(app, args)
     assert result.exit_code == 0
 
-    assert db_session.query(ForecastSQL).count() == init_n_forecasts + 2
-    assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (2 * 192)
+    assert db_session.query(ForecastSQL).count() == init_n_forecasts + 2*2
+    assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (2*2 * 192)
 
 
 @pytest.mark.requires_hf_token
