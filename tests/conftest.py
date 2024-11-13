@@ -6,6 +6,7 @@ import datetime as dt
 import logging
 import os
 import random
+from uuid import uuid4
 
 import numpy as np
 import pandas as pd
@@ -17,7 +18,6 @@ from pvsite_datamodel.read.model import get_or_create_model
 from pvsite_datamodel.sqlmodels import Base, GenerationSQL, ForecastSQL, ForecastValueSQL, SiteSQL
 from sqlalchemy import create_engine
 from testcontainers.postgres import PostgresContainer
-from uuid import uuid4
 
 log = logging.getLogger(__name__)
 
@@ -202,6 +202,7 @@ def forecast_values():
 
 @pytest.fixture()
 def forecasts(db_session, sites):
+    """Make fake forecasts"""
     init_timestamp = pd.Timestamp(dt.datetime.now(tz=None)).floor(dt.timedelta(minutes=15))
 
     n = 24 * 4  # 24 hours of readings of 15
