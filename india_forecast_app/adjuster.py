@@ -91,7 +91,7 @@ def get_me_values(
 
     if ml_model_name is not None:
         query = query.join(MLModelSQL)
-        query = query.filter(MLModelSQL.ml_model_name == ml_model_name)
+        query = query.filter(MLModelSQL.name == ml_model_name)
 
     # group by forecast horizon
     query = query.group_by(ForecastValueSQL.horizon_minutes)
