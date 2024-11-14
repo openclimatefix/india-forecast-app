@@ -64,6 +64,7 @@ The model takes the initial results from ml model,
 then looks up the ME over the last 7 days, 
 and then adjusts the forecast values accordingly. 
 This should get rid of any systematic errors. 
+The adjuster values are dependent on time of data and forecast horizon, e.g. a forecast made at 15.00 for 17.00 looks back at all the forecasts made at 15.00 for 17.00 in the last 7 days. 
 
 ## Install dependencies (requires [poetry](https://python-poetry.org/))
 
