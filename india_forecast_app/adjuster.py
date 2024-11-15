@@ -102,6 +102,9 @@ def get_me_values(
     me = query.all()
 
     me_df = pd.DataFrame(me, columns=["me_kw", "horizon_minutes"])
+    
+    # smooth results out, 30 mins each side
+    me_df["me_kw"] = me_df["me_kw"].rolling(window=5, min_periods=1, center=True).mean()
 
     return me_df
 
