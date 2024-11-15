@@ -102,9 +102,6 @@ def get_me_values(
     me = query.all()
 
     me_df = pd.DataFrame(me, columns=["me_kw", "horizon_minutes"])
-    
-    # smooth results out, 30 mins each side
-    me_df["me_kw"] = me_df["me_kw"].rolling(window=5, min_periods=1, center=True).mean()
 
     return me_df
 
@@ -130,6 +127,9 @@ def adjust_forecast_with_adjuster(
         ml_model_name=ml_model_name,
     )
     log.debug(f"ME values: {me_values}")
+
+    # smooth results out, 30 mins each side
+    me_values["me_kw"] = me_values["me_kw"].rolling(window=5, min_periods=1, center=True).mean()
 
     # clip me values by 10% of the capacity
     site = get_site_by_uuid(db_session, forecast_meta["site_uuid"])
