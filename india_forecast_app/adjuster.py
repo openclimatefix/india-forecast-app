@@ -128,6 +128,9 @@ def adjust_forecast_with_adjuster(
     )
     log.debug(f"ME values: {me_values}")
 
+    # smooth results out, 30 mins each side
+    me_values["me_kw"] = me_values["me_kw"].rolling(window=5, min_periods=1, center=True).mean()
+
     # clip me values by 10% of the capacity
     site = get_site_by_uuid(db_session, forecast_meta["site_uuid"])
     capacity = site.capacity_kw
