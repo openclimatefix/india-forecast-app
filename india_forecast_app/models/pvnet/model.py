@@ -24,6 +24,7 @@ from torch.utils.data.datapipes.iter import IterableWrapper
 from .consts import (
     nwp_ecmwf_path,
     nwp_gfs_path,
+    nwp_mo_global_path,
     pv_metadata_path,
     pv_netcdf_path,
     pv_path,
@@ -78,8 +79,8 @@ class PVNetModel:
 
         # Setup the data, dataloader, and model
         self.generation_data = generation_data
-        self._prepare_data_sources()
         self.dataloader = self._create_dataloader()
+        self._prepare_data_sources()
         self.model = self._load_model()
 
     def predict(self, site_id: str, timestamp: dt.datetime):
@@ -209,14 +210,26 @@ class PVNetModel:
             pass
 
         # Load remote zarr source
-        nwp_ecmwf_source_file_path = os.environ["NWP_ECMWF_ZARR_PATH"]
-        nwp_gfs_source_file_path = os.environ["NWP_GFS_ZARR_PATH"]
-
         use_satellite = os.getenv("USE_SATELLITE", "false").lower() == "true"
         satellite_source_file_path = os.getenv("SATELLITE_ZARR_PATH", None)
 
-        nwp_source_file_paths = [nwp_ecmwf_source_file_path, nwp_gfs_source_file_path]
-        nwp_paths = [nwp_ecmwf_path, nwp_gfs_path]
+        # only load nwp that we need
+        nwp_paths = []
+        nwp_source_file_paths = []
+        nwp_keys = self.config['input_data']['nwp'].keys()
+        if 'ecmwf' in nwp_keys:
+            nwp_ecmwf_source_file_path = os.environ["NWP_ECMWF_ZARR_PATH"]
+            nwp_source_file_paths.append(nwp_ecmwf_source_file_path)
+            nwp_paths.append(nwp_ecmwf_path)
+        if 'gfs' in nwp_keys:
+            nwp_gfs_source_file_path = os.environ["NWP_GFS_ZARR_PATH"]
+            nwp_source_file_paths.append(nwp_gfs_source_file_path)
+            nwp_paths.append(nwp_gfs_path)
+        if 'mo_global' in nwp_keys:
+            nwp_mo_global_source_file_path = os.environ["NWP_MO_GLOBAL_ZARR_PATH"]
+            nwp_source_file_paths.append(nwp_mo_global_source_file_path)
+            nwp_paths.append(nwp_mo_global_path)
+
         # Remove local cached zarr if already exists
         for nwp_source_file_path, nwp_path in zip(nwp_source_file_paths, nwp_paths, strict=False):
             # Process/cache remote zarr locally
@@ -299,7 +312,7 @@ class PVNetModel:
         temp_dir = tempfile.TemporaryDirectory()
         populated_data_config_filename = f"{temp_dir.name}/data_config.yaml"
 
-        populate_data_config_sources(data_config_filename, populated_data_config_filename)
+        self.config = populate_data_config_sources(data_config_filename, populated_data_config_filename)
 
         # Location and time datapipes
         gen_sites = self.generation_data["metadata"]
