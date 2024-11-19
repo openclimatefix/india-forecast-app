@@ -216,16 +216,16 @@ class PVNetModel:
         # only load nwp that we need
         nwp_paths = []
         nwp_source_file_paths = []
-        nwp_keys = self.config['input_data']['nwp'].keys()
-        if 'ecmwf' in nwp_keys:
+        nwp_keys = self.config["input_data"]["nwp"].keys()
+        if "ecmwf" in nwp_keys:
             nwp_ecmwf_source_file_path = os.environ["NWP_ECMWF_ZARR_PATH"]
             nwp_source_file_paths.append(nwp_ecmwf_source_file_path)
             nwp_paths.append(nwp_ecmwf_path)
-        if 'gfs' in nwp_keys:
+        if "gfs" in nwp_keys:
             nwp_gfs_source_file_path = os.environ["NWP_GFS_ZARR_PATH"]
             nwp_source_file_paths.append(nwp_gfs_source_file_path)
             nwp_paths.append(nwp_gfs_path)
-        if 'mo_global' in nwp_keys:
+        if "mo_global" in nwp_keys:
             nwp_mo_global_source_file_path = os.environ["NWP_MO_GLOBAL_ZARR_PATH"]
             nwp_source_file_paths.append(nwp_mo_global_source_file_path)
             nwp_paths.append(nwp_mo_global_path)
@@ -257,9 +257,7 @@ class PVNetModel:
             # if generation_da is still empty make nans
             if len(generation_da) == 0:
                 cols = [str(col) for col in self.generation_data["data"].columns]
-                generation_df = pd.DataFrame(
-                    index=forecast_timesteps, columns=cols, data=0.0001
-                )
+                generation_df = pd.DataFrame(index=forecast_timesteps, columns=cols, data=0.0001)
                 generation_da = generation_df.to_xarray()
             generation_da.to_netcdf(wind_netcdf_path, engine="h5netcdf")
 
@@ -312,7 +310,9 @@ class PVNetModel:
         temp_dir = tempfile.TemporaryDirectory()
         populated_data_config_filename = f"{temp_dir.name}/data_config.yaml"
 
-        self.config = populate_data_config_sources(data_config_filename, populated_data_config_filename)
+        self.config = populate_data_config_sources(
+            data_config_filename, populated_data_config_filename
+        )
 
         # Location and time datapipes
         gen_sites = self.generation_data["metadata"]
