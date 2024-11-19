@@ -63,7 +63,7 @@ def get_me_values(
     query = session.query(
         func.avg(ForecastValueSQL.forecast_power_kw - GenerationSQL.generation_power_kw),
         # create hour column
-        (cast(ForecastValueSQL.horizon_minutes, INT) / 60).label("horizon_hour"),
+        (cast(ForecastValueSQL.horizon_minutes / 60, INT)).label("horizon_hour"),
     )
 
     # join
