@@ -71,8 +71,8 @@ def get_me_values(
     # round Generation start_utc and join to forecast start_utc
     start_utc_minute_rounded = (
         cast(func.date_part("minute", GenerationSQL.start_utc), INT)
-        / 15
-        * text("interval '15 min'")
+        / 30
+        * text("interval '30 min'")
     )
     start_utc_hour = func.date_trunc("hour", GenerationSQL.start_utc)
     generation_start_utc = start_utc_hour + start_utc_minute_rounded
@@ -128,7 +128,7 @@ def adjust_forecast_with_adjuster(
     )
     log.debug(f"ME values: {me_values}")
 
-    # smooth results out, 30 mins each side
+    # smooth results out, 1 hour each side
     me_values["me_kw"] = me_values["me_kw"].rolling(window=5, min_periods=1, center=True).mean()
 
     # clip me values by 10% of the capacity
@@ -148,6 +148,9 @@ def adjust_forecast_with_adjuster(
     forecast_values_df_adjust = forecast_values_df_adjust.merge(
         me_values, on="horizon_minutes", how="left"
     )
+
+    # interpolate nans with window limit of 2
+    forecast_values_df_adjust["me_kw"].interpolate(limit=2, inplace=True)
 
     # if me_kw is null, set to 0
     forecast_values_df_adjust["me_kw"].fillna(0, inplace=True)
