@@ -62,7 +62,8 @@ def get_me_values(
 
     query = session.query(
         func.avg(ForecastValueSQL.forecast_power_kw - GenerationSQL.generation_power_kw),
-        ForecastValueSQL.horizon_minutes,
+        # create hour column
+        (cast(ForecastValueSQL.horizon_minutes, INT) / 60).label("horizon_hour"),
     )
 
     # join
@@ -71,8 +72,8 @@ def get_me_values(
     # round Generation start_utc and join to forecast start_utc
     start_utc_minute_rounded = (
         cast(func.date_part("minute", GenerationSQL.start_utc), INT)
-        / 30
-        * text("interval '30 min'")
+        / 15
+        * text("interval '15 min'")
     )
     start_utc_hour = func.date_trunc("hour", GenerationSQL.start_utc)
     generation_start_utc = start_utc_hour + start_utc_minute_rounded
@@ -94,14 +95,18 @@ def get_me_values(
         query = query.filter(MLModelSQL.name == ml_model_name)
 
     # group by forecast horizon
-    query = query.group_by(ForecastValueSQL.horizon_minutes)
+    query = query.group_by('horizon_hour')
 
     # order by forecast horizon
-    query = query.order_by(ForecastValueSQL.horizon_minutes)
+    query = query.order_by('horizon_hour')
 
     me = query.all()
 
-    me_df = pd.DataFrame(me, columns=["me_kw", "horizon_minutes"])
+    me_df = pd.DataFrame(me, columns=["me_kw", "horizon_hour"])
+    me_df["horizon_minutes"] = me_df["horizon_hour"] * 60
+
+    # drop the hour column
+    me_df.drop(columns=["horizon_hour"], inplace=True)
 
     return me_df
 
@@ -129,7 +134,7 @@ def adjust_forecast_with_adjuster(
     log.debug(f"ME values: {me_values}")
 
     # smooth results out, 1 hour each side
-    me_values["me_kw"] = me_values["me_kw"].rolling(window=5, min_periods=1, center=True).mean()
+    # me_values["me_kw"] = me_values["me_kw"].rolling(window=5, min_periods=1, center=True).mean()
 
     # clip me values by 10% of the capacity
     site = get_site_by_uuid(db_session, forecast_meta["site_uuid"])
@@ -149,7 +154,7 @@ def adjust_forecast_with_adjuster(
         me_values, on="horizon_minutes", how="left"
     )
 
-    # interpolate nans with window limit of 2
+    # interpolate nans with window limit of 3
     forecast_values_df_adjust["me_kw"].interpolate(limit=2, inplace=True)
 
     # if me_kw is null, set to 0
