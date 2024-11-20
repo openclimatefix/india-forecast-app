@@ -108,6 +108,18 @@ def get_me_values(
     # drop the hour column
     me_df.drop(columns=["horizon_hour"], inplace=True)
 
+    if len(me_df) == 0:
+        return me_df
+
+    # interpolate horizon_minutes up to 15 minutes blocks, its currently in 60 minute blocks
+    # currently in 0, 60, 120,...
+    # change to 0, 15, 30, 45, 60, 75, 90, 105, 120, ...
+    me_df = me_df.set_index("horizon_minutes")
+    me_df = me_df.reindex(range(0, max(me_df.index), 15)).interpolate(limit=3)
+
+    # reset indiex
+    me_df = me_df.reset_index()
+
     return me_df
 
 
@@ -153,9 +165,6 @@ def adjust_forecast_with_adjuster(
     forecast_values_df_adjust = forecast_values_df_adjust.merge(
         me_values, on="horizon_minutes", how="left"
     )
-
-    # interpolate nans with window limit of 3
-    forecast_values_df_adjust["me_kw"].interpolate(limit=3, inplace=True)
 
     # if me_kw is null, set to 0
     forecast_values_df_adjust["me_kw"].fillna(0, inplace=True)
