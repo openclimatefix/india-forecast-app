@@ -350,11 +350,14 @@ def nwp_mo_global_data(tmp_path_factory, time_before_present):
         f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data_gfs.zarr"
     )
 
-    # Last t0 to at least 6 hours ago and floor to 3-hour interval
+    # rename dimension init_time_utc to init_time
+    ds = ds.rename({"init_time_utc": "init_time"})
+
+    # Last t0 to at least 4 hours ago and floor to 3-hour interval
     t0_datetime_utc = time_before_present(dt.timedelta(hours=0)).floor("3h")
-    t0_datetime_utc = t0_datetime_utc - dt.timedelta(hours=6)
-    ds.init_time_utc.values[:] = pd.date_range(
-        t0_datetime_utc - dt.timedelta(hours=12 * (len(ds.init_time_utc) - 1)),
+    t0_datetime_utc = t0_datetime_utc - dt.timedelta(hours=4)
+    ds.init_time.values[:] = pd.date_range(
+        t0_datetime_utc - dt.timedelta(hours=12 * (len(ds.init_time) - 1)),
         t0_datetime_utc,
         freq=dt.timedelta(hours=1),
     )
@@ -370,6 +373,13 @@ def nwp_mo_global_data(tmp_path_factory, time_before_present):
     for v in list(ds.variables.keys()):
         if ds[v].dtype == object:
             ds[v].encoding.clear()
+
+    # change variables values to for MO global
+    ds.variable.values[0:3] = ["temperature_sl", "wind_u_component_10m", "wind_v_component_10m"]
+
+    # interpolate 3 hourly step to 1 hour steps
+    steps = pd.TimedeltaIndex(np.arange(49) * 3600 * 1e9, freq='infer')
+    ds = ds.interp(step=steps, method="linear")
 
     ds["mo_global"] = xr.DataArray(
         np.zeros([len(ds[c]) for c in ds.xindexes]),

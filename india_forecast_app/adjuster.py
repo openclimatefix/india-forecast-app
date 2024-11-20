@@ -115,9 +115,9 @@ def get_me_values(
     # currently in 0, 60, 120,...
     # change to 0, 15, 30, 45, 60, 75, 90, 105, 120, ...
     me_df = me_df.set_index("horizon_minutes")
-    me_df = me_df.reindex(range(0, max(me_df.index), 15)).interpolate(limit=3)
+    me_df = me_df.reindex(range(0, max(me_df.index)+15, 15)).interpolate(limit=3)
 
-    # reset indiex
+    # reset index
     me_df = me_df.reset_index()
 
     # log the maximum and minimum adjuster results
