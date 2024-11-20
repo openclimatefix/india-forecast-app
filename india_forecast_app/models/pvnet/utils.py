@@ -178,9 +178,4 @@ def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
     sun_elevation = sun_elevation[:, batch[t0_key] + 1 :, :]
     preds[sun_elevation < sun_elevation_limit] = 0
 
-    print(sun_elevation)
-    print(sun_elevation_limit)
-    print(preds)
-    assert 0
-
     return preds
