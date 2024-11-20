@@ -7,6 +7,7 @@ import numpy as np
 import xarray as xr
 import yaml
 from ocf_datapipes.batch import BatchKey
+from ocf_datapipes.utils.consts import ELEVATION_MEAN, ELEVATION_STD
 
 from .consts import (
     nwp_ecmwf_path,
@@ -173,6 +174,9 @@ def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
     sun_elevation = batch[key]
     if not isinstance(sun_elevation, np.ndarray):
         sun_elevation = sun_elevation.detach().cpu().numpy()
+
+    # un normalize elevation
+    sun_elevation = sun_elevation * ELEVATION_STD + ELEVATION_MEAN
 
     # expand dimension from (1,197) to (1,197,7), 7 is due to the number plevels
     n_plevels = preds.shape[2]
