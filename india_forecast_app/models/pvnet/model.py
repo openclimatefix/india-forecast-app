@@ -96,8 +96,9 @@ class PVNetModel:
                 # Run batch through model
                 device_batch = copy_batch_to_device(batch_to_tensor(batch), DEVICE)
                 preds = self.model(device_batch).detach().cpu().numpy()
+
                 # filter out night time
-                if self.asset_type == SiteAssetType.pv:
+                if self.asset_type == SiteAssetType.pv.name:
                     preds = set_night_time_zeros(batch, preds)
 
                 # Store predictions
@@ -174,16 +175,11 @@ class PVNetModel:
                     0.0,
                 ]
                 log.debug(f"Previous values are {values_df['forecast_power_kw']}")
-                zero_values = values_df["forecast_power_kw"] == 0
                 for idx in range(8):
                     values_df["forecast_power_kw"][idx] -= (
                         values_df["forecast_power_kw"][idx] - final_gen_points
                     ) * smooth_values[final_gen_index + idx]
                 log.debug(f"New values are {values_df['forecast_power_kw']}")
-
-            if self.asset_type == "solar":
-                # make sure previous zero values are still zero
-                values_df["forecast_power_kw"][zero_values] = 0
 
         if self.asset_type == "wind":
             # Smooth with a 1 hour rolling window
