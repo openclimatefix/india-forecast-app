@@ -51,7 +51,7 @@ def populate_data_config_sources(input_path, output_path):
         "wind": {"filename": wind_netcdf_path, "metadata_filename": wind_metadata_path},
         "pv": {"filename": pv_netcdf_path, "metadata_filename": pv_metadata_path},
         "nwp": {"ecmwf": nwp_ecmwf_path, "gfs": nwp_gfs_path},
-        "satellite": {"filepath": satellite_path}
+        "satellite": {"filepath": satellite_path},
     }
 
     if "nwp" in config["input_data"]:
@@ -89,7 +89,7 @@ def populate_data_config_sources(input_path, output_path):
 def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
     """Reads zarr file, renames t variable to t2m and saves zarr to new destination"""
 
-    log.info(f'Processing and caching NWP data for {source_nwp_path}')
+    log.info(f"Processing and caching NWP data for {source_nwp_path}")
 
     # Load dataset from source
     ds = xr.open_zarr(source_nwp_path)
@@ -105,7 +105,7 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
 
     is_gfs = "gfs" in source_nwp_path.lower()
 
-    if not is_gfs: # this is for ECMWF NWP
+    if not is_gfs:  # this is for ECMWF NWP
         # Rename t variable to t2m
         variables = list(ds.variable.values)
         new_variables = []
@@ -119,12 +119,12 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
             else:
                 new_variables.append(var)
         ds.__setitem__("variable", new_variables)
-    
+
     # Hack to resolve some NWP data format differences between providers
     elif is_gfs:
         data_var = ds[list(ds.data_vars.keys())[0]]
         # # Use .to_dataset() to split the data variable based on 'variable' dim
-        ds = data_var.to_dataset(dim='variable') 
+        ds = data_var.to_dataset(dim="variable")
         ds = ds.rename({"t2m": "t"})
     # Save destination path
     ds.to_zarr(dest_nwp_path, mode="a")
@@ -136,18 +136,23 @@ def download_satellite_data(satellite_source_file_path: str) -> None:
     # download satellite data
     fs = fsspec.open(satellite_source_file_path).fs
     if fs.exists(satellite_source_file_path):
-        log.info(f"Downloading satellite data from {satellite_source_file_path} "
-                 f"to sat_15_min.zarr.zip")
+        log.info(
+            f"Downloading satellite data from {satellite_source_file_path} "
+            f"to sat_15_min.zarr.zip"
+        )
         fs.get(satellite_source_file_path, "sat_15_min.zarr.zip")
         log.info(f"Unzipping sat_15_min.zarr.zip to {satellite_path}")
         os.system(f"unzip -qq sat_15_min.zarr.zip -d {satellite_path}")
     else:
         log.error(f"Could not find satellite data at {satellite_source_file_path}")
 
+
 def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
     """
     Set all predictions to zero for night time values
     """
+
+    log.debug("Setting night time values to zero")
     # get sun elevation values and if less 0, set to 0
     if BatchKey.wind_solar_elevation in batch.keys():
         key = BatchKey.wind_solar_elevation
@@ -167,7 +172,8 @@ def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
         sun_elevation = sun_elevation.detach().cpu().numpy()
 
     # expand dimension from (1,197) to (1,197,7), 7 is due to the number plevels
-    sun_elevation = np.repeat(sun_elevation[:, :, np.newaxis], 7, axis=2)
+    n_plevels = preds.shape[2]
+    sun_elevation = np.repeat(sun_elevation[:, :, np.newaxis], n_plevels, axis=2)
     # only take future time steps
     sun_elevation = sun_elevation[:, batch[t0_key] + 1 :, :]
     preds[sun_elevation < sun_elevation_limit] = 0
