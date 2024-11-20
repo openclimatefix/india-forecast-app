@@ -329,12 +329,14 @@ def app_run(timestamp: dt.datetime | None, write_to_db: bool = False, log_level:
         # 2. Load data/models
         all_model_configs = get_all_models(client_abbreviation=os.getenv("CLIENT_NAME", "ruvnl"))
         successful_runs = 0
+        runs = 0
         for model_config in all_model_configs.models:
 
             asset_sites = pv_sites if model_config.asset_type == "pv" else wind_sites
             asset_type = model_config.asset_type
 
             for site in asset_sites:
+                runs += 1
 
                 log.info(f"Reading latest historic {asset_type} generation data...")
                 generation_data = get_generation_data(session, [site], timestamp)
@@ -387,7 +389,8 @@ def app_run(timestamp: dt.datetime | None, write_to_db: bool = False, log_level:
                     )
                     successful_runs += 1
 
-        log.info(f"Completed forecasts for {successful_runs} runs for {len(sites)} sites")
+        log.info(f"Completed forecasts for {successful_runs} runs for "
+                 f"{runs} model runs. This was for {len(sites)} sites")
         if successful_runs == len(sites):
             log.info("All forecasts completed successfully")
         elif 0 < successful_runs < len(sites):
