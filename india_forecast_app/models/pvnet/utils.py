@@ -152,7 +152,7 @@ def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
     Set all predictions to zero for night time values
     """
 
-    log.debug(f"Setting night time values to zero")
+    log.debug("Setting night time values to zero")
     # get sun elevation values and if less 0, set to 0
     if BatchKey.wind_solar_elevation in batch.keys():
         key = BatchKey.wind_solar_elevation

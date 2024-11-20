@@ -174,7 +174,6 @@ class PVNetModel:
                     0.0,
                 ]
                 log.debug(f"Previous values are {values_df['forecast_power_kw']}")
-                zero_values = values_df["forecast_power_kw"] == 0
                 for idx in range(8):
                     values_df["forecast_power_kw"][idx] -= (
                         values_df["forecast_power_kw"][idx] - final_gen_points
