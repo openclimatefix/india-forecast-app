@@ -11,6 +11,7 @@ from ocf_datapipes.batch import BatchKey
 from .consts import (
     nwp_ecmwf_path,
     nwp_gfs_path,
+    nwp_mo_global_path,
     pv_metadata_path,
     pv_netcdf_path,
     satellite_path,
@@ -50,8 +51,8 @@ def populate_data_config_sources(input_path, output_path):
     production_paths = {
         "wind": {"filename": wind_netcdf_path, "metadata_filename": wind_metadata_path},
         "pv": {"filename": pv_netcdf_path, "metadata_filename": pv_metadata_path},
-        "nwp": {"ecmwf": nwp_ecmwf_path, "gfs": nwp_gfs_path},
-        "satellite": {"filepath": satellite_path},
+        "nwp": {"ecmwf": nwp_ecmwf_path, "gfs": nwp_gfs_path, "mo_global": nwp_mo_global_path},
+        "satellite": {"filepath": satellite_path}
     }
 
     if "nwp" in config["input_data"]:
@@ -84,6 +85,8 @@ def populate_data_config_sources(input_path, output_path):
 
     with open(output_path, "w") as outfile:
         yaml.dump(config, outfile, default_flow_style=False)
+
+    return config
 
 
 def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
