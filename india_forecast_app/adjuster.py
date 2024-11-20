@@ -120,6 +120,9 @@ def get_me_values(
     # reset indiex
     me_df = me_df.reset_index()
 
+    # log the maximum and minimum adjuster results
+    log.info(f"ME results: max={me_df['me_kw'].max()}, min={me_df['me_kw'].min()}")
+
     return me_df
 
 
