@@ -391,9 +391,9 @@ def app_run(timestamp: dt.datetime | None, write_to_db: bool = False, log_level:
 
         log.info(f"Completed forecasts for {successful_runs} runs for "
                  f"{runs} model runs. This was for {len(sites)} sites")
-        if successful_runs == len(sites):
+        if successful_runs == runs:
             log.info("All forecasts completed successfully")
-        elif 0 < successful_runs < len(sites):
+        elif 0 < successful_runs < runs:
             raise Exception("Some forecasts failed")
         else:
             raise Exception("All forecasts failed")
