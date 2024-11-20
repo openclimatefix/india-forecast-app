@@ -21,6 +21,10 @@ def test_get_me_values(db_session, sites, generation_db_values, forecasts):
     me_df = get_me_values(db_session, hour, site_uuid=sites[0].site_uuid, ml_model_name="test")
 
     assert len(me_df) != 0
+    assert len(me_df) == 96
+    assert me_df["me_kw"].sum() != 0
+    assert me_df["horizon_minutes"][0] == 0
+    assert me_df["horizon_minutes"][1] == 15
 
 
 def test_get_me_values_no_generation(db_session, sites, forecasts):
