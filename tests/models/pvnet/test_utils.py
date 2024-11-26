@@ -32,7 +32,7 @@ def test_set_night_time_zeros():
 
 
 def test_save_batch():
-    """test to check batches are saved"""
+    """Test to check batches are saved"""
 
     # set up batch
     batch = {"key": "value"}
