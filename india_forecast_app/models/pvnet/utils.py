@@ -211,7 +211,7 @@ def save_batch(batch, i: int, model_name, save_batches_dir: Optional[str] = None
     if save_batches_dir is None:
         save_batches_dir = os.getenv("SAVE_BATCHES_DIR", None)
 
-    if save_batches_dir:
+    if save_batches_dir is None:
         log.info(f"Saving batch {i} to {save_batches_dir}")
 
         local_filename = f"batch_{i}_{model_name}.pt"
