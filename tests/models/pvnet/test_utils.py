@@ -1,10 +1,11 @@
 """ Tests for utils for pvnet"""
-import numpy as np
 import os
-from ocf_datapipes.batch import BatchKey
 import tempfile
 
-from india_forecast_app.models.pvnet.utils import set_night_time_zeros, save_batch
+import numpy as np
+from ocf_datapipes.batch import BatchKey
+
+from india_forecast_app.models.pvnet.utils import save_batch, set_night_time_zeros
 
 
 def test_set_night_time_zeros():
@@ -31,7 +32,7 @@ def test_set_night_time_zeros():
 
 
 def test_save_batch():
-    """ test to check batches are saved """
+    """test to check batches are saved"""
 
     # set up batch
     batch = {"key": "value"}
