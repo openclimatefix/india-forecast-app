@@ -184,14 +184,6 @@ class PVNetModel:
                     ) * smooth_values[final_gen_index + idx]
                 log.debug(f"New values are {values_df['forecast_power_kw']}")
 
-        if self.asset_type == "wind":
-            # Smooth with a 1 hour rolling window
-            # Only smooth the wind else we introduce too much of a lag in the solar
-            # going up and down throughout the day
-            values_df["forecast_power_kw"] = (
-                values_df["forecast_power_kw"].rolling(4, min_periods=1).mean().astype(int)
-            )
-
         if self.smooth_blocks:
             log.info(f"Smoothing the forecast with {self.smooth_blocks} blocks")
             values_df["forecast_power_kw"] = (
