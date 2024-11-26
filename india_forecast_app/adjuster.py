@@ -45,6 +45,7 @@ def get_me_values(
     site_uuid: str,
     start_datetime: Optional[datetime] = None,
     ml_model_name: Optional[str] = None,
+    average_minutes: Optional[int] = 60,
 ) -> pd.DataFrame:
     """
     Get the ME values for the last 7 days for a given hour, for a given hour creation time
@@ -55,7 +56,12 @@ def get_me_values(
     start_datetime:: the start datetime to filter on. This defaults to 7 days before now.
     session: sqlalchemy session
     ml_model_name: the name of the model to filter on, this is optional.
+    average_minutes: the average minutes for the adjuster to group results by, this defaults to 60.
+        For solar data this should be 15, because of the sunrise and sunset,
+        for wind data this should be 60.
     """
+
+    assert average_minutes <= 60, "Average minutes for adjuster should be <= 60"
 
     if start_datetime is None:
         start_datetime = datetime.now() - timedelta(days=7)
@@ -63,7 +69,9 @@ def get_me_values(
     query = session.query(
         func.avg(ForecastValueSQL.forecast_power_kw - GenerationSQL.generation_power_kw),
         # create hour column
-        (cast(ForecastValueSQL.horizon_minutes / 60, INT)).label("horizon_hour"),
+        (cast(ForecastValueSQL.horizon_minutes / average_minutes, INT)).label(
+            "horizon_div_average_minutes"
+        ),
     )
 
     # join
@@ -72,8 +80,8 @@ def get_me_values(
     # round Generation start_utc and join to forecast start_utc
     start_utc_minute_rounded = (
         cast(func.date_part("minute", GenerationSQL.start_utc), INT)
-        / 30
-        * text("interval '30 min'")
+        / 15
+        * text("interval '15 min'")
     )
     start_utc_hour = func.date_trunc("hour", GenerationSQL.start_utc)
     generation_start_utc = start_utc_hour + start_utc_minute_rounded
@@ -95,18 +103,18 @@ def get_me_values(
         query = query.filter(MLModelSQL.name == ml_model_name)
 
     # group by forecast horizon
-    query = query.group_by('horizon_hour')
+    query = query.group_by("horizon_div_average_minutes")
 
     # order by forecast horizon
-    query = query.order_by('horizon_hour')
+    query = query.order_by("horizon_div_average_minutes")
 
     me = query.all()
 
-    me_df = pd.DataFrame(me, columns=["me_kw", "horizon_hour"])
-    me_df["horizon_minutes"] = me_df["horizon_hour"] * 60
+    me_df = pd.DataFrame(me, columns=["me_kw", "horizon_div_average_minutes"])
+    me_df["horizon_minutes"] = me_df["horizon_div_average_minutes"] * average_minutes
 
     # drop the hour column
-    me_df.drop(columns=["horizon_hour"], inplace=True)
+    me_df.drop(columns=["horizon_div_average_minutes"], inplace=True)
 
     if len(me_df) == 0:
         return me_df
@@ -115,10 +123,15 @@ def get_me_values(
     # currently in 0, 60, 120,...
     # change to 0, 15, 30, 45, 60, 75, 90, 105, 120, ...
     me_df = me_df.set_index("horizon_minutes")
-    me_df = me_df.reindex(range(0, max(me_df.index)+15, 15)).interpolate(limit=3)
+    me_df = me_df.reindex(range(0, max(me_df.index) + 15, 15)).interpolate(limit=3)
 
     # reset index
     me_df = me_df.reset_index()
+
+    # smooth by a few blocks, 30 minutes hour either side, and keep 0 values 0
+    idx = me_df["me_kw"] == 0
+    me_df["me_kw"] = me_df["me_kw"].rolling(window=5, min_periods=1, center=True).mean()
+    me_df.loc[idx, "me_kw"] = 0
 
     # log the maximum and minimum adjuster results
     log.info(f"ME results: max={me_df['me_kw'].max()}, min={me_df['me_kw'].min()}")
@@ -127,7 +140,11 @@ def get_me_values(
 
 
 def adjust_forecast_with_adjuster(
-    db_session, forecast_meta: dict, forecast_values_df: pd.DataFrame, ml_model_name: str
+    db_session,
+    forecast_meta: dict,
+    forecast_values_df: pd.DataFrame,
+    ml_model_name: str,
+    average_minutes: Optional[int] = 60,
 ):
     """
     Adjust forecast values with ME values
@@ -137,6 +154,7 @@ def adjust_forecast_with_adjuster(
     forecast_meta: forecast metadata
     forecast_values_df: forecast values dataframe
     ml_model_name: the ml model name
+    average_minutes: the average minutes for the adjuster to group results by, this defaults to 60.
 
     """
     # get the ME values
@@ -145,6 +163,7 @@ def adjust_forecast_with_adjuster(
         forecast_meta["timestamp_utc"].hour,
         site_uuid=forecast_meta["site_uuid"],
         ml_model_name=ml_model_name,
+        average_minutes=average_minutes,
     )
     log.debug(f"ME values: {me_values}")
 
@@ -173,6 +192,7 @@ def adjust_forecast_with_adjuster(
     forecast_values_df_adjust["me_kw"].fillna(0, inplace=True)
 
     # adjust forecast_power_kw by ME values
+    log.info(forecast_values_df_adjust["me_kw"])
     forecast_values_df_adjust["forecast_power_kw"] = (
         forecast_values_df_adjust["forecast_power_kw"] - forecast_values_df_adjust["me_kw"]
     )

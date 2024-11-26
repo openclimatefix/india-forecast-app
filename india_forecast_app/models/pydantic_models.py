@@ -28,6 +28,14 @@ class Model(BaseModel):
     asset_type: str = Field(
         "pv", title="Asset Type", description="The type of asset the model is for (pv or wind)"
     )
+    adjuster_average_minutes: int = Field(
+        60,
+        title="Average Minutes",
+        description="The number of minutes that results are average over when "
+                    "calculating adjuster values. "
+                    "For solar site with regular data, 15 should be used. "
+                    "For wind sites, 60 minutes should be used.",
+    )
 
 
 class Models(BaseModel):
