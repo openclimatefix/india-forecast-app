@@ -31,7 +31,8 @@ class Model(BaseModel):
     adjuster_average_minutes: int = Field(
         60,
         title="Average Minutes",
-        description="The number of minutes that results are average over when calculating adjuster values. "
+        description="The number of minutes that results are average over when "
+                    "calculating adjuster values. "
                     "For solar site with regular data, 15 should be used. "
                     "For wind sites, 60 minutes should be used.",
     )
