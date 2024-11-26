@@ -231,6 +231,7 @@ class PVNetModel:
             # Process/cache remote zarr locally
             process_and_cache_nwp(nwp_source_file_path, nwp_path)
         if use_satellite:
+            shutil.rmtree(satellite_path, ignore_errors=True)
             download_satellite_data(satellite_source_file_path)
 
         if self.asset_type == "wind":
