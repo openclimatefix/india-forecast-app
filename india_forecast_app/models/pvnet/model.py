@@ -93,7 +93,7 @@ class PVNetModel:
         with torch.no_grad():
             for i, batch in enumerate(self.dataloader):
                 log.info(f"Predicting for batch: {i}")
-                
+
                 # save batch
                 save_batch(batch=batch, i=i, model_name=self.name)
 

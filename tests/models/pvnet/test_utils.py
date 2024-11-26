@@ -8,7 +8,7 @@ from india_forecast_app.models.pvnet.utils import set_night_time_zeros, save_bat
 
 
 def test_set_night_time_zeros():
-    """ Test for setting night time zeros"""
+    """Test for setting night time zeros"""
     # set up preds (1,5,7) {example, time, plevels}
     preds = np.random.rand(1, 5, 7)
 
@@ -43,4 +43,3 @@ def test_save_batch():
 
         # check that batch is saved
         assert os.path.exists(f"{temp_dir}/batch_{i}_{model_name}.pt")
-
