@@ -3,10 +3,10 @@ Dummy Model class (generate a dummy forecast)
 """
 
 import datetime as dt
+import math
 import random
 from typing import Optional
 
-import math
 import pandas as pd
 import pytz
 
