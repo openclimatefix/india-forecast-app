@@ -196,7 +196,7 @@ def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
     return preds
 
 
-def save_batch(batch, i: int, model_name, save_batches_dir: Optional[str] = None):
+def save_batch(batch, i: int, model_name, site_uuid, save_batches_dir: Optional[str] = None):
     """
     Save batch to SAVE_BATCHES_DIR if set
 
@@ -204,6 +204,7 @@ def save_batch(batch, i: int, model_name, save_batches_dir: Optional[str] = None
         batch: The batch to save
         i: The index of the batch
         model_name: The name of the
+        site_uuid: The site_uuid of the site
         save_batches_dir: The directory to save the batch to,
             defaults to environment variable SAVE_BATCHES_DIR
     """
@@ -214,7 +215,7 @@ def save_batch(batch, i: int, model_name, save_batches_dir: Optional[str] = None
     if save_batches_dir is not None:
         log.info(f"Saving batch {i} to {save_batches_dir}")
 
-        local_filename = f"batch_{i}_{model_name}.pt"
+        local_filename = f"batch_{i}_{model_name}_{site_uuid}.pt"
         torch.save(batch, local_filename)
 
         fs = fsspec.open(save_batches_dir).fs

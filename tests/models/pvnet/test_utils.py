@@ -41,7 +41,7 @@ def test_save_batch():
 
     # create temp folder
     with tempfile.TemporaryDirectory() as temp_dir:
-        save_batch(batch, i, model_name, save_batches_dir=temp_dir)
+        save_batch(batch, i, model_name, save_batches_dir=temp_dir, site_uuid="fff-fff")
 
         # check that batch is saved
-        assert os.path.exists(f"{temp_dir}/batch_{i}_{model_name}.pt")
+        assert os.path.exists(f"{temp_dir}/batch_{i}_{model_name}_fff-fff.pt")
