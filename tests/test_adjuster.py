@@ -25,6 +25,29 @@ def test_get_me_values(db_session, sites, generation_db_values, forecasts):
     assert me_df["me_kw"].sum() != 0
     assert me_df["horizon_minutes"][0] == 0
     assert me_df["horizon_minutes"][1] == 15
+    assert me_df["me_kw"][90] != 0
+
+
+def test_get_me_values_15(db_session, sites, generation_db_values, forecasts):
+    """Check ME results are found"""
+
+    hour = pd.Timestamp(datetime.now()).hour
+    me_df_15 = get_me_values(
+        db_session, hour, site_uuid=sites[0].site_uuid, ml_model_name="test", average_minutes=15
+    )
+    me_df_60 = get_me_values(
+        db_session, hour, site_uuid=sites[0].site_uuid, ml_model_name="test", average_minutes=60
+    )
+
+    assert len(me_df_15) != 0
+    assert len(me_df_15) == 96
+    assert me_df_15["me_kw"].sum() != 0
+    assert me_df_15["horizon_minutes"][0] == 0
+    assert me_df_15["horizon_minutes"][1] == 15
+
+    # make sure the 15 and 60 are differnet values
+    assert me_df_15["horizon_minutes"][90] == me_df_60["horizon_minutes"][90]
+    assert me_df_15["me_kw"][90] != me_df_60["me_kw"][90]
 
 
 def test_get_me_values_no_generation(db_session, sites, forecasts):

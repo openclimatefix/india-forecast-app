@@ -206,6 +206,7 @@ def save_forecast(
     ml_model_name: Optional[str] = None,
     ml_model_version: Optional[str] = None,
     use_adjuster: bool = True,
+    adjuster_average_minutes: Optional[int] = 60,
 ):
     """
     Saves a forecast for a given site & timestamp
@@ -217,6 +218,8 @@ def save_forecast(
             ml_model_name: Name of the ML model used for the forecast
             ml_model_version: Version of the ML model used for the forecast
             use_adjuster: Make new model, adjusted by last 7 days of ME values
+            adjuster_average_minutes: The number of minutes that results are average over
+                when calculating adjuster values
 
     Raises:
             IOError: An error if database save fails
@@ -244,7 +247,11 @@ def save_forecast(
     if use_adjuster:
         log.info(f"Adjusting forecast for site_id={forecast_meta['site_uuid']}...")
         forecast_values_df_adjust = adjust_forecast_with_adjuster(
-            db_session, forecast_meta, forecast_values_df, ml_model_name=ml_model_name
+            db_session,
+            forecast_meta,
+            forecast_values_df,
+            ml_model_name=ml_model_name,
+            average_minutes=adjuster_average_minutes,
         )
 
         log.info(forecast_values_df_adjust)
@@ -386,11 +393,14 @@ def app_run(timestamp: dt.datetime | None, write_to_db: bool = False, log_level:
                         write_to_db=write_to_db,
                         ml_model_name=ml_model.name,
                         ml_model_version=version,
+                        adjuster_average_minutes=model_config.adjuster_average_minutes,
                     )
                     successful_runs += 1
 
-        log.info(f"Completed forecasts for {successful_runs} runs for "
-                 f"{runs} model runs. This was for {len(sites)} sites")
+        log.info(
+            f"Completed forecasts for {successful_runs} runs for "
+            f"{runs} model runs. This was for {len(sites)} sites"
+        )
         if successful_runs == runs:
             log.info("All forecasts completed successfully")
         elif 0 < successful_runs < runs:

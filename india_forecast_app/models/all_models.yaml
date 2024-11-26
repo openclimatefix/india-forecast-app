@@ -39,6 +39,7 @@ models:
     version: 20e7c3af76664ee2ac0e1502801749825ab8ed1f
     client: ad
     asset_type: pv
+    adjuster_average_minutes: 15
   # this is just a dummy one
   - name: dummy
     type: dummy
