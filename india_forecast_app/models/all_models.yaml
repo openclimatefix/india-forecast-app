@@ -13,6 +13,7 @@ models:
     version: 546baded3d4216736d8ee8d6798d47235bd72b08
     client: ruvnl
     asset_type: wind
+    smooth_blocks: 5
   - name: windnet_india_mo_v2
     type: pvnet
     id: openclimatefix/windnet_india
@@ -25,6 +26,7 @@ models:
     version: 990bed9ad1dbb10515f830c181609b10e72c975e
     client: ruvnl
     asset_type: wind
+    smooth_blocks: 5
    # RU client solar
   - name: pvnet_india
     type: pvnet
