@@ -161,9 +161,9 @@ def test_app(
     assert result.exit_code == 0
 
     if write_to_db:
-        assert db_session.query(ForecastSQL).count() == init_n_forecasts + 4 * 2
-        assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (4 * 2 * 192)
-        assert db_session.query(MLModelSQL).count() == 4 * 2
+        assert db_session.query(ForecastSQL).count() == init_n_forecasts + 5 * 2
+        assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (5 * 2 * 192)
+        assert db_session.query(MLModelSQL).count() == 5 * 2
     else:
         assert db_session.query(ForecastSQL).count() == init_n_forecasts
         assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values
@@ -183,8 +183,8 @@ def test_app_no_pv_data(
     result = run_click_script(app, args)
     assert result.exit_code == 0
 
-    assert db_session.query(ForecastSQL).count() == init_n_forecasts + 2 * 4
-    assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (2 * 4 * 192)
+    assert db_session.query(ForecastSQL).count() == init_n_forecasts + 2 * 5
+    assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (2 * 5 * 192)
 
 
 @pytest.mark.requires_hf_token
