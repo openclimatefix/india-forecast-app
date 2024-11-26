@@ -1,9 +1,11 @@
 """Useful functions for setting up PVNet model"""
 import logging
 import os
+from typing import Optional
 
 import fsspec
 import numpy as np
+import torch
 import xarray as xr
 import yaml
 from ocf_datapipes.batch import BatchKey
@@ -191,3 +193,29 @@ def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
     preds[sun_elevation < sun_elevation_limit] = 0
 
     return preds
+
+
+def save_batch(batch, i: int, model_name, save_batches_dir: Optional[str] = None):
+    """
+    Save batch to SAVE_BATCHES_DIR if set
+
+    Args:
+        batch: The batch to save
+        i: The index of the batch
+        model_name: The name of the
+        save_batches_dir: The directory to save the batch to,
+            defaults to environment variable SAVE_BATCHES_DIR
+    """
+
+    if save_batches_dir is None:
+        save_batches_dir = os.getenv("SAVE_BATCHES_DIR", None)
+    
+    if save_batches_dir:
+        log.info(f"Saving batch {i} to {save_batches_dir}")
+
+        local_filename = f'batch_{i}_{model_name}.pt'
+        torch.save(batch, local_filename)
+
+        fs = fsspec.open(save_batches_dir).fs
+        fs.put(local_filename, f"{save_batches_dir}/{local_filename}")
+

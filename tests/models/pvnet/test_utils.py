@@ -1,8 +1,10 @@
 """ Tests for utils for pvnet"""
 import numpy as np
+import os
 from ocf_datapipes.batch import BatchKey
+import tempfile
 
-from india_forecast_app.models.pvnet.utils import set_night_time_zeros
+from india_forecast_app.models.pvnet.utils import set_night_time_zeros, save_batch
 
 
 def test_set_night_time_zeros():
@@ -26,3 +28,19 @@ def test_set_night_time_zeros():
     assert np.all(preds[:, 2:, :] == 0)
     # check that all values are positive
     assert np.all(preds[:, :2, :] > 0)
+
+
+def test_save_batch():
+
+    # set up batch
+    batch = {"key": "value"}
+    i = 1
+    model_name = "test_model_name"
+
+    # create temp folder
+    with tempfile.TemporaryDirectory() as temp_dir:
+        save_batch(batch, i, model_name, save_batches_dir=temp_dir)
+
+        # check that batch is saved
+        assert os.path.exists(f"{temp_dir}/batch_{i}_{model_name}.pt")
+
