@@ -3,11 +3,10 @@ Dummy Model class (generate a dummy forecast)
 """
 
 import datetime as dt
-import math
 import random
-
 from typing import Optional
 
+import math
 import pandas as pd
 import pytz
 
@@ -23,14 +22,14 @@ class DummyModel:
         return "0.0.0"
 
     def __init__(
-            self,
-            asset_type: str,
-            timestamp: dt.datetime,
-            generation_data: dict[str, pd.DataFrame] = None,
-            hf_version: str = None,
-            hf_repo: str = None,
-            name: str = None,
-            smooth_blocks: Optional[int] = 0,
+        self,
+        asset_type: str,
+        timestamp: dt.datetime,
+        generation_data: dict[str, pd.DataFrame] = None,
+        hf_version: str = None,
+        hf_repo: str = None,
+        name: str = None,
+        smooth_blocks: Optional[int] = 0,
     ):
         """Initializer for the model"""
         self.asset_type = asset_type
