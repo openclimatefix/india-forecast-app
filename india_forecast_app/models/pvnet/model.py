@@ -184,14 +184,16 @@ class PVNetModel:
                     ) * smooth_values[final_gen_index + idx]
                 log.debug(f"New values are {values_df['forecast_power_kw']}")
 
-        if self.smooth_blocks:
+        if self.smooth_blocks > 0:
             log.info(f"Smoothing the forecast with {self.smooth_blocks} blocks")
             values_df["forecast_power_kw"] = (
                 values_df["forecast_power_kw"]
                 .rolling(window=self.smooth_blocks, min_periods=1, center=True)
                 .mean()
-                .astype(int)
             )
+
+        # convert to int
+        values_df["forecast_power_kw"] = values_df["forecast_power_kw"].astype(int)
 
         # remove any negative values
         values_df["forecast_power_kw"] = values_df["forecast_power_kw"].clip(lower=0.0)
