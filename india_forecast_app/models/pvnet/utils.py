@@ -116,8 +116,9 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
             ds[v].encoding.clear()
 
     is_gfs = "gfs" in source_nwp_path.lower()
+    is_ecmwf = "ecmwf" in source_nwp_path.lower()
 
-    if not is_gfs:  # this is for ECMWF NWP
+    if is_ecmwf:
         # Rename t variable to t2m
         variables = list(ds.variable.values)
         new_variables = []
