@@ -39,6 +39,7 @@ models:
     version: 20e7c3af76664ee2ac0e1502801749825ab8ed1f
     client: ad
     asset_type: pv
+    # Ad client solar, extra satellite, 4 hours
   - name: pvnet_ad_sites_satellite
     type: pvnet
     id: openclimatefix/pvnet_ad_sites
