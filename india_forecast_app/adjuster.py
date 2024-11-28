@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import pandas as pd
+import pvlib
 from pvsite_datamodel.read import get_site_by_uuid
 from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, GenerationSQL, MLModelSQL
 from sqlalchemy import INT, cast, text
@@ -139,6 +140,39 @@ def get_me_values(
     return me_df
 
 
+def zero_out_nighttime(db_session, forecast_values_df: pd.DataFrame, site_uuid: str):
+    """
+    Zero out nighttime values in forecast
+
+    Args:
+    db_session: sqlalchemy session
+    forecast_values_df: forecast values dataframe
+    site_uuid: the site uuid
+    """
+    # get the site
+    site = get_site_by_uuid(db_session, site_uuid)
+
+    if site.asset_type == "pv":
+
+        longitude = site.longitude
+        latitude = site.latitude
+
+        # get sunrise and sunset
+        solpos = pvlib.solarposition.get_solarposition(
+            time=forecast_values_df["start_utc"],
+            latitude=latitude,
+            longitude=longitude,
+        )
+        elevation = solpos["elevation"]
+
+    # zero out nighttime values
+    forecast_values_df["forecast_power_kw"] = forecast_values_df.apply(
+        lambda x: 0 if elevation <= 0 else x["forecast_power_kw"], axis=1
+    )
+
+    return forecast_values_df
+
+
 def adjust_forecast_with_adjuster(
     db_session,
     forecast_meta: dict,
@@ -198,6 +232,13 @@ def adjust_forecast_with_adjuster(
     )
     # drop me_kw column
     forecast_values_df_adjust.drop(columns=["me_kw"], inplace=True)
+
+    # make sure there are no positive values at nighttime
+    forecast_values_df_adjust = zero_out_nighttime(
+        db_session=db_session,
+        forecast_values_df=forecast_values_df,
+        site_uuid=forecast_meta["site_uuid"],
+    )
 
     # clip negative values to 0
     forecast_values_df_adjust["forecast_power_kw"].clip(lower=0, inplace=True)
