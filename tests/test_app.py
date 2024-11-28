@@ -200,9 +200,23 @@ def test_app_client_ad(
 ):
     """Test for running app from command line"""
 
+    init_n_forecasts = db_session.query(ForecastSQL).count()
+    init_n_forecast_values = db_session.query(ForecastValueSQL).count()
+
     hf_token = os.getenv("HUGGINGFACE_TOKEN")
     # Skip the test if the token is not available
     if hf_token is None:
         pytest.skip("Hugging Face token not set in environment variables, skipping test.")
 
-    app_run(timestamp=None)
+    app_run(timestamp=None, write_to_db=True)
+
+    n_forecasts = 2 * 2
+    # one model is 8 hours, one model is 4 hours
+    # x 4 for each 15 minutes
+    # x 2 for adjuster
+    n_forecast_values = (8 + 4) * 4 * 2
+
+    assert db_session.query(ForecastSQL).count() == init_n_forecasts + n_forecasts
+    assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + n_forecast_values
+
+
