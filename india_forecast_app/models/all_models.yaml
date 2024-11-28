@@ -39,6 +39,13 @@ models:
     version: 20e7c3af76664ee2ac0e1502801749825ab8ed1f
     client: ad
     asset_type: pv
+    # Ad client solar, extra satellite, 4 hours
+  - name: pvnet_ad_sites_satellite
+    type: pvnet
+    id: openclimatefix/pvnet_ad_sites
+    version: 4a351a8522d0265ef2113c68180b58b6917919b6
+    client: ad
+    asset_type: pv
     adjuster_average_minutes: 15
   # this is just a dummy one
   - name: dummy
