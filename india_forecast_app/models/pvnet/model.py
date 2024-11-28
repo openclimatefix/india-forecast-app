@@ -38,6 +38,7 @@ from .utils import (
     download_satellite_data,
     populate_data_config_sources,
     process_and_cache_nwp,
+    save_batch,
     set_night_time_zeros,
     worker_init_fn,
 )
@@ -92,6 +93,9 @@ class PVNetModel:
         with torch.no_grad():
             for i, batch in enumerate(self.dataloader):
                 log.info(f"Predicting for batch: {i}")
+
+                # save batch
+                save_batch(batch=batch, i=i, model_name=self.name, site_uuid=self.site_uuid)
 
                 # Run batch through model
                 device_batch = copy_batch_to_device(batch_to_tensor(batch), DEVICE)

@@ -1,9 +1,11 @@
 """Useful functions for setting up PVNet model"""
 import logging
 import os
+from typing import Optional
 
 import fsspec
 import numpy as np
+import torch
 import xarray as xr
 import yaml
 from ocf_datapipes.batch import BatchKey
@@ -53,7 +55,7 @@ def populate_data_config_sources(input_path, output_path):
         "wind": {"filename": wind_netcdf_path, "metadata_filename": wind_metadata_path},
         "pv": {"filename": pv_netcdf_path, "metadata_filename": pv_metadata_path},
         "nwp": {"ecmwf": nwp_ecmwf_path, "gfs": nwp_gfs_path, "mo_global": nwp_mo_global_path},
-        "satellite": {"filepath": satellite_path}
+        "satellite": {"filepath": satellite_path},
     }
 
     if "nwp" in config["input_data"]:
@@ -93,8 +95,9 @@ def populate_data_config_sources(input_path, output_path):
 def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
     """Reads zarr file, renames t variable to t2m and saves zarr to new destination"""
 
-    log.info(f"Processing and caching NWP data for {source_nwp_path}, "
-             f"and saving to {dest_nwp_path}")
+    log.info(
+        f"Processing and caching NWP data for {source_nwp_path}, " f"and saving to {dest_nwp_path}"
+    )
 
     if os.path.exists(dest_nwp_path):
         log.info(f"File already exists at {dest_nwp_path}")
@@ -192,3 +195,29 @@ def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
     preds[sun_elevation < sun_elevation_limit] = 0
 
     return preds
+
+
+def save_batch(batch, i: int, model_name, site_uuid, save_batches_dir: Optional[str] = None):
+    """
+    Save batch to SAVE_BATCHES_DIR if set
+
+    Args:
+        batch: The batch to save
+        i: The index of the batch
+        model_name: The name of the
+        site_uuid: The site_uuid of the site
+        save_batches_dir: The directory to save the batch to,
+            defaults to environment variable SAVE_BATCHES_DIR
+    """
+
+    if save_batches_dir is None:
+        save_batches_dir = os.getenv("SAVE_BATCHES_DIR", None)
+
+    if save_batches_dir is not None:
+        log.info(f"Saving batch {i} to {save_batches_dir}")
+
+        local_filename = f"batch_{i}_{model_name}_{site_uuid}.pt"
+        torch.save(batch, local_filename)
+
+        fs = fsspec.open(save_batches_dir).fs
+        fs.put(local_filename, f"{save_batches_dir}/{local_filename}")
