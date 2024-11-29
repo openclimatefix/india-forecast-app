@@ -2,8 +2,13 @@
 from datetime import datetime
 
 import pandas as pd
+import pytest
 
-from india_forecast_app.adjuster import adjust_forecast_with_adjuster, get_me_values
+from india_forecast_app.adjuster import (
+    adjust_forecast_with_adjuster,
+    get_me_values,
+    zero_out_nighttime,
+)
 
 
 def test_get_me_values_no_values(db_session, sites):
@@ -104,3 +109,30 @@ def test_adjust_forecast_with_adjuster_no_values(db_session, sites):
 
     assert len(forecast_values_df) == 5
     assert forecast_values_df["forecast_power_kw"].sum() == 15
+
+
+@pytest.mark.parametrize("asset_type", ["pv", "wind"])
+def test_zero_out_nighttime(asset_type, db_session, sites):
+    forecast_values_df = pd.DataFrame(
+        {
+            "forecast_power_kw": [1, 2, 3, 4, 5],
+            "horizon_minutes": [15, 30, 45, 60, 1200],
+            "start_utc": [
+                pd.Timestamp("2024-11-01 23:00:00") + pd.Timedelta(f"{i}H") for i in range(0, 5)
+            ],
+        }
+    )
+
+    sites[0].asset_type = asset_type
+
+    forecast_values_df = zero_out_nighttime(
+        db_session, forecast_values_df=forecast_values_df, site_uuid=sites[0].site_uuid
+    )
+
+    assert len(forecast_values_df) == 5
+    night_sum = forecast_values_df["forecast_power_kw"][0:2].sum()
+    if asset_type == "pv":
+        assert night_sum == 0
+    else:
+        assert night_sum > 0
+    assert forecast_values_df["forecast_power_kw"][2:].sum() > 0
