@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import pandas as pd
+import pvlib
 from pvsite_datamodel.read import get_site_by_uuid
 from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, GenerationSQL, MLModelSQL
 from sqlalchemy import INT, cast, text
@@ -139,6 +140,51 @@ def get_me_values(
     return me_df
 
 
+def zero_out_night_time_for_pv(
+    db_session,
+    forecast_values_df: pd.DataFrame,
+    site_uuid: str,
+    elevation_limit: Optional[float] = 0,
+):
+    """
+    Zero out night time values in forecast, only for pv sites
+
+    Args:
+    db_session: sqlalchemy session
+    forecast_values_df: forecast values dataframe
+    site_uuid: the site uuid
+    elevation_limit: the elevation limit to zero out values, this defaults to 0.
+    """
+    # get the site
+    site = get_site_by_uuid(db_session, site_uuid)
+
+    if site.asset_type == "pv":
+
+        longitude = site.longitude
+        latitude = site.latitude
+
+        # get sunrise and sunset
+        solpos = pvlib.solarposition.get_solarposition(
+            time=forecast_values_df["start_utc"],
+            latitude=latitude,
+            longitude=longitude,
+        )
+        elevation = solpos[["elevation"]]
+
+        # merge with forecast_values_df on start_utc
+        forecast_values_df = forecast_values_df.merge(elevation, on="start_utc", how="left")
+
+        # zero out nighttime values
+        forecast_values_df.loc[
+            forecast_values_df["elevation"] < elevation_limit, "forecast_power_kw"
+        ] = 0
+
+        # drop elevation column
+        forecast_values_df.drop(columns=["elevation"], inplace=True)
+
+    return forecast_values_df
+
+
 def adjust_forecast_with_adjuster(
     db_session,
     forecast_meta: dict,
@@ -154,7 +200,8 @@ def adjust_forecast_with_adjuster(
     forecast_meta: forecast metadata
     forecast_values_df: forecast values dataframe
     ml_model_name: the ml model name
-    average_minutes: the average minutes for the adjuster to group results by, this defaults to 60.
+    average_minutes: the average minutes for the adjuster to group results by,
+        this defaults to 60.
 
     """
     # get the ME values
@@ -198,6 +245,13 @@ def adjust_forecast_with_adjuster(
     )
     # drop me_kw column
     forecast_values_df_adjust.drop(columns=["me_kw"], inplace=True)
+
+    # make sure there are no positive values at nighttime
+    forecast_values_df_adjust = zero_out_night_time_for_pv(
+        db_session=db_session,
+        forecast_values_df=forecast_values_df_adjust,
+        site_uuid=forecast_meta["site_uuid"],
+    )
 
     # clip negative values to 0
     forecast_values_df_adjust["forecast_power_kw"].clip(lower=0, inplace=True)
