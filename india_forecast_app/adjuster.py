@@ -140,7 +140,12 @@ def get_me_values(
     return me_df
 
 
-def zero_out_nighttime(db_session, forecast_values_df: pd.DataFrame, site_uuid: str, elevation_limit:Optional[float]= 0):
+def zero_out_nighttime(
+    db_session,
+    forecast_values_df: pd.DataFrame,
+    site_uuid: str,
+    elevation_limit: Optional[float] = 0,
+):
     """
     Zero out nighttime values in forecast
 
@@ -169,11 +174,12 @@ def zero_out_nighttime(db_session, forecast_values_df: pd.DataFrame, site_uuid: 
         forecast_values_df = forecast_values_df.merge(elevation, on="start_utc", how="left")
 
         # zero out nighttime values
-        forecast_values_df.loc[forecast_values_df['elevation'] < elevation_limit, "forecast_power_kw"] = 0
+        forecast_values_df.loc[
+            forecast_values_df["elevation"] < elevation_limit, "forecast_power_kw"
+        ] = 0
 
         # drop elevation column
         forecast_values_df.drop(columns=["elevation"], inplace=True)
-
 
     return forecast_values_df
 
@@ -193,7 +199,8 @@ def adjust_forecast_with_adjuster(
     forecast_meta: forecast metadata
     forecast_values_df: forecast values dataframe
     ml_model_name: the ml model name
-    average_minutes: the average minutes for the adjuster to group results by, this defaults to 60.
+    average_minutes: the average minutes for the adjuster to group results by,
+        this defaults to 60.
 
     """
     # get the ME values
