@@ -140,7 +140,7 @@ def get_me_values(
     return me_df
 
 
-def zero_out_nighttime(
+def zero_out_night_time_for_pv(
     db_session,
     forecast_values_df: pd.DataFrame,
     site_uuid: str,
@@ -153,6 +153,7 @@ def zero_out_nighttime(
     db_session: sqlalchemy session
     forecast_values_df: forecast values dataframe
     site_uuid: the site uuid
+    elevation_limit: the elevation limit to zero out values, this defaults to 0.
     """
     # get the site
     site = get_site_by_uuid(db_session, site_uuid)
@@ -246,7 +247,7 @@ def adjust_forecast_with_adjuster(
     forecast_values_df_adjust.drop(columns=["me_kw"], inplace=True)
 
     # make sure there are no positive values at nighttime
-    forecast_values_df_adjust = zero_out_nighttime(
+    forecast_values_df_adjust = zero_out_night_time_for_pv(
         db_session=db_session,
         forecast_values_df=forecast_values_df_adjust,
         site_uuid=forecast_meta["site_uuid"],

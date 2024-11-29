@@ -7,7 +7,7 @@ import pytest
 from india_forecast_app.adjuster import (
     adjust_forecast_with_adjuster,
     get_me_values,
-    zero_out_nighttime,
+    zero_out_night_time_for_pv,
 )
 
 
@@ -112,7 +112,7 @@ def test_adjust_forecast_with_adjuster_no_values(db_session, sites):
 
 
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
-def test_zero_out_nighttime(asset_type, db_session, sites):
+def test_zero_out_night_time_for_pv(asset_type, db_session, sites):
     """ Test for zero_out_nighttime """
     forecast_values_df = pd.DataFrame(
         {
@@ -126,7 +126,7 @@ def test_zero_out_nighttime(asset_type, db_session, sites):
 
     sites[0].asset_type = asset_type
 
-    forecast_values_df = zero_out_nighttime(
+    forecast_values_df = zero_out_night_time_for_pv(
         db_session, forecast_values_df=forecast_values_df, site_uuid=sites[0].site_uuid
     )
 
