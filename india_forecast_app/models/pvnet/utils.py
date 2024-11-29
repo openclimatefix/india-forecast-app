@@ -109,7 +109,8 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
     source_nwp_path = nwp_config.source_nwp_path
     dest_nwp_path = nwp_config.dest_nwp_path
 
-    log.info(f"Processing and caching NWP data for {source_nwp_path} and saving to {dest_nwp_path}")
+    log.info(f"Processing and caching NWP data for {source_nwp_path} "
+             f"and saving to {dest_nwp_path} for {nwp_config.source}")
 
     if os.path.exists(dest_nwp_path):
         log.info(f"File already exists at {dest_nwp_path}")
@@ -149,14 +150,19 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
         ds = data_var.to_dataset(dim="variable")
         ds = ds.rename({"t2m": "t"})
 
-    # Save destination path
-    ds.to_zarr(dest_nwp_path, mode="a")
-
     if nwp_config.source == "mo_global":
+
+        # only select the variables we need
+        ds = ds.sel(variable=["temperature_sl", "wind_u_component_10m", "wind_v_component_10m"])
+
         # regrid data
-        regrid_nwp_data(
-            dest_nwp_path, "india_forecast_app/data/mo_global/india_coords.nc", dest_nwp_path
+        ds = regrid_nwp_data(
+            ds, "india_forecast_app/data/mo_global/india_coords.nc"
         )
+
+    # Save destination path
+    log.info(f"Saving NWP data to {dest_nwp_path}")
+    ds.to_zarr(dest_nwp_path, mode="a")
 
 
 def download_satellite_data(satellite_source_file_path: str) -> None:
@@ -225,6 +231,7 @@ def save_batch(batch, i: int, model_name, site_uuid, save_batches_dir: Optional[
         save_batches_dir: The directory to save the batch to,
             defaults to environment variable SAVE_BATCHES_DIR
     """
+    return
 
     if save_batches_dir is None:
         save_batches_dir = os.getenv("SAVE_BATCHES_DIR", None)
