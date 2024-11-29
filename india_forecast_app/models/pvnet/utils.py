@@ -28,6 +28,7 @@ log = logging.getLogger(__name__)
 
 
 class NWPProcessAndCacheConfig(BaseModel):
+    """ Configuration for processing and caching NWP data"""
     source_nwp_path: str
     dest_nwp_path: str
     source: str

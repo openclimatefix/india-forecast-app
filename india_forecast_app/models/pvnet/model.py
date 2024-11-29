@@ -35,8 +35,8 @@ from .consts import (
     wind_path,
 )
 from .utils import (
-    download_satellite_data,
     NWPProcessAndCacheConfig,
+    download_satellite_data,
     populate_data_config_sources,
     process_and_cache_nwp,
     save_batch,
