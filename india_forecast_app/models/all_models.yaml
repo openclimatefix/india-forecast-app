@@ -43,7 +43,7 @@ models:
   - name: pvnet_ad_sites_satellite
     type: pvnet
     id: openclimatefix/pvnet_ad_sites
-    version: 4a351a8522d0265ef2113c68180b58b6917919b6
+    version: 7685efc0cb3e796e8bd954d9ee17b8a94c8901e9
     client: ad
     asset_type: pv
     adjuster_average_minutes: 15
