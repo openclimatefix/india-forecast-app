@@ -13,6 +13,7 @@ from ocf_datapipes.utils.consts import ELEVATION_MEAN, ELEVATION_STD
 from pydantic import BaseModel
 
 from india_forecast_app.data.nwp import regrid_nwp_data
+
 from .consts import (
     nwp_ecmwf_path,
     nwp_gfs_path,
@@ -28,7 +29,8 @@ log = logging.getLogger(__name__)
 
 
 class NWPProcessAndCacheConfig(BaseModel):
-    """ Configuration for processing and caching NWP data"""
+    """Configuration for processing and caching NWP data"""
+
     source_nwp_path: str
     dest_nwp_path: str
     source: str
