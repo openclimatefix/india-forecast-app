@@ -231,7 +231,6 @@ def save_batch(batch, i: int, model_name, site_uuid, save_batches_dir: Optional[
         save_batches_dir: The directory to save the batch to,
             defaults to environment variable SAVE_BATCHES_DIR
     """
-    return
 
     if save_batches_dir is None:
         save_batches_dir = os.getenv("SAVE_BATCHES_DIR", None)
