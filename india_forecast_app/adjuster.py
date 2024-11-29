@@ -147,7 +147,7 @@ def zero_out_night_time_for_pv(
     elevation_limit: Optional[float] = 0,
 ):
     """
-    Zero out nighttime values in forecast
+    Zero out night time values in forecast, only for pv sites
 
     Args:
     db_session: sqlalchemy session
