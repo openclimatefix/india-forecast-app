@@ -113,6 +113,7 @@ def test_adjust_forecast_with_adjuster_no_values(db_session, sites):
 
 @pytest.mark.parametrize("asset_type", ["pv", "wind"])
 def test_zero_out_nighttime(asset_type, db_session, sites):
+    """ Test for zero_out_nighttime """
     forecast_values_df = pd.DataFrame(
         {
             "forecast_power_kw": [1, 2, 3, 4, 5],
