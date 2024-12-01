@@ -3,7 +3,6 @@ from datetime import datetime
 
 import pandas as pd
 import pytest
-
 from pvsite_datamodel.sqlmodels import SiteAssetType
 
 from india_forecast_app.adjuster import (
