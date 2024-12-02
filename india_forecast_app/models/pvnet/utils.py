@@ -160,8 +160,11 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
         nwp_channels = list(nwp_config.config.nwp_channels)
         ds = ds.sel(variable=nwp_channels)
 
+        # get directory of file
+        dest_nwp_dir = os.path.dirname(dest_nwp_path)
+
         # regrid data
-        ds = regrid_nwp_data(ds, "india_forecast_app/data/mo_global/india_coords.nc")
+        ds = regrid_nwp_data(ds, f"{dest_nwp_dir}/mo_global/india_coords.nc")
 
     # Save destination path
     log.info(f"Saving NWP data to {dest_nwp_path}")
