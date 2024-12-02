@@ -13,7 +13,7 @@ from ocf_datapipes.config.model import NWP
 from ocf_datapipes.utils.consts import ELEVATION_MEAN, ELEVATION_STD
 from pydantic import BaseModel
 
-from india_forecast_app.data.nwp import regrid_nwp_data
+from india_forecast_app.data import nwp
 
 from .consts import (
     nwp_ecmwf_path,
@@ -161,10 +161,10 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
         ds = ds.sel(variable=nwp_channels)
 
         # get directory of file
-        dest_nwp_dir = os.path.dirname(regrid_nwp_data.__file__)
+        regrid_coords = os.path.dirname(nwp.__file__)
 
         # regrid data
-        ds = regrid_nwp_data(ds, f"{dest_nwp_dir}/mo_global/india_coords.nc")
+        ds = nwp.regrid_nwp_data(ds, f"{regrid_coords}/mo_global/india_coords.nc")
 
     # Save destination path
     log.info(f"Saving NWP data to {dest_nwp_path}")
