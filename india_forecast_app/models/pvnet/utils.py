@@ -9,7 +9,11 @@ import torch
 import xarray as xr
 import yaml
 from ocf_datapipes.batch import BatchKey
+from ocf_datapipes.config.model import NWP
 from ocf_datapipes.utils.consts import ELEVATION_MEAN, ELEVATION_STD
+from pydantic import BaseModel
+
+from india_forecast_app.data.nwp import regrid_nwp_data
 
 from .consts import (
     nwp_ecmwf_path,
@@ -23,6 +27,15 @@ from .consts import (
 )
 
 log = logging.getLogger(__name__)
+
+
+class NWPProcessAndCacheConfig(BaseModel):
+    """Configuration for processing and caching NWP data"""
+
+    source_nwp_path: str
+    dest_nwp_path: str
+    source: str
+    config: Optional[NWP] = None
 
 
 def worker_init_fn(worker_id):
@@ -92,11 +105,15 @@ def populate_data_config_sources(input_path, output_path):
     return config
 
 
-def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
+def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
     """Reads zarr file, renames t variable to t2m and saves zarr to new destination"""
 
+    source_nwp_path = nwp_config.source_nwp_path
+    dest_nwp_path = nwp_config.dest_nwp_path
+
     log.info(
-        f"Processing and caching NWP data for {source_nwp_path}, " f"and saving to {dest_nwp_path}"
+        f"Processing and caching NWP data for {source_nwp_path} "
+        f"and saving to {dest_nwp_path} for {nwp_config.source}"
     )
 
     if os.path.exists(dest_nwp_path):
@@ -115,10 +132,7 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
         if ds[v].dtype == object:
             ds[v].encoding.clear()
 
-    is_gfs = "gfs" in source_nwp_path.lower()
-    is_ecmwf = "ecmwf" in source_nwp_path.lower()
-
-    if is_ecmwf:
+    if nwp_config.source == "ecmwf":
         # Rename t variable to t2m
         variables = list(ds.variable.values)
         new_variables = []
@@ -134,12 +148,23 @@ def process_and_cache_nwp(source_nwp_path: str, dest_nwp_path: str):
         ds.__setitem__("variable", new_variables)
 
     # Hack to resolve some NWP data format differences between providers
-    elif is_gfs:
+    elif nwp_config.source == "gfs":
         data_var = ds[list(ds.data_vars.keys())[0]]
         # # Use .to_dataset() to split the data variable based on 'variable' dim
         ds = data_var.to_dataset(dim="variable")
         ds = ds.rename({"t2m": "t"})
+
+    if nwp_config.source == "mo_global":
+
+        # only select the variables we need
+        nwp_channels = list(nwp_config.config.nwp_channels)
+        ds = ds.sel(variable=nwp_channels)
+
+        # regrid data
+        ds = regrid_nwp_data(ds, "india_forecast_app/data/mo_global/india_coords.nc")
+
     # Save destination path
+    log.info(f"Saving NWP data to {dest_nwp_path}")
     ds.to_zarr(dest_nwp_path, mode="a")
 
 

@@ -35,6 +35,7 @@ from .consts import (
     wind_path,
 )
 from .utils import (
+    NWPProcessAndCacheConfig,
     download_satellite_data,
     populate_data_config_sources,
     process_and_cache_nwp,
@@ -214,26 +215,42 @@ class PVNetModel:
         satellite_source_file_path = os.getenv("SATELLITE_ZARR_PATH", None)
 
         # only load nwp that we need
-        nwp_paths = []
-        nwp_source_file_paths = []
+        nwp_configs = []
         nwp_keys = self.config["input_data"]["nwp"].keys()
         if "ecmwf" in nwp_keys:
-            nwp_ecmwf_source_file_path = os.environ["NWP_ECMWF_ZARR_PATH"]
-            nwp_source_file_paths.append(nwp_ecmwf_source_file_path)
-            nwp_paths.append(nwp_ecmwf_path)
+
+            nwp_configs.append(
+                NWPProcessAndCacheConfig(
+                    source_nwp_path=os.environ["NWP_ECMWF_ZARR_PATH"],
+                    dest_nwp_path=nwp_ecmwf_path,
+                    source="ecmwf",
+                )
+            )
+
         if "gfs" in nwp_keys:
-            nwp_gfs_source_file_path = os.environ["NWP_GFS_ZARR_PATH"]
-            nwp_source_file_paths.append(nwp_gfs_source_file_path)
-            nwp_paths.append(nwp_gfs_path)
+
+            nwp_configs.append(
+                NWPProcessAndCacheConfig(
+                    source_nwp_path=os.environ["NWP_GFS_ZARR_PATH"],
+                    dest_nwp_path=nwp_gfs_path,
+                    source="gfs",
+                )
+            )
+
         if "mo_global" in nwp_keys:
-            nwp_mo_global_source_file_path = os.environ["NWP_MO_GLOBAL_ZARR_PATH"]
-            nwp_source_file_paths.append(nwp_mo_global_source_file_path)
-            nwp_paths.append(nwp_mo_global_path)
+            nwp_configs.append(
+                NWPProcessAndCacheConfig(
+                    source_nwp_path=os.environ["NWP_MO_GLOBAL_ZARR_PATH"],
+                    dest_nwp_path=nwp_mo_global_path,
+                    source="mo_global",
+                    config=self.config["input_data"]["nwp"]["mo_global"]
+                )
+            )
 
         # Remove local cached zarr if already exists
-        for nwp_source_file_path, nwp_path in zip(nwp_source_file_paths, nwp_paths, strict=False):
+        for nwp_config in nwp_configs:
             # Process/cache remote zarr locally
-            process_and_cache_nwp(nwp_source_file_path, nwp_path)
+            process_and_cache_nwp(nwp_config)
         if use_satellite and "satellite" in self.config["input_data"].keys():
             shutil.rmtree(satellite_path, ignore_errors=True)
             download_satellite_data(satellite_source_file_path)
