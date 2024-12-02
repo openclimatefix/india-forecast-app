@@ -10,6 +10,7 @@ import xarray as xr
 import yaml
 from ocf_datapipes.batch import BatchKey
 from ocf_datapipes.utils.consts import ELEVATION_MEAN, ELEVATION_STD
+from ocf_datapipes.config.model import NWP
 from pydantic import BaseModel
 
 from india_forecast_app.data.nwp import regrid_nwp_data
@@ -34,6 +35,7 @@ class NWPProcessAndCacheConfig(BaseModel):
     source_nwp_path: str
     dest_nwp_path: str
     source: str
+    config: Optional[NWP] = None
 
 
 def worker_init_fn(worker_id):
@@ -153,7 +155,8 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
     if nwp_config.source == "mo_global":
 
         # only select the variables we need
-        ds = ds.sel(variable=["temperature_sl", "wind_u_component_10m", "wind_v_component_10m"])
+        nwp_channels = nwp_config.config.nwp_channels
+        ds = ds.sel(variable=nwp_channels)
 
         # regrid data
         ds = regrid_nwp_data(
