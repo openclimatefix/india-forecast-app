@@ -110,8 +110,10 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
     source_nwp_path = nwp_config.source_nwp_path
     dest_nwp_path = nwp_config.dest_nwp_path
 
-    log.info(f"Processing and caching NWP data for {source_nwp_path} "
-             f"and saving to {dest_nwp_path} for {nwp_config.source}")
+    log.info(
+        f"Processing and caching NWP data for {source_nwp_path} "
+        f"and saving to {dest_nwp_path} for {nwp_config.source}"
+    )
 
     if os.path.exists(dest_nwp_path):
         log.info(f"File already exists at {dest_nwp_path}")
@@ -158,9 +160,7 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
         ds = ds.sel(variable=nwp_channels)
 
         # regrid data
-        ds = regrid_nwp_data(
-            ds, "india_forecast_app/data/mo_global/india_coords.nc"
-        )
+        ds = regrid_nwp_data(ds, "india_forecast_app/data/mo_global/india_coords.nc")
 
     # Save destination path
     log.info(f"Saving NWP data to {dest_nwp_path}")
