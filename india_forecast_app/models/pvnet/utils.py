@@ -161,7 +161,7 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
         ds = ds.sel(variable=nwp_channels)
 
         # get directory of file
-        dest_nwp_dir = os.path.dirname(dest_nwp_path)
+        dest_nwp_dir = os.path.dirname(__file__)
 
         # regrid data
         ds = regrid_nwp_data(ds, f"{dest_nwp_dir}/mo_global/india_coords.nc")
