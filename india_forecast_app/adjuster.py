@@ -6,7 +6,13 @@ from typing import Optional
 import pandas as pd
 import pvlib
 from pvsite_datamodel.read import get_site_by_uuid
-from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, GenerationSQL, MLModelSQL
+from pvsite_datamodel.sqlmodels import (
+    ForecastSQL,
+    ForecastValueSQL,
+    GenerationSQL,
+    MLModelSQL,
+    SiteAssetType,
+)
 from sqlalchemy import INT, cast, text
 from sqlalchemy.sql import func
 
@@ -158,7 +164,7 @@ def zero_out_night_time_for_pv(
     # get the site
     site = get_site_by_uuid(db_session, site_uuid)
 
-    if site.asset_type == "pv":
+    if site.asset_type == SiteAssetType.pv:
 
         longitude = site.longitude
         latitude = site.latitude
