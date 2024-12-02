@@ -7,6 +7,7 @@ import logging
 import os
 import shutil
 import tempfile
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -65,6 +66,7 @@ class PVNetModel:
         hf_repo: str,
         hf_version: str,
         name: str,
+        smooth_blocks: Optional[int] = 0,
     ):
         """Initializer for the model"""
 
@@ -74,6 +76,7 @@ class PVNetModel:
         self.name = name
         self.site_uuid = None
         self.t0 = timestamp
+        self.smooth_blocks = smooth_blocks
         log.info(f"Model initialised at t0={self.t0}")
 
         self.client = os.getenv("CLIENT_NAME", "ruvnl")
@@ -186,13 +189,16 @@ class PVNetModel:
                     ) * smooth_values[final_gen_index + idx]
                 log.debug(f"New values are {values_df['forecast_power_kw']}")
 
-        if self.asset_type == "wind":
-            # Smooth with a 1 hour rolling window
-            # Only smooth the wind else we introduce too much of a lag in the solar
-            # going up and down throughout the day
+        if self.smooth_blocks > 0:
+            log.info(f"Smoothing the forecast with {self.smooth_blocks} blocks")
             values_df["forecast_power_kw"] = (
-                values_df["forecast_power_kw"].rolling(4, min_periods=1).mean().astype(int)
+                values_df["forecast_power_kw"]
+                .rolling(window=self.smooth_blocks, min_periods=1, center=True)
+                .mean()
             )
+
+        # convert to int
+        values_df["forecast_power_kw"] = values_df["forecast_power_kw"].astype(int)
 
         # remove any negative values
         values_df["forecast_power_kw"] = values_df["forecast_power_kw"].clip(lower=0.0)

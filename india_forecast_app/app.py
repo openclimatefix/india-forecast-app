@@ -149,6 +149,7 @@ def get_model(
     hf_repo: str,
     hf_version: str,
     name: str,
+    smooth_blocks: Optional[int] = 0,
 ) -> PVNetModel:
     """
     Instantiates and returns the forecast model ready for running inference
@@ -160,6 +161,7 @@ def get_model(
             hf_repo: ID of the ML model used for the forecast
             hf_version: Version of the ML model used for the forecast
             name: Name of the ML model used for the forecast
+            smooth_blocks: Number of blocks to smooth the forecast by
 
     Returns:
             A forecasting model
@@ -169,7 +171,13 @@ def get_model(
     model_cls = PVNetModel
 
     model = model_cls(
-        asset_type, timestamp, generation_data, hf_repo=hf_repo, hf_version=hf_version, name=name
+        asset_type,
+        timestamp,
+        generation_data,
+        hf_repo=hf_repo,
+        hf_version=hf_version,
+        name=name,
+        smooth_blocks=smooth_blocks,
     )
     return model
 
@@ -363,6 +371,7 @@ def app_run(timestamp: dt.datetime | None, write_to_db: bool = False, log_level:
                     hf_repo=model_config.id,
                     hf_version=model_config.version,
                     name=model_config.name,
+                    smooth_blocks=model_config.smooth_blocks,
                 )
                 ml_model.site_uuid = site.site_uuid
 
