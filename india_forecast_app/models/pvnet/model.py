@@ -243,7 +243,7 @@ class PVNetModel:
                     source_nwp_path=os.environ["NWP_MO_GLOBAL_ZARR_PATH"],
                     dest_nwp_path=nwp_mo_global_path,
                     source="mo_global",
-                    config=self.config["input_data"]["nwp"]["ecmwf"]
+                    config=self.config["input_data"]["nwp"]["mo_global"]
                 )
             )
 
