@@ -3,6 +3,7 @@ from datetime import datetime
 
 import pandas as pd
 import pytest
+from pvsite_datamodel.sqlmodels import SiteAssetType
 
 from india_forecast_app.adjuster import (
     adjust_forecast_with_adjuster,
@@ -80,6 +81,9 @@ def test_adjust_forecast_with_adjuster(db_session, sites, generation_db_values, 
         {
             "forecast_power_kw": [1, 2, 3, 4, 5],
             "horizon_minutes": [15, 30, 45, 60, 1200],
+            "start_utc": [
+                pd.Timestamp("2024-11-01 03:00:00") + pd.Timedelta(f"{i}H") for i in range(0, 5)
+            ],
         }
     )
 
@@ -100,6 +104,9 @@ def test_adjust_forecast_with_adjuster_no_values(db_session, sites):
         {
             "forecast_power_kw": [1, 2, 3, 4, 5],
             "horizon_minutes": [15, 30, 45, 60, 1200],
+            "start_utc": [
+                pd.Timestamp("2024-11-01 03:00:00") + pd.Timedelta(f"{i}H") for i in range(0, 5)
+            ],
         }
     )
 
@@ -111,7 +118,7 @@ def test_adjust_forecast_with_adjuster_no_values(db_session, sites):
     assert forecast_values_df["forecast_power_kw"].sum() == 15
 
 
-@pytest.mark.parametrize("asset_type", ["pv", "wind"])
+@pytest.mark.parametrize("asset_type", [SiteAssetType.pv, SiteAssetType.wind])
 def test_zero_out_night_time_for_pv(asset_type, db_session, sites):
     """ Test for zero_out_nighttime """
     forecast_values_df = pd.DataFrame(
@@ -132,7 +139,7 @@ def test_zero_out_night_time_for_pv(asset_type, db_session, sites):
 
     assert len(forecast_values_df) == 5
     night_sum = forecast_values_df["forecast_power_kw"][0:2].sum()
-    if asset_type == "pv":
+    if asset_type == SiteAssetType.pv:
         assert night_sum == 0
     else:
         assert night_sum > 0
