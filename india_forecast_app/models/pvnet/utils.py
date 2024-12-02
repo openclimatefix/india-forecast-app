@@ -157,7 +157,7 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
     if nwp_config.source == "mo_global":
 
         # only select the variables we need
-        nwp_channels = nwp_config.config.nwp_channels
+        nwp_channels = list(nwp_config.config.nwp_channels)
         ds = ds.sel(variable=nwp_channels)
 
         # regrid data
