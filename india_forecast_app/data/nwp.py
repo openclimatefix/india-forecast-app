@@ -8,8 +8,6 @@ logger = logging.getLogger(__name__)
 def regrid_nwp_data(nwp_ds: xr.Dataset, target_coords_path: str) -> xr.Dataset:
     """This function loads the  NWP data, then regrids and saves it back out if the data is not
     on the same grid as expected. The data is resaved in-place.
-
-    method can be 'conservative' or 'bilinear'
     """
 
     logger.info(f"Regridding NWP data to expected grid to {target_coords_path}")
@@ -27,7 +25,7 @@ def regrid_nwp_data(nwp_ds: xr.Dataset, target_coords_path: str) -> xr.Dataset:
 
     if not needs_regridding:
         logger.info(f"No NWP regridding required - skipping this step")
-        return
+        return ds_raw
 
     # flip latitude, so its in ascending order
     if ds_raw.latitude[0] > ds_raw.latitude[-1]:
