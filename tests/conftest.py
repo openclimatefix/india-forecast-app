@@ -111,6 +111,20 @@ def sites(db_session):
     db_session.add(site)
     sites.append(site)
 
+    # Ad wind site
+    site = SiteSQL(
+        client_site_id=3,
+        client_site_name="test_site_ad_wind",
+        latitude=26.4199,
+        longitude=72.6699,
+        capacity_kw=25000,
+        ml_id=2,
+        asset_type="wind",
+        country="india",
+    )
+    db_session.add(site)
+    sites.append(site)
+
     db_session.commit()
 
     return sites
