@@ -263,9 +263,13 @@ class PVNetModel:
 
             # Save generation data as netcdf file
             generation_da = self.generation_data["data"].to_xarray()
+
+            # get the minimum timestamp in generation data
+            min_timestamp = generation_da.index.min().values
             # Add the forecast timesteps to the generation, with 0 values
+            # 192 is 48 hours of 15 min intervals
             forecast_timesteps = pd.date_range(
-                start=self.t0 - pd.Timedelta("1H"), periods=197, freq="15min"
+                start=min_timestamp, periods=len(generation_da.index) + 192, freq="15min"
             )
 
             generation_da = generation_da.reindex(index=forecast_timesteps, fill_value=0.00001)
