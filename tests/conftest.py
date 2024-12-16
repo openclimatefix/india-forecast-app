@@ -166,7 +166,7 @@ def generation_db_values(db_session, sites, init_timestamp):
 def generation_db_values_only_wind(db_session, sites, init_timestamp):
     """Create some fake generations"""
 
-    n = 100  # 5 hours of readings
+    n = 20*24  # 24 hours of readings
     start_times = [init_timestamp - dt.timedelta(minutes=x * 3) for x in range(n)]
 
     # remove some of the most recent readings (to simulate missing timestamps)
