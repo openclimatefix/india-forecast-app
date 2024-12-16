@@ -118,7 +118,7 @@ def sites(db_session):
         latitude=26.4199,
         longitude=72.6699,
         capacity_kw=25000,
-        ml_id=2,
+        ml_id=3,
         asset_type="wind",
         country="india",
     )
