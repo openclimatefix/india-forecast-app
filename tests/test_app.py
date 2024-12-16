@@ -45,7 +45,7 @@ def test_get_generation_data(db_session, sites, generation_db_values, init_times
     """Test for correct generation data"""
 
     # Test only checks for wind data as solar data not ready yet
-    gen_sites = [s for s in sites if s.asset_type == SiteAssetType.wind]  # 1 site
+    gen_sites = [s for s in sites if s.asset_type == SiteAssetType.wind][0:1]  # 1 site
     gen_data = get_generation_data(db_session, gen_sites, timestamp=init_timestamp)
     gen_df, gen_meta = gen_data["data"], gen_data["metadata"]
 
