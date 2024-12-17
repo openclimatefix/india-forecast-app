@@ -94,7 +94,7 @@ def test_adjust_forecast_with_adjuster(db_session, sites, generation_db_values, 
     assert len(forecast_values_df) == 5
     assert forecast_values_df["forecast_power_kw"][0:4].sum() == 10
     assert forecast_values_df["forecast_power_kw"][4] != 5
-    # note the way the tests are setup, only the horizon_minutes=1200 has some ME values
+    # note the way the tests are setup, only the horizon_minutes=90 has some ME values
 
 
 def test_adjust_forecast_with_adjuster_no_values(db_session, sites):

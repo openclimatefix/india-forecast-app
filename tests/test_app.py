@@ -45,7 +45,7 @@ def test_get_generation_data(db_session, sites, generation_db_values, init_times
     """Test for correct generation data"""
 
     # Test only checks for wind data as solar data not ready yet
-    gen_sites = [s for s in sites if s.asset_type == SiteAssetType.wind]  # 1 site
+    gen_sites = [s for s in sites if s.asset_type == SiteAssetType.wind][0:1]  # 1 site
     gen_data = get_generation_data(db_session, gen_sites, timestamp=init_timestamp)
     gen_df, gen_meta = gen_data["data"], gen_data["metadata"]
 
@@ -210,11 +210,13 @@ def test_app_client_ad(
 
     app_run(timestamp=None, write_to_db=True)
 
-    n_forecasts = 2 * 2
-    # one model is 8 hours, one model is 4 hours
+    # 2 pv models, 1 wind model
+    # x2 for adjuster
+    n_forecasts = 3 * 2
+    # one models is 8 hours, two model is 4 hours
     # x 4 for each 15 minutes
     # x 2 for adjuster
-    n_forecast_values = (8 + 4) * 4 * 2
+    n_forecast_values = (8 + 4 + 4) * 4 * 2
 
     assert db_session.query(ForecastSQL).count() == init_n_forecasts + n_forecasts
     assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + n_forecast_values

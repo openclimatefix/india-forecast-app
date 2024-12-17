@@ -47,6 +47,13 @@ models:
     client: ad
     asset_type: pv
     adjuster_average_minutes: 15
+  - name: windnet_ad_sites
+    type: pvnet
+    id: openclimatefix/windnet_ad_sites
+    version: 8f1fd4322f6618b74dd718d50ff2d64ffec8e8fb
+    client: ad
+    asset_type: wind
+    adjuster_average_minutes: 15
   # this is just a dummy one
   - name: dummy
     type: dummy

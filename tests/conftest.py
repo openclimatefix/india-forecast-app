@@ -111,6 +111,20 @@ def sites(db_session):
     db_session.add(site)
     sites.append(site)
 
+    # Ad wind site
+    site = SiteSQL(
+        client_site_id=3,
+        client_site_name="test_site_ad_wind",
+        latitude=26.4199,
+        longitude=72.6699,
+        capacity_kw=25000,
+        ml_id=3,
+        asset_type="wind",
+        country="india",
+    )
+    db_session.add(site)
+    sites.append(site)
+
     db_session.commit()
 
     return sites
@@ -120,7 +134,7 @@ def sites(db_session):
 def generation_db_values(db_session, sites, init_timestamp):
     """Create some fake generations"""
 
-    n = 100  # 5 hours of readings
+    n = 450  # 22.5 hours of readings
     start_times = [init_timestamp - dt.timedelta(minutes=x * 3) for x in range(n)]
 
     # remove some of the most recent readings (to simulate missing timestamps)
@@ -152,7 +166,7 @@ def generation_db_values(db_session, sites, init_timestamp):
 def generation_db_values_only_wind(db_session, sites, init_timestamp):
     """Create some fake generations"""
 
-    n = 100  # 5 hours of readings
+    n = 20*25  # 25 hours of readings
     start_times = [init_timestamp - dt.timedelta(minutes=x * 3) for x in range(n)]
 
     # remove some of the most recent readings (to simulate missing timestamps)

@@ -77,7 +77,7 @@ def get_generation_data(
     if client == "ruvnl":
         start = timestamp - dt.timedelta(hours=1)
     elif client == "ad":
-        start = timestamp - dt.timedelta(hours=3)
+        start = timestamp - dt.timedelta(hours=25)
     # pad by 1 second to ensure get_pv_generation_by_sites returns correct data
     end = timestamp + dt.timedelta(seconds=1)
 
