@@ -133,7 +133,7 @@ class PVNetModel:
             ]
         )
 
-        if self.asset_type == "wind":
+        if self.asset_type == "wind" and self.client == "ruvnl":
 
             log.info("Feathering the forecast to the lastest value of generation")
 
@@ -186,7 +186,6 @@ class PVNetModel:
                     ) * smooth_values[final_gen_index + idx]
                 log.debug(f"New values are {values_df['forecast_power_kw']}")
 
-        if self.asset_type == "wind":
             # Smooth with a 1 hour rolling window
             # Only smooth the wind else we introduce too much of a lag in the solar
             # going up and down throughout the day
