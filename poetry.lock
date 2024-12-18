@@ -4462,13 +4462,13 @@ requests = "*"
 
 [[package]]
 name = "pvnet"
-version = "3.0.52"
+version = "3.0.64"
 description = "PVNet"
 optional = false
 python-versions = "*"
 files = [
-    {file = "PVNet-3.0.52-py3-none-any.whl", hash = "sha256:d2fbfaa93950b608a605d0a0b09b059c5d752ab3a41489ac97f62df8b437daa5"},
-    {file = "pvnet-3.0.52.tar.gz", hash = "sha256:40b727da937d1ff27e084a1a922aaca2045b8cf74cff6d5999e537cec070c8d5"},
+    {file = "PVNet-3.0.64-py3-none-any.whl", hash = "sha256:17caa0866d934e8de9ddffddac87e05ec08eb5f74c416f1fa76bd8865adc39df"},
+    {file = "pvnet-3.0.64.tar.gz", hash = "sha256:733f10cf98c70332f0128072f55d4354f93bfd437d8a9270ce698146d203d9f9"},
 ]
 
 [package.dependencies]
@@ -7017,4 +7017,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "3f3f60103d2147e8a9fcc33a5594323c12456f9ce10642cb1bd722e99578bc39"
+content-hash = "ce3e5b7c5eb197d7e643996fe596b70ba281397e28acbfbe5f70df2f51f915dd"
