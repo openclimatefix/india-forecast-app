@@ -166,7 +166,7 @@ def generation_db_values(db_session, sites, init_timestamp):
 def generation_db_values_only_wind(db_session, sites, init_timestamp):
     """Create some fake generations"""
 
-    n = 20*25  # 25 hours of readings
+    n = 20 * 25  # 25 hours of readings
     start_times = [init_timestamp - dt.timedelta(minutes=x * 3) for x in range(n)]
 
     # remove some of the most recent readings (to simulate missing timestamps)
@@ -389,10 +389,21 @@ def nwp_mo_global_data(tmp_path_factory, time_before_present):
             ds[v].encoding.clear()
 
     # change variables values to for MO global
-    ds.variable.values[0:3] = ["temperature_sl", "wind_u_component_10m", "wind_v_component_10m"]
+    ds.variable.values[0:10] = [
+        "temperature_sl",
+        "wind_u_component_10m",
+        "wind_v_component_10m",
+        "downward_shortwave_radiation_flux_gl",
+        "cloud_cover_high",
+        "cloud_cover_low",
+        "cloud_cover_medium",
+        "relative_humidity_sl",
+        "snow_depth_gl",
+        "visibility_sl",
+    ]
 
     # interpolate 3 hourly step to 1 hour steps
-    steps = pd.TimedeltaIndex(np.arange(49) * 3600 * 1e9, freq='infer')
+    steps = pd.TimedeltaIndex(np.arange(49) * 3600 * 1e9, freq="infer")
     ds = ds.interp(step=steps, method="linear")
 
     ds["mo_global"] = xr.DataArray(
