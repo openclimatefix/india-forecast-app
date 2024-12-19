@@ -361,11 +361,8 @@ def nwp_mo_global_data(tmp_path_factory, time_before_present):
 
     # Load dataset which only contains coordinates, but no data
     ds = xr.open_zarr(
-        f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data_gfs.zarr"
+        f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data.zarr"
     )
-
-    # rename dimension init_time_utc to init_time
-    ds = ds.rename({"init_time_utc": "init_time"})
 
     # Last t0 to at least 4 hours ago and floor to 3-hour interval
     t0_datetime_utc = time_before_present(dt.timedelta(hours=0)).floor("3h")
