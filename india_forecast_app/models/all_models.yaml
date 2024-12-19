@@ -32,6 +32,12 @@ models:
     version: d71104620f0b0bdd3eeb63cafecd2a49032ae0f7
     client: ruvnl
     asset_type: pv
+  - name: pvnet_india_ecmwf_mo_gfs
+    type: pvnet
+    id: openclimatefix/pvnet_india
+    version: 0561e737765df164b572fa506401995263c6401b
+    client: ruvnl
+    asset_type: pv
   # Ad client solar
   - name: pvnet_ad_sites
     type: pvnet
