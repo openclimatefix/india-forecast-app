@@ -273,7 +273,7 @@ class PVNetModel:
             generation_da = self.generation_data["data"].to_xarray()
 
             # get the minimum timestamp in generation data
-            if len(generation_da) > 0:
+            if len(generation_da.index) > 0:
                 min_timestamp = generation_da.index.min().values
             else:
                 min_timestamp = self.t0 - pd.Timedelta(hours=24)
