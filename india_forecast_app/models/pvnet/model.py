@@ -273,7 +273,10 @@ class PVNetModel:
             generation_da = self.generation_data["data"].to_xarray()
 
             # get the minimum timestamp in generation data
-            min_timestamp = generation_da.index.min().values
+            if len(generation_da.index) > 0:
+                min_timestamp = generation_da.index.min().values
+            else:
+                min_timestamp = self.t0 - pd.Timedelta(hours=24)
             # Add the forecast timesteps to the generation, with 0 values
             # 192 is 48 hours of 15 min intervals
             forecast_timesteps = pd.date_range(
