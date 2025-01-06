@@ -3798,13 +3798,13 @@ numpy = "*"
 
 [[package]]
 name = "ocf-datapipes"
-version = "3.3.52"
+version = "3.3.55"
 description = "Pytorch Datapipes built for use in Open Climate Fix's forecasting work"
 optional = false
 python-versions = "*"
 files = [
-    {file = "ocf_datapipes-3.3.52-py3-none-any.whl", hash = "sha256:889d5d0a0d91868783a85c414a9860d721305942a57ce5713c7c14fb38e9cf6f"},
-    {file = "ocf_datapipes-3.3.52.tar.gz", hash = "sha256:eaf149ad672d423595afc45c5d58bbac1e537d1714e388ecf702d477754de61e"},
+    {file = "ocf_datapipes-3.3.55-py3-none-any.whl", hash = "sha256:d4712aef35a13974eccbbe7aca420de318fc84f0112a8bb05729f5a610965d49"},
+    {file = "ocf_datapipes-3.3.55.tar.gz", hash = "sha256:1a9db14fffcdc902ea4f649d5d2ed47d33f5ee80b9803f44278abf142a530ae3"},
 ]
 
 [package.dependencies]
@@ -3818,18 +3818,18 @@ fsspec = "*"
 geopandas = "*"
 gitpython = "*"
 h5netcdf = "*"
-nowcasting-datamodel = ">=1.5.30"
+nowcasting_datamodel = ">=1.5.30"
 numpy = "*"
-ocf-blosc2 = "*"
+ocf_blosc2 = "*"
 pandas = "*"
 pathy = "*"
 pvlib = "*"
 pvlive-api = "*"
-pyaml-env = "*"
+pyaml_env = "*"
 pydantic = "*"
 pyproj = "*"
 pyresample = "*"
-pytorch-lightning = "*"
+pytorch_lightning = "*"
 rioxarray = "*"
 scipy = "*"
 torch = ">=2.0.0,<2.5.0"
@@ -7017,4 +7017,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "ce3e5b7c5eb197d7e643996fe596b70ba281397e28acbfbe5f70df2f51f915dd"
+content-hash = "bb7863a314a25e025cdf8c88a97eeae78793cf0aa71834cd2121218ce0f37b47"
