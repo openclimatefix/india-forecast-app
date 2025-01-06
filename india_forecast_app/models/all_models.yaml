@@ -60,6 +60,13 @@ models:
     client: ad
     asset_type: wind
     adjuster_average_minutes: 15
+  - name: windnet_ad_sites_generation_delay
+    type: pvnet
+    id: openclimatefix/windnet_ad_sites
+    version: bced479c5c3ab198bfce7d5cb4e02f8679be3297
+    client: ad
+    asset_type: wind
+    adjuster_average_minutes: 15
   # this is just a dummy one
   - name: dummy
     type: dummy
