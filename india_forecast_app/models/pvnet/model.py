@@ -380,10 +380,23 @@ class PVNetModel:
             )
 
         else:
+
+            # This is a bit of a hack, for ocf datapipes.
+            # The normalisation constants are different for the
+            # ruvnl pv 1st model and the ruvnl pv 2nd model
+            # and ad models
+            # When moving to ocf-data-sampler, we should think carefully how this is done
+            if self.name == 'pvnet_india_ecmwf_mo_gfs':
+                new_normalisation_constants = True
+            else:
+                new_normalisation_constants = False
+            log.debug(f"Using new normalisation constants: {new_normalisation_constants}")
+
             base_datapipe_dict = pv_base_pipeline(
                 config_filename=populated_data_config_filename,
                 location_pipe=location_pipe,
                 t0_datapipe=t0_datapipe,
+                new_normalisation_constants=new_normalisation_constants,
             )
 
             base_datapipe = DictDatasetIterDataPipe(

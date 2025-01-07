@@ -156,9 +156,11 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
 
     if nwp_config.source == "mo_global":
 
+        # COMMENTED this out for the moment, as different models use different mo global variables
         # only select the variables we need
-        nwp_channels = list(nwp_config.config.nwp_channels)
-        ds = ds.sel(variable=nwp_channels)
+        # nwp_channels = list(nwp_config.config.nwp_channels)
+        # log.info(f"Selecting NWP channels {nwp_channels} for mo_global data")
+        # ds = ds.sel(variable=nwp_channels)
 
         # get directory of file
         regrid_coords = os.path.dirname(nwp.__file__)
