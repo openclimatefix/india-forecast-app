@@ -21,6 +21,7 @@ from testcontainers.postgres import PostgresContainer
 
 log = logging.getLogger(__name__)
 
+random.seed(42)
 
 @pytest.fixture(scope="session")
 def engine():
