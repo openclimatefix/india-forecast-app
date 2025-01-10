@@ -184,10 +184,47 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
 
     # Hack to resolve some NWP data format differences between providers
     elif nwp_config.source == "gfs":
-        data_var = ds[list(ds.data_vars.keys())[0]]
-        # # Use .to_dataset() to split the data variable based on 'variable' dim
-        ds = data_var.to_dataset(dim="variable")
-        ds = ds.rename({"t2m": "t"})
+
+        if "HRES-IFS_india" in ds.data_vars:
+
+            ds = ds.rename({"HRES-IFS_india": "ECMWF_INDIA"})
+
+            # rename variable names in the variable coordinate
+            # This is a renaming from ECMWF variables to what we use in the ML Model
+            # This change happened in the new nwp-consumer>=1.0.0
+            # Ideally we won't need this step in the future
+            variable_coords = ds.variable.values
+            rename = {'cloud_cover_high': 'hcc',
+                      'cloud_cover_low': 'lcc',
+                      'cloud_cover_medium': 'mcc',
+                      'cloud_cover_total': 'tcc',
+                      'snow_depth_gl': 'sdwe',
+                      'direct_shortwave_radiation_flux_gl': 'sr',
+                      'downward_longwave_radiation_flux_gl': 'dlwrf',
+                      'downward_shortwave_radiation_flux_gl': 'dswrf',
+                      'downward_ultraviolet_radiation_flux_gl': 'duvrs',
+                      'temperature_sl': 't',
+                      'total_precipitation_rate_gl': 'prate',
+                      'visibility_sl': 'vis',
+                      'wind_u_component_100m': 'u100',
+                      'wind_u_component_10m': 'u10',
+                      'wind_u_component_200m': 'u200',
+                      'wind_v_component_100m': 'v100',
+                      'wind_v_component_10m': 'v10',
+                      'wind_v_component_200m': 'v200'}
+
+            for k, v in rename.items():
+                variable_coords[variable_coords == k] = v
+
+            # assign the new variable names
+            ds = ds.assign_coords(variable=variable_coords)
+
+        else:
+
+            data_var = ds[list(ds.data_vars.keys())[0]]
+            # # Use .to_dataset() to split the data variable based on 'variable' dim
+            ds = data_var.to_dataset(dim="variable")
+            ds = ds.rename({"t2m": "t"})
 
     if nwp_config.source == "mo_global":
 
