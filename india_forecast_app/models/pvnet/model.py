@@ -41,13 +41,13 @@ from .consts import (
 )
 from .utils import (
     NWPProcessAndCacheConfig,
-    download_satellite_data,
     populate_data_config_sources,
     process_and_cache_nwp,
     save_batch,
     set_night_time_zeros,
     worker_init_fn,
 )
+from ...data.satellite import download_satellite_data
 
 # Global settings for running the model
 
