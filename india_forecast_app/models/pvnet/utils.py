@@ -190,7 +190,7 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
             ds = ds.rename({"NCEP-GFS": "NOAA_GLOBAL"})
 
             # rename variable names in the variable coordinate
-            # This is a renaming from ECMWF variables to what we use in the ML Model
+            # This is a renaming from GFS variables to what we use in the ML Model
             # This change happened in the new nwp-consumer>=1.0.0
             # Ideally we won't need this step in the future
             variable_coords = ds.variable.values
