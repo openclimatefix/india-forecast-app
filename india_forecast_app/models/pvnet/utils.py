@@ -187,7 +187,7 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
 
         if "NCEP-GFS" in ds.data_vars:
 
-            ds = ds.rename({"NCEP-GFS": "NOAA_GLOBAL'"})
+            ds = ds.rename({"NCEP-GFS": "NOAA_GLOBAL"})
 
             # rename variable names in the variable coordinate
             # This is a renaming from ECMWF variables to what we use in the ML Model
