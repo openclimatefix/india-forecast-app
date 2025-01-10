@@ -185,9 +185,9 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
     # Hack to resolve some NWP data format differences between providers
     elif nwp_config.source == "gfs":
 
-        if "HRES-IFS_india" in ds.data_vars:
+        if "NCEP-GFS" in ds.data_vars:
 
-            ds = ds.rename({"HRES-IFS_india": "ECMWF_INDIA"})
+            ds = ds.rename({"NCEP-GFS": "NOAA_GLOBAL'"})
 
             # rename variable names in the variable coordinate
             # This is a renaming from ECMWF variables to what we use in the ML Model
@@ -219,11 +219,13 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
             # assign the new variable names
             ds = ds.assign_coords(variable=variable_coords)
 
-        else:
+        # change to list of data variables
+        # note we need this for ocf-datapipes, but not for ocf-data-sampler
+        data_var = ds[list(ds.data_vars.keys())[0]]
+        # # Use .to_dataset() to split the data variable based on 'variable' dim
+        ds = data_var.to_dataset(dim="variable")
 
-            data_var = ds[list(ds.data_vars.keys())[0]]
-            # # Use .to_dataset() to split the data variable based on 'variable' dim
-            ds = data_var.to_dataset(dim="variable")
+        if "t2m" in ds.data_vars:
             ds = ds.rename({"t2m": "t"})
 
     if nwp_config.source == "mo_global":
