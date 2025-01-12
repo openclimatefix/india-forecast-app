@@ -263,6 +263,10 @@ def download_satellite_data(satellite_source_file_path: str) -> None:
     else:
         log.error(f"Could not find satellite data at {satellite_source_file_path}")
 
+    # log the timestamps for satellite data
+    ds = xr.open_zarr(satellite_path)
+    log.info(f"Satellite data timestamps: {ds.time.values}")
+
 
 def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
     """
