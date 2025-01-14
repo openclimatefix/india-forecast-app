@@ -205,6 +205,7 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
                       'downward_ultraviolet_radiation_flux_gl': 'duvrs',
                       'temperature_sl': 't',
                       'total_precipitation_rate_gl': 'prate',
+                      "relative_humidity_sl": "r",
                       'visibility_sl': 'vis',
                       'wind_u_component_100m': 'u100',
                       'wind_u_component_10m': 'u10',
