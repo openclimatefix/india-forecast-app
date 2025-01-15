@@ -198,7 +198,7 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
                       'cloud_cover_low': 'lcc',
                       'cloud_cover_medium': 'mcc',
                       'cloud_cover_total': 'tcc',
-                      'snow_depth_gl': 'sdwe',
+                      'snow_depth_gl': 'sde',
                       'direct_shortwave_radiation_flux_gl': 'sr',
                       'downward_longwave_radiation_flux_gl': 'dlwrf',
                       'downward_shortwave_radiation_flux_gl': 'dswrf',
