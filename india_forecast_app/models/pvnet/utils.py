@@ -198,13 +198,14 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
                       'cloud_cover_low': 'lcc',
                       'cloud_cover_medium': 'mcc',
                       'cloud_cover_total': 'tcc',
-                      'snow_depth_gl': 'sdwe',
+                      'snow_depth_gl': 'sde',
                       'direct_shortwave_radiation_flux_gl': 'sr',
                       'downward_longwave_radiation_flux_gl': 'dlwrf',
                       'downward_shortwave_radiation_flux_gl': 'dswrf',
                       'downward_ultraviolet_radiation_flux_gl': 'duvrs',
                       'temperature_sl': 't',
                       'total_precipitation_rate_gl': 'prate',
+                      "relative_humidity_sl": "r",
                       'visibility_sl': 'vis',
                       'wind_u_component_100m': 'u100',
                       'wind_u_component_10m': 'u10',
@@ -262,6 +263,10 @@ def download_satellite_data(satellite_source_file_path: str) -> None:
         os.system(f"unzip -qq sat_15_min.zarr.zip -d {satellite_path}")
     else:
         log.error(f"Could not find satellite data at {satellite_source_file_path}")
+
+    # log the timestamps for satellite data
+    ds = xr.open_zarr(satellite_path)
+    log.info(f"Satellite data timestamps: {ds.time.values}")
 
 
 def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
