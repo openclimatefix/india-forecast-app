@@ -160,7 +160,7 @@ def test_app(
     result = run_click_script(app, args)
     assert result.exit_code == 0
 
-    n = 5
+    n = 6
 
     if write_to_db:
         assert db_session.query(ForecastSQL).count() == init_n_forecasts + n * 2
@@ -185,7 +185,7 @@ def test_app_no_pv_data(
     result = run_click_script(app, args)
     assert result.exit_code == 0
 
-    n = 5
+    n = 6
 
     assert db_session.query(ForecastSQL).count() == init_n_forecasts + 2 * n
     assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (2 * n * 192)
