@@ -134,9 +134,9 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
 
     if nwp_config.source == "ecmwf":
 
-        if "HRES-IFS_india" in ds.data_vars:
-            # rename from HRES-IFS_india to ECMWF_INDIA
-            ds = ds.rename({"HRES-IFS_india": "ECMWF_INDIA"})
+        if "hres-ifs_india" in ds.data_vars:
+            # rename from hres-ifs_india to ECMWF_INDIA
+            ds = ds.rename({"hres-ifs_india": "ECMWF_INDIA"})
 
             # rename variable names in the variable coordinate
             # This is a renaming from ECMWF variables to what we use in the ML Model
@@ -185,9 +185,9 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
     # Hack to resolve some NWP data format differences between providers
     elif nwp_config.source == "gfs":
 
-        if "NCEP-GFS" in ds.data_vars:
+        if "ncep-gfs" in ds.data_vars:
 
-            ds = ds.rename({"NCEP-GFS": "NOAA_GLOBAL"})
+            ds = ds.rename({"ncep-gfs": "NOAA_GLOBAL"})
 
             # rename variable names in the variable coordinate
             # This is a renaming from GFS variables to what we use in the ML Model
