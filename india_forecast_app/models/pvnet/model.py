@@ -277,10 +277,13 @@ class PVNetModel:
                 min_timestamp = generation_da.index.min().values
             else:
                 min_timestamp = self.t0 - pd.Timedelta(hours=24)
-            # Add the forecast timesteps to the generation, with 0 values
-            # 192 is 48 hours of 15 min intervals
+            # Add the forecast time steps to the generation, with 0 values
+            # 96 is 24 hours of 15 min intervals
+            # There's a maximum of 24 hours in the past,
+            # and 48 hours into the future, means a total length of 3 days.
+            # (plus 0.5 for buffer)
             forecast_timesteps = pd.date_range(
-                start=min_timestamp, periods=len(generation_da.index) + 192, freq="15min"
+                start=min_timestamp, periods=len(generation_da.index) + 96*3.5, freq="15min"
             )
 
             generation_da = generation_da.reindex(index=forecast_timesteps, fill_value=0.00001)
