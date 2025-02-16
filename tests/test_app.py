@@ -191,6 +191,28 @@ def test_app_no_pv_data(
     assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (2 * n * 192)
 
 
+def test_app_no_wind_or_pv_data(
+    db_session, sites, nwp_data, nwp_gfs_data, nwp_mo_global_data
+):
+    """Test for running app from command line"""
+
+    init_n_forecasts = db_session.query(ForecastSQL).count()
+    init_n_forecast_values = db_session.query(ForecastValueSQL).count()
+
+    args = ["--date", dt.datetime.now(tz=dt.UTC).strftime("%Y-%m-%d-%H-%M")]
+    args.append("--write-to-db")
+
+    result = run_click_script(app, args)
+    assert result.exit_code == 0
+
+    n = 6
+
+    assert db_session.query(ForecastSQL).count() == init_n_forecasts + 2 * n
+    assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + (2 * n * 192)
+
+
+
+
 @pytest.mark.requires_hf_token
 def test_app_client_ad(
     db_session,
@@ -202,7 +224,7 @@ def test_app_client_ad(
     generation_db_values,
     client_ad,
 ):
-    """Test for running app from command line"""
+    """Test for running app with no pv or wind data"""
 
     init_n_forecasts = db_session.query(ForecastSQL).count()
     init_n_forecast_values = db_session.query(ForecastValueSQL).count()
