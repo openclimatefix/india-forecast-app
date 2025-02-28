@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 click = "^8.1.7"
-pvsite-datamodel = "^1.0.34"
+pvsite-datamodel = "^1.0.53"
 pandas = "1.5.3"
 pvnet = "3.0.64"
 pytz = "^2024.1"
