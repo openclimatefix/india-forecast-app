@@ -5,8 +5,10 @@ Fixtures for testing
 import datetime as dt
 import logging
 import os
-import random
 from uuid import uuid4
+
+#importing random
+import random
 
 import numpy as np
 import pandas as pd
@@ -19,9 +21,10 @@ from pvsite_datamodel.sqlmodels import Base, ForecastSQL, ForecastValueSQL, Gene
 from sqlalchemy import create_engine
 from testcontainers.postgres import PostgresContainer
 
-log = logging.getLogger(__name__)
+# added random.seed() to replicate random values in multiple runs
+random.seed(36)
 
-random.seed(42)
+log = logging.getLogger(__name__)
 
 @pytest.fixture(scope="session")
 def engine():
