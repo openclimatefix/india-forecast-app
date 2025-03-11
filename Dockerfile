@@ -27,7 +27,7 @@ RUN pip install "poetry==$POETRY_VERSION"
 
 RUN python -m venv /venv
 
-COPY pyproject.toml poetry.lock README.md .
+COPY pyproject.toml README.md .
 RUN . /venv/bin/activate && poetry install --only main --no-root
 
 COPY india_forecast_app ./india_forecast_app
