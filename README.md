@@ -1,4 +1,5 @@
 <h1 align="center">india-forecast-app</h1>
+
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
@@ -110,17 +111,11 @@ DB_URL={DB_URL} NWP_ZARR_PATH={NWP_ZARR_PATH} poetry run app
 ```
 
 To save batches, you need to set the `SAVE_BATCHES_DIR` environment variable to directory. 
-```
 
 ### Starting a local database using docker
 
-```bash
-    docker run \
-        -it --rm \
-        -e POSTGRES_USER=postgres \
-        -e POSTGRES_PASSWORD=postgres \
-        -p 54545:5432 postgres:14-alpine \
-        postgres
+```
+docker run -d --rm -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 54545:5432 postgres:14.5 postgres
 ```
 
 The corresponding `DB_URL` will be
