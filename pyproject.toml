@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "india_forecast_app"
-version = "1.1.34"
+version = "1.1.35"
 description = "Runs wind and PV forecasts for India and saves to database"
 authors = ["Chris Briggs <confusedmatrix@gmail.com>"]
 readme = "README.md"
@@ -9,7 +9,7 @@ readme = "README.md"
 python = "^3.11"
 click = "^8.1.7"
 pvsite-datamodel = "^1.0.53"
-pandas = "1.5.3"
+pandas = "2.2.3"
 pvnet = "3.0.64"
 pytz = "^2024.1"
 numpy = "^1.26.4"
