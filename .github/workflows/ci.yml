@@ -1,6 +1,11 @@
 name: CI pipeline for India Forecast App
 
-on: push
+on:
+  push:
+    paths-ignore: ['README.md']
+  pull_request:
+      types: [opened, reopened]
+      paths-ignore: ['README.md']
 
 jobs:
 
