@@ -1,6 +1,11 @@
 name: CI pipeline for India Forecast App
 
-on: push
+on:
+  push:
+    paths-ignore: ['README.md']
+  pull_request:
+      types: [opened, reopened]
+      paths-ignore: ['README.md']
 
 jobs:
 
@@ -14,7 +19,7 @@ jobs:
   release:
     needs: [lint_and_test]
     if: github.ref_name == 'main'
-    uses: openclimatefix/.github/.github/workflows/docker-release.yml@clean-up
+    uses: openclimatefix/.github/.github/workflows/docker-release.yml@main
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
