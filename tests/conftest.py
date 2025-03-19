@@ -246,6 +246,7 @@ def forecasts(db_session, sites):
                 ml_model_uuid=model.model_uuid,
                 forecast_uuid=forecast_uuid,
                 created_utc=start_times[-1],
+                probabilistic_values = None,
             )
             forecast_values.append(forecast_value)
 
