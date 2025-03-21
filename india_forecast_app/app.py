@@ -78,6 +78,8 @@ def get_generation_data(
         start = timestamp - dt.timedelta(hours=1)
     elif client == "ad":
         start = timestamp - dt.timedelta(hours=25)
+    else:
+        start = timestamp - dt.timedelta(hours=1)  # default fallback
     # pad by 1 second to ensure get_pv_generation_by_sites returns correct data
     end = timestamp + dt.timedelta(seconds=1)
 
