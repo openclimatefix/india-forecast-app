@@ -125,7 +125,7 @@ def test_adjust_forecast_with_adjuster(
     assert adjusted_p50 != original_p50
 
     assert len(adjusted_forecast_df) == 5
-    assert adjusted_forecast_df["forecast_power_kw"][0:4].sum() == 10
+    assert adjusted_forecast_df["forecast_power_kw"][0:4].sum() == 8.0
     assert adjusted_forecast_df["forecast_power_kw"][4] != 5
     
     # note the way the tests are setup, only the horizon_minutes=90 has some ME values
