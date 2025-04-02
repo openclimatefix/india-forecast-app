@@ -1,6 +1,6 @@
 <h1 align="center">India-Forecast-App </h1>
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![ease of contribution: hard](https://img.shields.io/badge/ease%20of%20contribution:%20hard-bb2629)](https://github.com/openclimatefix/ocf-meta-repo?tab=readme-ov-file#how-easy-is-it-to-get-involved)
@@ -59,15 +59,27 @@ The weather variables are
 
 ### Adjuster
 
-As well as the main ml model, we also calculate a new model. 
-This new model tweaks the original model and adjusts it based 
-on its performance over the last 7 days. 
+The Adjuster model improves forecast accuracy by learning from recent prediction errors. Here's how it works:
 
-The model takes the initial results from ml model, 
-then looks up the ME over the last 7 days, 
-and then adjusts the forecast values accordingly. 
-This should get rid of any systematic errors. 
-The adjuster values are dependent on time of data and forecast horizon, e.g. a forecast made at 15.00 for 17.00 looks back at all the forecasts made at 15.00 for 17.00 in the last 7 days. 
+1. For each forecast, it analyzes the Mean Error (ME) from forecasts made at the same hour over the past 7 days
+2. It calculates the average error for each forecast horizon (e.g., 1-hour ahead, 2-hours ahead, etc.)
+3. It then adjusts the current forecast by subtracting these systematic errors
+
+**Real-world example:**
+If our ML model consistently under-predicts solar generation by 50kW during sunny mornings (positive ME), the Adjuster will add 50kW to future morning forecasts. Conversely, if it over-predicts evening wind generation by 30kW (negative ME), the Adjuster will subtract 30kW from future evening forecasts.
+
+**Key features:**
+- Time-specific: Adjustments depend on the time of day and forecast horizon
+- Safety limits: Adjustments are capped at 10% of site capacity to prevent extreme corrections
+- Special handling for solar: Ensures zero generation during nighttime
+
+This approach significantly reduces systematic errors and improves overall forecast accuracy.
+
+| Without Adjuster | With Adjuster |
+|------------------|---------------|
+| Systematic errors persist | Learns from recent patterns |
+| Fixed model behavior | Adapts to changing conditions |
+| Higher overall error | Reduced forecast error |
 
 ## Install dependencies (requires [poetry](https://python-poetry.org/))
 
@@ -157,6 +169,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/priyanshubajaj"><img src="https://avatars.githubusercontent.com/u/58442385?v=4?s=100" width="100px;" alt="priyanshubajaj"/><br /><sub><b>priyanshubajaj</b></sub></a><br /><a href="https://github.com/openclimatefix/india-forecast-app/commits?author=priyanshubajaj" title="Tests">⚠️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/peterdudfield"><img src="https://avatars.githubusercontent.com/u/34686298?v=4?s=100" width="100px;" alt="Peter Dudfield"/><br /><sub><b>Peter Dudfield</b></sub></a><br /><a href="https://github.com/openclimatefix/india-forecast-app/commits?author=peterdudfield" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Dakshbir"><img src="https://avatars.githubusercontent.com/u/144359831?v=4?s=100" width="100px;" alt="Dakshbir"/><br /><sub><b>Dakshbir</b></sub></a><br /><a href="https://github.com/openclimatefix/india-forecast-app/commits?author=Dakshbir" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
@@ -167,3 +180,29 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+
+## Troubleshooting
+
+### Poetry Installation Issues
+
+**Problem**: `poetry install` fails with dependency conflicts
+**Solution**: Try updating Poetry first with `pip install --upgrade poetry`, then run `poetry update` followed by `poetry install`
+
+**Problem**: Package installation errors
+**Solution**: Check your Python version matches the one specified in `pyproject.toml`. You can use `poetry env use python3.x` to set the correct version.
+
+### Docker Database Connection Issues
+
+**Problem**: Container can't connect to local database with "connection refused" error
+**Solution**: If using localhost in your DB_URL, replace it with `host.docker.internal` when running in Docker
+
+**Problem**: Database authentication failures
+**Solution**: Verify your DB_URL format is correct: `postgresql://username:password@hostname:port/database`
+
+### Model Loading Issues
+
+**Problem**: "Failed to load model" errors
+**Solution**: Ensure your HUGGINGFACE_TOKEN environment variable is set correctly. The token can be found in AWS Secret Manager under {environment}/huggingface/token.
+
+**Problem**: Out of memory errors when loading models
+**Solution**: Ensure your system has sufficient RAM, or consider using a smaller model variant.
