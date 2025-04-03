@@ -111,14 +111,15 @@ def filter_on_sun_elevation(generation_df, site) -> pd.DataFrame:
 
     If the sun is up, the generation values should be above zero
     param:
-        generation_df: A dataframe containing generation data, columns of "time_utc" and "power_kw"
+        generation_df: A dataframe containing generation data,
+            with a column "power_kw", and index of datetimes
         site: A SiteSQL object
 
     return: dataframe with generation data
     """
     # using pvlib, calculate the sun elevations
     solpos = pvlib.solarposition.get_solarposition(
-        time=generation_df["time_utc"],
+        time=generation_df.index,
         longitude=site.longitude,
         latitude=site.latitude,
         method="nrel_numpy",
@@ -126,13 +127,13 @@ def filter_on_sun_elevation(generation_df, site) -> pd.DataFrame:
     elevation = solpos["elevation"].values
 
     # find the values that are <=0 and elevation >5
-    mask = (elevation > 5) & (generation_df['power_kw'] <= 0)
+    mask = (elevation > 5) & (generation_df[generation_df.columns[0]] <= 0)
 
     dropping_datetimes = generation_df.index[mask]
     if len(dropping_datetimes) > 0:
         log.warning(
             f"Will be dropping {len(dropping_datetimes)} rows "
-            f"from generation data: {dropping_datetimes} "
+            f"from generation data: {dropping_datetimes.values} "
             f"due to sun elevation > 5 degrees and generation <= 0.0 kW. "
             f"This is likely due error in the generation data)"
         )
