@@ -423,6 +423,7 @@ def client_ad():
     os.environ["CLIENT_NAME"] = "ad"
 
 
+@pytest.fixture(scope="session")
 def client_ruvnl():
     """Set ruvnl client env var"""
     os.environ["CLIENT_NAME"] = "ruvnl"
