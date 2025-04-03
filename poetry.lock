@@ -4460,18 +4460,18 @@ tests = ["pytest"]
 
 [[package]]
 name = "pvlib"
-version = "0.11.0"
+version = "0.12.0"
 description = "A set of functions and classes for simulating the performance of photovoltaic energy systems."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "pvlib-0.11.0-py3-none-any.whl", hash = "sha256:da04acf6b9d485c2879f6111bcf453707b57a40baebfcb1e22e319396b0abe62"},
-    {file = "pvlib-0.11.0.tar.gz", hash = "sha256:88b31c44dc07f0435af1e2d5ddcac067e6ce15917251a9f270366f61e9bd015b"},
+    {file = "pvlib-0.12.0-py3-none-any.whl", hash = "sha256:5922991b6a1ad9c4c90b114b582c8ac91ec4bb2d5fb04ce00eac83581316fa2e"},
+    {file = "pvlib-0.12.0.tar.gz", hash = "sha256:222bcb7b88f228944e7f7e9317082b7182232b8d0a5d1b1499cff50027d1e964"},
 ]
 
 [package.dependencies]
 h5py = "*"
-numpy = ">=1.17.3"
+numpy = ">=1.19.3"
 pandas = ">=1.3.0"
 pytz = "*"
 requests = "*"
@@ -4479,7 +4479,7 @@ scipy = ">=1.6.0"
 
 [package.extras]
 all = ["pvlib[doc,optional,test]"]
-doc = ["docutils (==0.15.2)", "ipython", "matplotlib", "pillow", "pydata-sphinx-theme (==0.8.1)", "solarfactors", "sphinx (==4.5.0)", "sphinx-gallery", "sphinx-toggleprompt (>=0.0.5)"]
+doc = ["docutils (==0.21)", "ipython", "matplotlib", "pickleshare", "pillow", "pydata-sphinx-theme (==0.15.4)", "solarfactors", "sphinx (==7.3.7)", "sphinx-favicon", "sphinx-gallery", "sphinx-hoverxref (>=1.4.2,<1.5.0)", "sphinx-toggleprompt (==0.5.2)"]
 optional = ["cython", "ephem", "nrel-pysam", "numba (>=0.17.0)", "solarfactors", "statsmodels"]
 test = ["packaging", "pytest", "pytest-cov", "pytest-mock", "pytest-remotedata", "pytest-rerunfailures", "pytest-timeout", "requests-mock"]
 
@@ -7069,4 +7069,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "cad569bbe7e617a229656a53b9b26269d990c9d93d52f4d7f0a562da3e45740f"
+content-hash = "03bcb884448ce24f8339757a754a94a8bf464b1076a560daf46f9f6ac32872ea"
