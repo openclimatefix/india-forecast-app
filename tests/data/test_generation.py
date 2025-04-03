@@ -50,7 +50,7 @@ def test_get_generation_data_wind(db_session, sites, generation_db_values, init_
     assert len(gen_meta) == 1
 
 
-def test_get_generation_data_pv(db_session, sites, generation_db_values, init_timestamp):
+def test_get_generation_data_pv(db_session, sites, generation_db_values, init_timestamp, client_ruvnl):
     """Test for correct generation data"""
 
     # Test only checks for wind data as solar data not ready yet
