@@ -250,14 +250,14 @@ def adjust_forecast_with_adjuster(
         forecast_values_df_adjust["forecast_power_kw"] - forecast_values_df_adjust["me_kw"]
     )
 
-    # # adjust probabilistic_values by ME values
-    # for idx, row in forecast_values_df_adjust.iterrows():
-    #     if isinstance(row.get("probabilistic_values"), dict):
-    #         # Directly update the probabilistic_values dictionary by subtracting me_kw
-    #         adjusted_values = {
-    #             key: value - row["me_kw"] for key, value in row["probabilistic_values"].items()
-    #         }
-    #         forecast_values_df_adjust.at[idx, "probabilistic_values"] = adjusted_values
+    # adjust probabilistic_values by ME values
+    for idx, row in forecast_values_df_adjust.iterrows():
+        if isinstance(row.get("probabilistic_values"), dict):
+            # Directly update the probabilistic_values dictionary by subtracting me_kw
+            adjusted_values = {
+                key: value - row["me_kw"] for key, value in row["probabilistic_values"].items()
+            }
+            forecast_values_df_adjust.at[idx, "probabilistic_values"] = adjusted_values
 
     # drop me_kw column
     forecast_values_df_adjust.drop(columns=["me_kw"], inplace=True)

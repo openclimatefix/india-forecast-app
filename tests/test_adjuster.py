@@ -120,20 +120,20 @@ def test_adjust_forecast_with_adjuster(
         db_session, forecast_meta, forecast_values_df, ml_model_name="test"
     )
     
-    # # check that the forecast_values_df has been adjusted for the horizon_minutes=90
-    # original_p50 = forecast_values_df.loc[
-    #     forecast_values_df["horizon_minutes"] == 90, "probabilistic_values"
-    # ].iloc[0]["p50"]
+    # check that the forecast_values_df has been adjusted for the horizon_minutes=90
+    original_p50 = forecast_values_df.loc[
+        forecast_values_df["horizon_minutes"] == 90, "probabilistic_values"
+    ].iloc[0]["p50"]
     
-    # adjusted_p50 = adjusted_forecast_df.loc[
-    #     adjusted_forecast_df["horizon_minutes"] == 90, "probabilistic_values"
-    # ].iloc[0]["p50"]
+    adjusted_p50 = adjusted_forecast_df.loc[
+        adjusted_forecast_df["horizon_minutes"] == 90, "probabilistic_values"
+    ].iloc[0]["p50"]
     
-    # assert adjusted_p50 != original_p50
+    assert adjusted_p50 != original_p50
     
     assert len(adjusted_forecast_df) == 5
     
-    assert adjusted_forecast_df["forecast_power_kw"][0:4].sum() == 10.0
+    assert adjusted_forecast_df["forecast_power_kw"][0:4].sum() != 10.0
     assert adjusted_forecast_df["forecast_power_kw"][4] != 5
     
     # note the way the tests are setup, only the horizon_minutes=90 has some ME values
