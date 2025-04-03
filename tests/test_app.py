@@ -13,12 +13,12 @@ from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, MLModelSQL
 from india_forecast_app.app import (
     app,
     app_run,
-    get_generation_data,
     get_model,
     get_sites,
     run_model,
     save_forecast,
 )
+from india_forecast_app.data.generation import get_generation_data
 from india_forecast_app.models.dummy import DummyModel
 from india_forecast_app.models.pvnet.model import PVNetModel
 from india_forecast_app.models.pydantic_models import get_all_models
