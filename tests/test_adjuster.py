@@ -121,11 +121,11 @@ def test_adjust_forecast_with_adjuster(
     
     # check that the forecast_values_df has been adjusted for the horizon_minutes=90
     original_p50 = forecast_values_df.loc[
-        forecast_values_df["horizon_minutes"] == 30, "probabilistic_values"
+        forecast_values_df["horizon_minutes"] == 1200, "probabilistic_values"
     ].iloc[0]["p50"]
     
     adjusted_p50 = adjusted_forecast_df.loc[
-        adjusted_forecast_df["horizon_minutes"] == 30, "probabilistic_values"
+        adjusted_forecast_df["horizon_minutes"] == 1200, "probabilistic_values"
     ].iloc[0]["p50"]
     
     assert adjusted_p50 != original_p50
