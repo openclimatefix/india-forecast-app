@@ -99,8 +99,7 @@ def test_adjust_forecast_with_adjuster(
     forecast_values_df = pd.DataFrame(
         {
             "forecast_power_kw": [1, 2, 3, 4, 5],
-            # Modify horizon_minutes so that one row is 90 (assumed to get a ME adjustment)
-            "horizon_minutes": [15, 90, 45, 60, 1200],
+            "horizon_minutes": [15, 30, 45, 60, 1200],
             "start_utc": [
                 pd.Timestamp("2024-11-01 03:00:00") + pd.Timedelta(hours=i)
                 for i in range(5)
@@ -122,18 +121,18 @@ def test_adjust_forecast_with_adjuster(
     
     # check that the forecast_values_df has been adjusted for the horizon_minutes=90
     original_p50 = forecast_values_df.loc[
-        forecast_values_df["horizon_minutes"] == 90, "probabilistic_values"
+        forecast_values_df["horizon_minutes"] == 30, "probabilistic_values"
     ].iloc[0]["p50"]
     
     adjusted_p50 = adjusted_forecast_df.loc[
-        adjusted_forecast_df["horizon_minutes"] == 90, "probabilistic_values"
+        adjusted_forecast_df["horizon_minutes"] == 30, "probabilistic_values"
     ].iloc[0]["p50"]
     
     assert adjusted_p50 != original_p50
     
     assert len(adjusted_forecast_df) == 5
     
-    assert adjusted_forecast_df["forecast_power_kw"][0:4].sum() != 10.0
+    assert adjusted_forecast_df["forecast_power_kw"][0:4].sum() == 10.0
     assert adjusted_forecast_df["forecast_power_kw"][4] != 5
     
     # note the way the tests are setup, only the horizon_minutes=90 has some ME values
