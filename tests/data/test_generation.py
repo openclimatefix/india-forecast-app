@@ -1,8 +1,31 @@
 import datetime as dt
+import pandas as pd
 
 from pvsite_datamodel.sqlmodels import SiteAssetType
 
-from india_forecast_app.data.generation import get_generation_data
+from india_forecast_app.data.generation import get_generation_data, filter_on_sun_elevation
+
+
+def test_filter_on_sun_elevation(sites):
+
+    """Test for filtering generation data based on sun elevation"""
+
+    site = sites[0]
+    generation_df = pd.DataFrame(
+        data=[
+            ["2023-10-01", 0],
+            ["2023-10-01 10:00", 0],  # this one will get removed
+            ["2023-10-01 11:00", 1],
+            ["2023-10-01 20:00", 0],
+        ],
+        columns=["time_utc", "power_kw"],
+    )
+
+    filter_generation_df = filter_on_sun_elevation(generation_df=generation_df, site=site)
+    assert len(filter_generation_df) == 3
+    assert filter_generation_df.iloc[0]["time_utc"] == "2023-10-01"
+    assert filter_generation_df.iloc[1]["time_utc"] == "2023-10-01 11:00"
+    assert filter_generation_df.iloc[2]["time_utc"] == "2023-10-01 20:00"
 
 
 def test_get_generation_data(db_session, sites, generation_db_values, init_timestamp):

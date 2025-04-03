@@ -1,5 +1,6 @@
 import datetime as dt
 import os
+import logging
 
 import numpy as np
 import pandas as pd
@@ -9,7 +10,8 @@ from pvsite_datamodel.read import get_pv_generation_by_sites
 from pvsite_datamodel.sqlmodels import SiteAssetType
 from sqlalchemy.orm import Session
 
-from india_forecast_app.app import log
+
+log = logging.getLogger(__name__)
 
 
 def get_generation_data(
@@ -61,7 +63,7 @@ def get_generation_data(
 
         # Filter out any 0 values when the sun is up
         if sites[0].asset_type == SiteAssetType.pv:
-            generation_df = filter_on_sun_elevation(generation_df, sites)
+            generation_df = filter_on_sun_elevation(generation_df, sites[0])
 
         # Ensure timestamps line up with 3min intervals
         generation_df.index = generation_df.index.round("3min")
@@ -104,25 +106,30 @@ def get_generation_data(
     return {"data": generation_df, "metadata": sites_df}
 
 
-def filter_on_sun_elevation(generation_df, sites):
+def filter_on_sun_elevation(generation_df, site) -> pd.DataFrame:
     """Filter the data on sun elevation
 
     If the sun is up, the generation values should be above zero
+    param:
+        generation_df: A dataframe containing generation data, columns of "time_utc" and "power_kw"
+        site: A SiteSQL object
+
+    return: dataframe with generation data
     """
     # using pvlib, calculate the sun elevations
     solpos = pvlib.solarposition.get_solarposition(
         time=generation_df["time_utc"],
-        longitude=sites[0].longitude,
-        latitude=sites[0].latitude,
+        longitude=site.longitude,
+        latitude=site.latitude,
         method="nrel_numpy",
     )
     elevation = solpos["elevation"].values
 
     # find the values that are <=0 and elevation >5
-    mask = elevation > 5 & (generation_df.values <= 0)
+    mask = (elevation > 5) & (generation_df['power_kw'] <= 0)
 
     dropping_datetimes = generation_df.index[mask]
-    if dropping_datetimes > 0:
+    if len(dropping_datetimes) > 0:
         log.warning(
             f"Will be dropping {len(dropping_datetimes)} rows "
             f"from generation data: {dropping_datetimes} "
