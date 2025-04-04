@@ -215,6 +215,14 @@ def forecast_values():
     return forecast_values
 
 
+def generate_probabilistic_values():
+    """Generate probabilistic values for forecast"""
+    return {
+        "p10": round(random.uniform(0, 5000), 2),
+        "p50": round(random.uniform(5000, 10000), 2),
+        "p90": round(random.uniform(10000, 15000), 2),
+    }
+
 @pytest.fixture()
 def forecasts(db_session, sites):
     """Make fake forecasts"""
@@ -246,6 +254,8 @@ def forecasts(db_session, sites):
                 ml_model_uuid=model.model_uuid,
                 forecast_uuid=forecast_uuid,
                 created_utc=start_times[-1],
+                probabilistic_values=generate_probabilistic_values(),
+                
             )
             forecast_values.append(forecast_value)
 
