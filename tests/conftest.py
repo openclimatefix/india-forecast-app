@@ -5,6 +5,7 @@ Fixtures for testing
 import datetime as dt
 import logging
 import os
+import random
 from uuid import uuid4
 
 import numpy as np
@@ -23,6 +24,7 @@ log = logging.getLogger(__name__)
 def get_solar_profile(n, max_power=10000):
     """
     Generate a solar generation profile that follows a sine curve.
+
     Values start at 0, peak mid-day, and return to 0.
     """
     x = np.linspace(0, np.pi, n)
@@ -31,6 +33,7 @@ def get_solar_profile(n, max_power=10000):
 def get_wind_profile(n, max_power=10000):
     """
     Generate a wind generation profile.
+
     Here we assume a constant value (70% of max power) for simplicity.
     """
     return [max_power * 0.7] * n
