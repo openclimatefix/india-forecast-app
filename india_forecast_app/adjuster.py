@@ -1,4 +1,5 @@
-""" Adjuster code, adjust forecast by last 7 days of ME"""
+"""Adjuster code, adjust forecast by last 7 days of ME"""
+
 import logging
 from datetime import datetime, timedelta
 from typing import Optional
@@ -165,7 +166,6 @@ def zero_out_night_time_for_pv(
     site = get_site_by_uuid(db_session, site_uuid)
 
     if site.asset_type == SiteAssetType.pv:
-
         longitude = site.longitude
         latitude = site.latitude
 
@@ -249,6 +249,16 @@ def adjust_forecast_with_adjuster(
     forecast_values_df_adjust["forecast_power_kw"] = (
         forecast_values_df_adjust["forecast_power_kw"] - forecast_values_df_adjust["me_kw"]
     )
+
+    # adjust probabilistic_values by ME values
+    for idx, row in forecast_values_df_adjust.iterrows():
+        if isinstance(row.get("probabilistic_values"), dict):
+            # Directly update the probabilistic_values dictionary by subtracting me_kw
+            adjusted_values = {
+                key: value - row["me_kw"] for key, value in row["probabilistic_values"].items()
+            }
+            forecast_values_df_adjust.at[idx, "probabilistic_values"] = adjusted_values
+
     # drop me_kw column
     forecast_values_df_adjust.drop(columns=["me_kw"], inplace=True)
 
