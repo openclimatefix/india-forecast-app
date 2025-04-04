@@ -153,6 +153,58 @@ Replace `{DB_URL}` with a postgres DB connection string.\
 docker run -it --rm -e DB_URL={DB_URL} -e NWP_ZARR_PATH={NWP_ZARR_PATH} ocf/india-forecast-app
 ```
 
+## Development Environment Setup
+
+To set up the development environment for this project, follow these steps:
+
+**1. Clone the repository:**
+```
+git clone https://github.com/openclimatefix/india-forecast-app.git
+cd india-forecast-app
+```
+
+**2. Create a virtual environment:**
+```
+python -m venv venv
+source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+```
+
+**3. Install the required dependencies:**
+```
+pip install -r requirements.txt
+```
+
+**4. Database Setup**
+1. Install PostgreSQL.
+2. Create a new database and user:
+```
+CREATE DATABASE forecast_db;
+CREATE USER forecast_user WITH PASSWORD 'password';
+GRANT ALL PRIVILEGES ON DATABASE forecast_db TO forecast_user;
+```
+
+**5. Running Initial Migrations**
+```
+python manage.py migrate
+```
+
+**6. Configuring Environment Variable**
+Create a `.env` file in the project root with the following content:
+```
+DATABASE_NAME=forecast_db
+DATABASE_USER=forecast_user
+DATABASE_PASSWORD=password
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+```
+
+**7. Running the Application**
+```
+python manage.py runserver
+```
+
+Access the application at http://localhost:8000.
+
 ## Notes
 
 This repo makes use of PyTorch (`torch` and `torchvision` packages) CPU-only version. In order to support installing PyTorch via poetry for various environments, we specify the exact wheels for each environment in the pyproject.toml file. Some background reading on why this is required can be found here: https://santiagovelez.substack.com/p/how-to-install-torch-cpu-in-poetry?utm_campaign=post&utm_medium=web&triedRedirect=true 
