@@ -464,6 +464,12 @@ def client_ad():
 
 
 @pytest.fixture(scope="session")
+def client_ruvnl():
+    """Set ruvnl client env var"""
+    os.environ["CLIENT_NAME"] = "ruvnl"
+
+
+@pytest.fixture(scope="session")
 def satellite_data(tmp_path_factory, init_timestamp):
     """Dummy Satellite data"""
     # Load dataset which only contains coordinates, but no data
