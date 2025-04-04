@@ -169,26 +169,23 @@ python -m venv venv
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 ```
 
-**3. Install the required dependencies:**
+**3. Install the required dependencies using Poetry**
 ```
-pip install -r requirements.txt
+poetry install
 ```
 
 **4. Database Setup**
-1. Install PostgreSQL.
-2. Create a new database and user:
+1. Start a local database using Docker:
 ```
-CREATE DATABASE forecast_db;
-CREATE USER forecast_user WITH PASSWORD 'password';
-GRANT ALL PRIVILEGES ON DATABASE forecast_db TO forecast_user;
+docker run -it --rm -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 54545:5432 postgres:14-alpine postgres
 ```
 
-**5. Running Initial Migrations**
+2. The corresponding DB_URL will be:
 ```
-python manage.py migrate
+postgresql://postgres:postgres@localhost:54545/postgres
 ```
 
-**6. Configuring Environment Variable**
+**5. Configuring Environment Variable**
 Create a `.env` file in the project root with the following content:
 ```
 DATABASE_NAME=forecast_db
@@ -200,10 +197,10 @@ DATABASE_PORT=5432
 
 **7. Running the Application**
 ```
-python manage.py runserver
+DB_URL={DB_URL} NWP_ZARR_PATH={NWP_ZARR_PATH} poetry run app
 ```
 
-Access the application at http://localhost:8000.
+Replace {DB_URL} with your actual database URL and {NWP_ZARR_PATH} with the path to your NWP Zarr data.
 
 ## Notes
 
