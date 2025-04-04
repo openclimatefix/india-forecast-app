@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 click = "^8.1.7"
-pvsite-datamodel = "^1.0.53"
+pvsite-datamodel = "^1.0.54"
 pandas = "2.2.3"
 pvnet = "3.0.64"
 pytz = "^2024.1"
@@ -48,7 +48,7 @@ inspect = "tests.test_data.inspect:run"
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
 select = ["B", "E", "F", "D", "I"]
-ignore = ["D200","D202","D210","D212","D415","D105",]
+ignore = ["D200","D202","D210","D212","D415","D105"]
 
 # Allow autofix for all enabled rules (when `--fix`) is provided.
 fixable = ["A", "B", "C", "D", "E", "F", "I"]
