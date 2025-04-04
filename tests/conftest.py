@@ -5,7 +5,6 @@ Fixtures for testing
 import datetime as dt
 import logging
 import os
-import random
 from uuid import uuid4
 
 import numpy as np
@@ -21,7 +20,26 @@ from testcontainers.postgres import PostgresContainer
 
 log = logging.getLogger(__name__)
 
-random.seed(42)
+def get_solar_profile(n, max_power=10000):
+    """
+    Generate a solar generation profile that follows a sine curve.
+    Values start at 0, peak mid-day, and return to 0.
+    """
+    x = np.linspace(0, np.pi, n)
+    return np.sin(x) * max_power
+
+def get_wind_profile(n, max_power=10000):
+    """
+    Generate a wind generation profile.
+    Here we assume a constant value (70% of max power) for simplicity.
+    """
+    return [max_power * 0.7] * n
+
+def get_forecast_profile(n, max_power=10000):
+    """
+    Generate a forecast profile with a linear progression from 0 to max_power.
+    """
+    return np.linspace(0, max_power, n)
 
 @pytest.fixture(scope="session")
 def engine():
@@ -143,11 +161,17 @@ def generation_db_values(db_session, sites, init_timestamp):
     del start_times[8]
     del start_times[3]
 
-    # Random power values in the range 0-10000kw
-    power_values = [random.random() * 10000 for _ in range(len(start_times))]
 
     all_generations = []
     for site in sites:
+        # Choose a deterministic profile based on asset type.
+        if site.asset_type == "pv":
+            power_values = get_solar_profile(len(start_times))
+        elif site.asset_type == "wind":
+            power_values = get_wind_profile(len(start_times))
+        else:
+            power_values = [0] * len(start_times)
+
         for i in range(0, len(start_times)):
             generation = GenerationSQL(
                 site_uuid=site.site_uuid,
@@ -175,20 +199,21 @@ def generation_db_values_only_wind(db_session, sites, init_timestamp):
     del start_times[8]
     del start_times[3]
 
-    # Random power values in the range 0-10000kw
-    power_values = [random.random() * 10000 for _ in range(len(start_times))]
 
     all_generations = []
     for site in sites:
-        for i in range(0, len(start_times)):
-            if site.asset_type.name == "wind":
-                generation = GenerationSQL(
-                    site_uuid=site.site_uuid,
-                    generation_power_kw=power_values[i],
-                    start_utc=start_times[i],
-                    end_utc=start_times[i] + dt.timedelta(minutes=3),
-                )
-                all_generations.append(generation)
+        if site.asset_type == "wind":
+            # Use a deterministic wind profile
+            power_values = get_wind_profile(len(start_times))
+            for i in range(0, len(start_times)):
+                if site.asset_type.name == "wind":
+                    generation = GenerationSQL(
+                        site_uuid=site.site_uuid,
+                        generation_power_kw=power_values[i],
+                        start_utc=start_times[i],
+                        end_utc=start_times[i] + dt.timedelta(minutes=3),
+                    )
+                    all_generations.append(generation)
 
     db_session.add_all(all_generations)
     db_session.commit()
@@ -231,6 +256,8 @@ def forecasts(db_session, sites):
     n = 24 * 4  # 24 hours of readings of 15
     start_times = [init_timestamp - dt.timedelta(minutes=x * 15) for x in range(n)]
     start_times = start_times[::-1]
+    
+    forecast_power_values = get_forecast_profile(n, max_power=10000)
 
     for site in sites:
         forecast_uuid = uuid4()
@@ -248,7 +275,7 @@ def forecasts(db_session, sites):
         for i in range(0, len(start_times)):
             forecast_value = ForecastValueSQL(
                 horizon_minutes=i * 15,
-                forecast_power_kw=random.random() * 10000,
+                forecast_power_kw=forecast_power_values[i],
                 start_utc=start_times[i],
                 end_utc=start_times[i] + dt.timedelta(minutes=15),
                 ml_model_uuid=model.model_uuid,
