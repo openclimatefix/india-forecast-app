@@ -4556,7 +4556,6 @@ files = [
     {file = "pvsite_datamodel-1.0.54.tar.gz", hash = "sha256:c0cd5315051284d7ad8e029d1f5a76f2ea1a8fca2603e2e3ccf0aa03c64b6199"},
 ]
 
-
 [package.dependencies]
 pandas = ">=2.2.3,<3.0.0"
 psycopg2-binary = ">=2.9.5,<3.0.0"
@@ -7070,4 +7069,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "cad569bbe7e617a229656a53b9b26269d990c9d93d52f4d7f0a562da3e45740f"
+content-hash = "6dd372e1b8c5b5fbf638e2a50203e256b5ffd2150680cb885dab2bc251ab79bf"
