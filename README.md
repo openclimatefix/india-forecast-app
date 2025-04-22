@@ -19,9 +19,6 @@ This is to allow for more context in the image and to allow for the model to lea
 
 The validation error is ~ 7.15% (normalized using the maximum wind generation)
 
-- wandb [link](https://wandb.ai/openclimatefix/india/runs/xdlew7ib)
-- hugging face [link](https://huggingface.co/openclimatefix/windnet_india)
-
 The weather variables are currently
 - t2m
 - u10
@@ -39,9 +36,6 @@ We add some model smoothing
 ### PV
 
 The validation error is ~ 2.28% (normalized using the maximum solar generation)
-
-- wandb [link](https://wandb.ai/openclimatefix/pvnet_india2.1/runs/o4xpvzrc)
-- hugging face [link](https://huggingface.co/openclimatefix/pvnet_india)
 
 The weather variables are
 - hcc
