@@ -138,7 +138,7 @@ def save_forecast(
     """
 
     forecast_meta = {
-        "site_uuid": forecast["meta"]["site_id"],
+        "location_uuid": forecast["meta"]["site_id"],
         "timestamp_utc": forecast["meta"]["timestamp"],
         "forecast_version": forecast["meta"]["version"],
     }

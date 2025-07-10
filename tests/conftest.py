@@ -15,13 +15,20 @@ import xarray as xr
 import zarr
 from pvsite_datamodel import DatabaseConnection
 from pvsite_datamodel.read.model import get_or_create_model
-from pvsite_datamodel.sqlmodels import Base, ForecastSQL, ForecastValueSQL, GenerationSQL, LocationSQL
+from pvsite_datamodel.sqlmodels import (
+    Base,
+    ForecastSQL,
+    ForecastValueSQL,
+    GenerationSQL,
+    LocationSQL,
+)
 from sqlalchemy import create_engine
 from testcontainers.postgres import PostgresContainer
 
 log = logging.getLogger(__name__)
 
 random.seed(42)
+
 
 @pytest.fixture(scope="session")
 def engine():
@@ -223,6 +230,7 @@ def generate_probabilistic_values():
         "p90": round(random.uniform(10000, 15000), 2),
     }
 
+
 @pytest.fixture()
 def forecasts(db_session, sites):
     """Make fake forecasts"""
@@ -255,7 +263,6 @@ def forecasts(db_session, sites):
                 forecast_uuid=forecast_uuid,
                 created_utc=start_times[-1],
                 probabilistic_values=generate_probabilistic_values(),
-                
             )
             forecast_values.append(forecast_value)
 
@@ -371,9 +378,7 @@ def nwp_mo_global_data(tmp_path_factory, time_before_present):
     """Dummy NWP data"""
 
     # Load dataset which only contains coordinates, but no data
-    ds = xr.open_zarr(
-        f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data.zarr"
-    )
+    ds = xr.open_zarr(f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data.zarr")
 
     # Last t0 to at least 4 hours ago and floor to 3-hour interval
     t0_datetime_utc = time_before_present(dt.timedelta(hours=0)).floor("3h")

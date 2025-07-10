@@ -11,8 +11,8 @@ from pvsite_datamodel.sqlmodels import (
     ForecastSQL,
     ForecastValueSQL,
     GenerationSQL,
-    MLModelSQL,
     LocationAssetType,
+    MLModelSQL,
 )
 from sqlalchemy import INT, cast, text
 from sqlalchemy.sql import func
