@@ -22,7 +22,7 @@ from ocf_datapipes.training.windnet import DictDatasetIterDataPipe, split_datase
 from ocf_datapipes.training.windnet import construct_sliced_data_pipeline as wind_base_pipeline
 from ocf_datapipes.utils import Location
 from pvnet.models.base_model import BaseModel as PVNetBaseModel
-from pvsite_datamodel.sqlmodels import SiteAssetType
+from pvsite_datamodel.sqlmodels import LocationAssetType
 from torch.utils.data import DataLoader
 from torch.utils.data.datapipes.iter import IterableWrapper
 
@@ -112,7 +112,7 @@ class PVNetModel:
                 preds = self.model(device_batch).detach().cpu().numpy()
 
                 # filter out night time
-                if self.asset_type == SiteAssetType.pv.name:
+                if self.asset_type == LocationAssetType.pv.name:
                     preds = set_night_time_zeros(batch, preds)
 
                 # Store predictions

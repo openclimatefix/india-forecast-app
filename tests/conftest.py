@@ -15,7 +15,7 @@ import xarray as xr
 import zarr
 from pvsite_datamodel import DatabaseConnection
 from pvsite_datamodel.read.model import get_or_create_model
-from pvsite_datamodel.sqlmodels import Base, ForecastSQL, ForecastValueSQL, GenerationSQL, SiteSQL
+from pvsite_datamodel.sqlmodels import Base, ForecastSQL, ForecastValueSQL, GenerationSQL, LocationSQL
 from sqlalchemy import create_engine
 from testcontainers.postgres import PostgresContainer
 
@@ -71,9 +71,9 @@ def sites(db_session):
 
     sites = []
     # PV site
-    site = SiteSQL(
-        client_site_id=1,
-        client_site_name="test_site_ruvnl",
+    site = LocationSQL(
+        client_location_id=1,
+        client_location_name="test_site_ruvnl",
         latitude=20.59,
         longitude=78.96,
         capacity_kw=20000,
@@ -85,9 +85,9 @@ def sites(db_session):
     sites.append(site)
 
     # Wind site
-    site = SiteSQL(
-        client_site_id=2,
-        client_site_name="test_site_ruvnl",
+    site = LocationSQL(
+        client_location_id=2,
+        client_location_name="test_site_ruvnl",
         latitude=26.4499,
         longitude=72.6399,
         capacity_kw=10000,
@@ -99,9 +99,9 @@ def sites(db_session):
     sites.append(site)
 
     # Ad site
-    site = SiteSQL(
-        client_site_id=3,
-        client_site_name="test_site_ad",
+    site = LocationSQL(
+        client_location_id=3,
+        client_location_name="test_site_ad",
         latitude=26.4199,
         longitude=72.6699,
         capacity_kw=25000,
@@ -113,9 +113,9 @@ def sites(db_session):
     sites.append(site)
 
     # Ad wind site
-    site = SiteSQL(
-        client_site_id=3,
-        client_site_name="test_site_ad_wind",
+    site = LocationSQL(
+        client_location_id=3,
+        client_location_name="test_site_ad_wind",
         latitude=26.4199,
         longitude=72.6699,
         capacity_kw=25000,
@@ -150,7 +150,7 @@ def generation_db_values(db_session, sites, init_timestamp):
     for site in sites:
         for i in range(0, len(start_times)):
             generation = GenerationSQL(
-                site_uuid=site.site_uuid,
+                location_uuid=site.location_uuid,
                 generation_power_kw=power_values[i],
                 start_utc=start_times[i],
                 end_utc=start_times[i] + dt.timedelta(minutes=3),
@@ -183,7 +183,7 @@ def generation_db_values_only_wind(db_session, sites, init_timestamp):
         for i in range(0, len(start_times)):
             if site.asset_type.name == "wind":
                 generation = GenerationSQL(
-                    site_uuid=site.site_uuid,
+                    site_uuid=site.location_uuid,
                     generation_power_kw=power_values[i],
                     start_utc=start_times[i],
                     end_utc=start_times[i] + dt.timedelta(minutes=3),
@@ -236,7 +236,7 @@ def forecasts(db_session, sites):
         forecast_uuid = uuid4()
         model = get_or_create_model(db_session, "test", "0.0.0")
         forecast = ForecastSQL(
-            site_uuid=site.site_uuid,
+            location_uuid=site.location_uuid,
             timestamp_utc=start_times[-1],
             forecast_version="0.0.0",
             created_utc=start_times[-1],

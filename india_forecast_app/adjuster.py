@@ -12,7 +12,7 @@ from pvsite_datamodel.sqlmodels import (
     ForecastValueSQL,
     GenerationSQL,
     MLModelSQL,
-    SiteAssetType,
+    LocationAssetType,
 )
 from sqlalchemy import INT, cast, text
 from sqlalchemy.sql import func
@@ -100,8 +100,8 @@ def get_me_values(
     query = query.filter(GenerationSQL.start_utc >= start_datetime)
 
     # filter on site
-    query = query.filter(ForecastSQL.site_uuid == site_uuid)
-    query = query.filter(GenerationSQL.site_uuid == site_uuid)
+    query = query.filter(ForecastSQL.location_uuid == site_uuid)
+    query = query.filter(GenerationSQL.location_uuid == site_uuid)
 
     # filter on created_utc
     query = query.filter((func.extract("hour", ForecastSQL.created_utc) == hour))
@@ -165,7 +165,7 @@ def zero_out_night_time_for_pv(
     # get the site
     site = get_site_by_uuid(db_session, site_uuid)
 
-    if site.asset_type == SiteAssetType.pv:
+    if site.asset_type == LocationAssetType.pv:
         longitude = site.longitude
         latitude = site.latitude
 

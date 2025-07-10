@@ -32,11 +32,11 @@ def test_get_sites(db_session, sites):
     """Test for correct site ids"""
 
     sites = get_sites(db_session)
-    sites = sorted(sites, key=lambda s: s.client_site_id)
+    sites = sorted(sites, key=lambda s: s.client_location_id)
 
     assert len(sites) == 2
     for site in sites:
-        assert isinstance(site.site_uuid, uuid.UUID)
+        assert isinstance(site.location_uuid, uuid.UUID)
         assert sites[0].asset_type.name == "pv"
         assert sites[1].asset_type.name == "wind"
 
@@ -52,7 +52,7 @@ def test_get_model(
     gen_sites = [
         s
         for s in sites
-        if s.asset_type.name == asset_type and s.client_site_name == "test_site_ruvnl"
+        if s.asset_type.name == asset_type and s.client_location_name == "test_site_ruvnl"
     ]
     gen_data = get_generation_data(db_session, gen_sites, timestamp=init_timestamp)
     model = get_model(
@@ -80,7 +80,7 @@ def test_run_model(
     gen_sites = [
         s
         for s in sites
-        if s.asset_type.name == asset_type and s.client_site_name == "test_site_ruvnl"
+        if s.asset_type.name == asset_type and s.client_location_name == "test_site_ruvnl"
     ]
     gen_data = get_generation_data(db_session, sites=gen_sites, timestamp=init_timestamp)
     model_cls = PVNetModel if asset_type == "wind" else DummyModel
@@ -108,7 +108,7 @@ def test_save_forecast(db_session, sites, forecast_values):
 
     forecast = {
         "meta": {
-            "site_id": site.site_uuid,
+            "site_id": site.location_uuid,
             "version": "0.0.0",
             "timestamp": dt.datetime.now(tz=dt.UTC),
         },
