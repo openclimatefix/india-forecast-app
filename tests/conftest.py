@@ -183,7 +183,7 @@ def generation_db_values_only_wind(db_session, sites, init_timestamp):
         for i in range(0, len(start_times)):
             if site.asset_type.name == "wind":
                 generation = GenerationSQL(
-                    site_uuid=site.location_uuid,
+                    location_uuid=site.location_uuid,
                     generation_power_kw=power_values[i],
                     start_utc=start_times[i],
                     end_utc=start_times[i] + dt.timedelta(minutes=3),

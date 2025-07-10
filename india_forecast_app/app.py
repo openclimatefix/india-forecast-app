@@ -157,7 +157,8 @@ def save_forecast(
         )
 
     if use_adjuster:
-        log.info(f"Adjusting forecast for site_id={forecast_meta['site_uuid']}...")
+        log.info(f"Adjusting forecast for site_id={forecast_meta['location_uuid']}...")
+
         forecast_values_df_adjust = adjust_forecast_with_adjuster(
             db_session,
             forecast_meta,
@@ -177,7 +178,7 @@ def save_forecast(
                 ml_model_version=ml_model_version,
             )
 
-    output = f'Forecast for site_id={forecast_meta["site_uuid"]},\
+    output = f'Forecast for site_id={forecast_meta["location_uuid"]},\
                timestamp={forecast_meta["timestamp_utc"]},\
                version={forecast_meta["forecast_version"]}:'
     log.info(output.replace("  ", ""))
@@ -281,7 +282,7 @@ def app_run(timestamp: dt.datetime | None, write_to_db: bool = False, log_level:
                 log.info(f"{asset_type} model loaded")
 
                 # 3. Run model for each site
-                site_id = ml_model.site_uuid
+                site_id = ml_model.location_uuid
                 asset_type = ml_model.asset_type
                 log.info(f"Running {asset_type} model for site={site_id}...")
                 forecast_values = run_model(model=ml_model, site_id=site_id, timestamp=timestamp)
