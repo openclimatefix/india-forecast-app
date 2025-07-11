@@ -15,13 +15,20 @@ import xarray as xr
 import zarr
 from pvsite_datamodel import DatabaseConnection
 from pvsite_datamodel.read.model import get_or_create_model
-from pvsite_datamodel.sqlmodels import Base, ForecastSQL, ForecastValueSQL, GenerationSQL, SiteSQL
+from pvsite_datamodel.sqlmodels import (
+    Base,
+    ForecastSQL,
+    ForecastValueSQL,
+    GenerationSQL,
+    LocationSQL,
+)
 from sqlalchemy import create_engine
 from testcontainers.postgres import PostgresContainer
 
 log = logging.getLogger(__name__)
 
 random.seed(42)
+
 
 @pytest.fixture(scope="session")
 def engine():
@@ -71,9 +78,9 @@ def sites(db_session):
 
     sites = []
     # PV site
-    site = SiteSQL(
-        client_site_id=1,
-        client_site_name="test_site_ruvnl",
+    site = LocationSQL(
+        client_location_id=1,
+        client_location_name="test_site_ruvnl",
         latitude=20.59,
         longitude=78.96,
         capacity_kw=20000,
@@ -85,9 +92,9 @@ def sites(db_session):
     sites.append(site)
 
     # Wind site
-    site = SiteSQL(
-        client_site_id=2,
-        client_site_name="test_site_ruvnl",
+    site = LocationSQL(
+        client_location_id=2,
+        client_location_name="test_site_ruvnl",
         latitude=26.4499,
         longitude=72.6399,
         capacity_kw=10000,
@@ -99,9 +106,9 @@ def sites(db_session):
     sites.append(site)
 
     # Ad site
-    site = SiteSQL(
-        client_site_id=3,
-        client_site_name="test_site_ad",
+    site = LocationSQL(
+        client_location_id=3,
+        client_location_name="test_site_ad",
         latitude=26.4199,
         longitude=72.6699,
         capacity_kw=25000,
@@ -113,9 +120,9 @@ def sites(db_session):
     sites.append(site)
 
     # Ad wind site
-    site = SiteSQL(
-        client_site_id=3,
-        client_site_name="test_site_ad_wind",
+    site = LocationSQL(
+        client_location_id=3,
+        client_location_name="test_site_ad_wind",
         latitude=26.4199,
         longitude=72.6699,
         capacity_kw=25000,
@@ -150,7 +157,7 @@ def generation_db_values(db_session, sites, init_timestamp):
     for site in sites:
         for i in range(0, len(start_times)):
             generation = GenerationSQL(
-                site_uuid=site.site_uuid,
+                location_uuid=site.location_uuid,
                 generation_power_kw=power_values[i],
                 start_utc=start_times[i],
                 end_utc=start_times[i] + dt.timedelta(minutes=3),
@@ -183,7 +190,7 @@ def generation_db_values_only_wind(db_session, sites, init_timestamp):
         for i in range(0, len(start_times)):
             if site.asset_type.name == "wind":
                 generation = GenerationSQL(
-                    site_uuid=site.site_uuid,
+                    location_uuid=site.location_uuid,
                     generation_power_kw=power_values[i],
                     start_utc=start_times[i],
                     end_utc=start_times[i] + dt.timedelta(minutes=3),
@@ -223,6 +230,7 @@ def generate_probabilistic_values():
         "p90": round(random.uniform(10000, 15000), 2),
     }
 
+
 @pytest.fixture()
 def forecasts(db_session, sites):
     """Make fake forecasts"""
@@ -236,7 +244,7 @@ def forecasts(db_session, sites):
         forecast_uuid = uuid4()
         model = get_or_create_model(db_session, "test", "0.0.0")
         forecast = ForecastSQL(
-            site_uuid=site.site_uuid,
+            location_uuid=site.location_uuid,
             timestamp_utc=start_times[-1],
             forecast_version="0.0.0",
             created_utc=start_times[-1],
@@ -255,7 +263,6 @@ def forecasts(db_session, sites):
                 forecast_uuid=forecast_uuid,
                 created_utc=start_times[-1],
                 probabilistic_values=generate_probabilistic_values(),
-                
             )
             forecast_values.append(forecast_value)
 
@@ -371,9 +378,7 @@ def nwp_mo_global_data(tmp_path_factory, time_before_present):
     """Dummy NWP data"""
 
     # Load dataset which only contains coordinates, but no data
-    ds = xr.open_zarr(
-        f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data.zarr"
-    )
+    ds = xr.open_zarr(f"{os.path.dirname(os.path.abspath(__file__))}/test_data/nwp-no-data.zarr")
 
     # Last t0 to at least 4 hours ago and floor to 3-hour interval
     t0_datetime_utc = time_before_present(dt.timedelta(hours=0)).floor("3h")

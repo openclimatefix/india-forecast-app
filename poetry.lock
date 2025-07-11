@@ -4547,13 +4547,13 @@ dev = ["black", "flake8", "isort", "mypy", "pre-commit", "pvlive-api", "pytest",
 
 [[package]]
 name = "pvsite-datamodel"
-version = "1.0.55"
+version = "1.2.0"
 description = "SDK for interacting with the PVSite database"
 optional = false
 python-versions = "<4.0,>=3.11"
 files = [
-    {file = "pvsite_datamodel-1.0.55-py3-none-any.whl", hash = "sha256:984548503bb9e856e9050cc806874e749d31f4bd6eac093cba9a3f66904e83bd"},
-    {file = "pvsite_datamodel-1.0.55.tar.gz", hash = "sha256:7ffde4107fe16a70f5ecb3eed57ee42ad78101dc1f87286dfd671d6461e2c464"},
+    {file = "pvsite_datamodel-1.2.0-py3-none-any.whl", hash = "sha256:edd46b542ca90f17ed956118e514ae8ac7e7ea1795b3831e3090ee33f09e622a"},
+    {file = "pvsite_datamodel-1.2.0.tar.gz", hash = "sha256:bc7ee8de310906488deb40e90137efdcfd2934415876798b20ecc52d45ed4cbe"},
 ]
 
 [package.dependencies]
@@ -7069,4 +7069,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "27312ac9835da3c999951c4c3e4e1c74499afa74dd319c09efdba13e1dac2c21"
+content-hash = "eceaeaeb1a05d157aa02cebd3c240745e0786b9292454d074b1b6ae8c44fcaf5"

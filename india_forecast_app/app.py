@@ -13,7 +13,7 @@ import pandas as pd
 import sentry_sdk
 from pvsite_datamodel import DatabaseConnection
 from pvsite_datamodel.read import get_sites_by_country
-from pvsite_datamodel.sqlmodels import SiteAssetType, SiteSQL
+from pvsite_datamodel.sqlmodels import LocationAssetType, LocationSQL
 from pvsite_datamodel.write import insert_forecast_values
 from sqlalchemy.orm import Session
 
@@ -34,7 +34,7 @@ sentry_sdk.init(
 )
 
 
-def get_sites(db_session: Session) -> list[SiteSQL]:
+def get_sites(db_session: Session) -> list[LocationSQL]:
     """
     Gets all available sites in India
 
@@ -42,7 +42,7 @@ def get_sites(db_session: Session) -> list[SiteSQL]:
             db_session: A SQLAlchemy session
 
     Returns:
-            A list of SiteSQL objects
+            A list of LocationSQL objects
     """
 
     client = os.getenv("CLIENT_NAME", "ruvnl")
@@ -138,7 +138,7 @@ def save_forecast(
     """
 
     forecast_meta = {
-        "site_uuid": forecast["meta"]["site_id"],
+        "location_uuid": forecast["meta"]["site_id"],
         "timestamp_utc": forecast["meta"]["timestamp"],
         "forecast_version": forecast["meta"]["version"],
     }
@@ -157,7 +157,8 @@ def save_forecast(
         )
 
     if use_adjuster:
-        log.info(f"Adjusting forecast for site_id={forecast_meta['site_uuid']}...")
+        log.info(f"Adjusting forecast for site_id={forecast_meta['location_uuid']}...")
+
         forecast_values_df_adjust = adjust_forecast_with_adjuster(
             db_session,
             forecast_meta,
@@ -177,7 +178,7 @@ def save_forecast(
                 ml_model_version=ml_model_version,
             )
 
-    output = f'Forecast for site_id={forecast_meta["site_uuid"]},\
+    output = f'Forecast for site_id={forecast_meta["location_uuid"]},\
                timestamp={forecast_meta["timestamp_utc"]},\
                version={forecast_meta["forecast_version"]}:'
     log.info(output.replace("  ", ""))
@@ -240,9 +241,9 @@ def app_run(timestamp: dt.datetime | None, write_to_db: bool = False, log_level:
         log.info("Getting sites...")
         sites = get_sites(session)
 
-        pv_sites = [site for site in sites if site.asset_type == SiteAssetType.pv]
+        pv_sites = [site for site in sites if site.asset_type == LocationAssetType.pv]
         log.info(f"Found {len(pv_sites)} pv sites")
-        wind_sites = [site for site in sites if site.asset_type == SiteAssetType.wind]
+        wind_sites = [site for site in sites if site.asset_type == LocationAssetType.wind]
         log.info(f"Found {len(wind_sites)} wind sites")
 
         # 2. Load data/models
@@ -276,12 +277,12 @@ def app_run(timestamp: dt.datetime | None, write_to_db: bool = False, log_level:
                     hf_version=model_config.version,
                     name=model_config.name,
                 )
-                ml_model.site_uuid = site.site_uuid
+                ml_model.location_uuid = site.location_uuid
 
                 log.info(f"{asset_type} model loaded")
 
                 # 3. Run model for each site
-                site_id = ml_model.site_uuid
+                site_id = ml_model.location_uuid
                 asset_type = ml_model.asset_type
                 log.info(f"Running {asset_type} model for site={site_id}...")
                 forecast_values = run_model(model=ml_model, site_id=site_id, timestamp=timestamp)

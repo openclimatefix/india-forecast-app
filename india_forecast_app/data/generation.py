@@ -5,9 +5,9 @@ import logging
 import numpy as np
 import pandas as pd
 import pvlib
-from pvsite_datamodel import SiteSQL
+from pvsite_datamodel import LocationSQL
 from pvsite_datamodel.read import get_pv_generation_by_sites
-from pvsite_datamodel.sqlmodels import SiteAssetType
+from pvsite_datamodel.sqlmodels import LocationAssetType
 from sqlalchemy.orm import Session
 
 
@@ -15,14 +15,14 @@ log = logging.getLogger(__name__)
 
 
 def get_generation_data(
-    db_session: Session, sites: list[SiteSQL], timestamp: dt.datetime
+    db_session: Session, sites: list[LocationSQL], timestamp: dt.datetime
 ) -> dict[str, pd.DataFrame]:
     """
     Gets generation data values for given sites
 
     Args:
             db_session: A SQLAlchemy session
-            sites: A list of SiteSQL objects
+            sites: A list of LocationSQL objects
             timestamp: The end time from which to retrieve data
 
     Returns:
@@ -31,7 +31,7 @@ def get_generation_data(
             - "metadata": Dataframe containing information about the site
     """
 
-    site_uuids = [s.site_uuid for s in sites]
+    site_uuids = [s.location_uuid for s in sites]
     # TODO change this from  hardcoded to site and config related variable
     client = os.getenv("CLIENT_NAME", "ruvnl")
     if client == "ruvnl":
@@ -62,7 +62,7 @@ def get_generation_data(
         log.info(generation_df)
 
         # Filter out any 0 values when the sun is up
-        if sites[0].asset_type == SiteAssetType.pv:
+        if sites[0].asset_type == LocationAssetType.pv:
             generation_df = filter_on_sun_elevation(generation_df, sites[0])
 
         # Ensure timestamps line up with 3min intervals
@@ -113,7 +113,7 @@ def filter_on_sun_elevation(generation_df, site) -> pd.DataFrame:
     param:
         generation_df: A dataframe containing generation data,
             with a column "power_kw", and index of datetimes
-        site: A SiteSQL object
+        site: A LocationSQL object
 
     return: dataframe with generation data
     """

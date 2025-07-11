@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pandas as pd
 import pytest
-from pvsite_datamodel.sqlmodels import SiteAssetType
+from pvsite_datamodel.sqlmodels import LocationAssetType
 
 from india_forecast_app.adjuster import (
     adjust_forecast_with_adjuster,
@@ -17,7 +17,7 @@ def test_get_me_values_no_values(db_session, sites):
     """Check no ME results are found with no forecast or generation values"""
 
     me_df = get_me_values(
-        db_session, 10, site_uuid=sites[0].site_uuid, ml_model_name="test"
+        db_session, 10, site_uuid=sites[0].location_uuid, ml_model_name="test"
     )
 
     assert len(me_df) == 0
@@ -28,7 +28,7 @@ def test_get_me_values(db_session, sites, generation_db_values, forecasts):
 
     hour = pd.Timestamp(datetime.now()).hour
     me_df = get_me_values(
-        db_session, hour, site_uuid=sites[0].site_uuid, ml_model_name="test"
+        db_session, hour, site_uuid=sites[0].location_uuid, ml_model_name="test"
     )
 
     assert len(me_df) != 0
@@ -46,14 +46,14 @@ def test_get_me_values_15(db_session, sites, generation_db_values, forecasts):
     me_df_15 = get_me_values(
         db_session,
         hour,
-        site_uuid=sites[0].site_uuid,
+        site_uuid=sites[0].location_uuid,
         ml_model_name="test",
         average_minutes=15,
     )
     me_df_60 = get_me_values(
         db_session,
         hour,
-        site_uuid=sites[0].site_uuid,
+        site_uuid=sites[0].location_uuid,
         ml_model_name="test",
         average_minutes=60,
     )
@@ -74,7 +74,7 @@ def test_get_me_values_no_generation(db_session, sites, forecasts):
 
     hour = pd.Timestamp(datetime.now()).hour
     me_df = get_me_values(
-        db_session, hour, site_uuid=sites[0].site_uuid, ml_model_name="test"
+        db_session, hour, site_uuid=sites[0].location_uuid, ml_model_name="test"
     )
 
     assert len(me_df) == 0
@@ -85,7 +85,7 @@ def test_get_me_values_no_forecasts(db_session, sites, generation_db_values):
 
     hour = pd.Timestamp(datetime.now()).hour
     me_df = get_me_values(
-        db_session, hour, site_uuid=sites[0].site_uuid, ml_model_name="test"
+        db_session, hour, site_uuid=sites[0].location_uuid, ml_model_name="test"
     )
 
     assert len(me_df) == 0
@@ -95,7 +95,7 @@ def test_adjust_forecast_with_adjuster(
     db_session, sites, generation_db_values, forecasts
 ):
     """Check forecast gets adjuster"""
-    forecast_meta = {"timestamp_utc": datetime.now(), "site_uuid": sites[0].site_uuid}
+    forecast_meta = {"timestamp_utc": datetime.now(), "location_uuid": sites[0].location_uuid}
     forecast_values_df = pd.DataFrame(
         {
             "forecast_power_kw": [1, 2, 3, 4, 5],
@@ -140,7 +140,7 @@ def test_adjust_forecast_with_adjuster(
 
 def test_adjust_forecast_with_adjuster_no_values(db_session, sites):
     """Check forecast doesnt adjuster, no me values"""
-    forecast_meta = {"timestamp_utc": datetime.now(), "site_uuid": sites[0].site_uuid}
+    forecast_meta = {"timestamp_utc": datetime.now(), "location_uuid": sites[0].location_uuid}
     forecast_values_df = pd.DataFrame(
         {
             "forecast_power_kw": [1, 2, 3, 4, 5],
@@ -160,7 +160,7 @@ def test_adjust_forecast_with_adjuster_no_values(db_session, sites):
     assert forecast_values_df["forecast_power_kw"].sum() == 15
 
 
-@pytest.mark.parametrize("asset_type", [SiteAssetType.pv, SiteAssetType.wind])
+@pytest.mark.parametrize("asset_type", [LocationAssetType.pv, LocationAssetType.wind])
 def test_zero_out_night_time_for_pv(asset_type, db_session, sites):
     """Test for zero_out_nighttime"""
     forecast_values_df = pd.DataFrame(
@@ -177,12 +177,12 @@ def test_zero_out_night_time_for_pv(asset_type, db_session, sites):
     sites[0].asset_type = asset_type
 
     forecast_values_df = zero_out_night_time_for_pv(
-        db_session, forecast_values_df=forecast_values_df, site_uuid=sites[0].site_uuid
+        db_session, forecast_values_df=forecast_values_df, site_uuid=sites[0].location_uuid
     )
 
     assert len(forecast_values_df) == 5
     night_sum = forecast_values_df["forecast_power_kw"][0:2].sum()
-    if asset_type == SiteAssetType.pv:
+    if asset_type == LocationAssetType.pv:
         assert night_sum == 0
     else:
         assert night_sum > 0
