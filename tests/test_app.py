@@ -216,13 +216,13 @@ def test_app_client_ad(
 
     app_run(timestamp=None, write_to_db=True)
 
-    # 2 pv models, 2 wind model
+    # 2 wind model
     # x2 for adjuster
-    n_forecasts = 4 * 2
-    # one models is 8 hours, three model is 4 hours
+    n_forecasts = 2 * 2
+    # two models is 4 hours
     # x 4 for each 15 minutes
     # x 2 for adjuster
-    n_forecast_values = (8 + 4 + 4 + 4) * 4 * 2
+    n_forecast_values = (4 + 4) * 4 * 2
 
     assert db_session.query(ForecastSQL).count() == init_n_forecasts + n_forecasts
     assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + n_forecast_values
