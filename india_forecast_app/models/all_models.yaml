@@ -38,21 +38,21 @@ models:
     version: 7a179d1f8349d99cb2a30a48e5be17d59b6f2b16
     client: ruvnl
     asset_type: pv
-  # Ad client solar
-  - name: pvnet_ad_sites
-    type: pvnet
-    id: openclimatefix/pvnet_ad_sites
-    version: 20e7c3af76664ee2ac0e1502801749825ab8ed1f
-    client: ad
-    asset_type: pv
-    # Ad client solar, extra satellite, 4 hours
-  - name: pvnet_ad_sites_satellite
-    type: pvnet
-    id: openclimatefix/pvnet_ad_sites
-    version: 7685efc0cb3e796e8bd954d9ee17b8a94c8901e9
-    client: ad
-    asset_type: pv
-    adjuster_average_minutes: 15
+#  - name: pvnet_ad_sites
+#    type: pvnet
+#    id: openclimatefix/pvnet_ad_sites
+#    version: 20e7c3af76664ee2ac0e1502801749825ab8ed1f
+#    client: ad
+#    asset_type: pv
+#    # Ad client solar, extra satellite, 4 hours
+#  - name: pvnet_ad_sites_satellite
+#    type: pvnet
+#    id: openclimatefix/pvnet_ad_sites
+#    version: 7685efc0cb3e796e8bd954d9ee17b8a94c8901e9
+#    client: ad
+#    asset_type: pv
+#    adjuster_average_minutes: 15
+# Ad client wind
   - name: windnet_ad_sites
     type: pvnet
     id: openclimatefix/windnet_ad_sites

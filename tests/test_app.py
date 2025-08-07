@@ -216,9 +216,9 @@ def test_app_client_ad(
 
     app_run(timestamp=None, write_to_db=True)
 
-    # 2 pv models, 2 wind model
+    # 2 wind model
     # x2 for adjuster
-    n_forecasts = 4 * 2
+    n_forecasts = 2 * 2
     # one models is 8 hours, three model is 4 hours
     # x 4 for each 15 minutes
     # x 2 for adjuster
