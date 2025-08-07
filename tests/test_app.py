@@ -222,7 +222,7 @@ def test_app_client_ad(
     # one models is 8 hours, three model is 4 hours
     # x 4 for each 15 minutes
     # x 2 for adjuster
-    n_forecast_values = (8 + 4 + 4 + 4) * 4 * 2
+    n_forecast_values = (8 + 4 + 4 + 4) * n_forecasts
 
     assert db_session.query(ForecastSQL).count() == init_n_forecasts + n_forecasts
     assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values + n_forecast_values
