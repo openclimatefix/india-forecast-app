@@ -1,4 +1,7 @@
 <h1 align="center">India-Forecast-App </h1>
+
+⚠️ **WARNING: We are in the process of deprecating this app and moving to the [site-forecast-app](https://github.com/openclimatefix/site-forecast-app) this repo will be archived soon**
+
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
@@ -6,74 +9,6 @@
 [![ease of contribution: hard](https://img.shields.io/badge/ease%20of%20contribution:%20hard-bb2629)](https://github.com/openclimatefix/ocf-meta-repo?tab=readme-ov-file#how-easy-is-it-to-get-involved)
 
 Runs wind and PV forecasts for India and saves to database
-
-## The model
-
-The ML model is from [PVnet](https://github.com/openclimatefix/PVNet) and uses [ocf_datapipes](https://github.com/openclimatefix/ocf_datapipes) for the data processing
-For both Wind and Solar we use ECMWF data and predict 48 hours into the future. 
-
-### Wind
-
-The latest change is to use a patch size of 84x84, an increase from 64x64. 
-This is to allow for more context in the image and to allow for the model to learn more about the wind patterns.
-
-The validation error is ~ 7.15% (normalized using the maximum wind generation)
-
-The weather variables are currently
-- t2m
-- u10
-- u100
-- u200
-- v10
-- v100
-- v200
-
-We add some model smoothing
-- feathering [feathering](https://github.com/openclimatefix/india-forecast-app/blob/main/india_forecast_app/models/pvnet/model.py#L131) close to current generation: 
-- [smoothing](https://github.com/openclimatefix/india-forecast-app/blob/main/india_forecast_app/models/pvnet/model.py#L188) over 1 hour rolling window
-
-
-### PV
-
-The validation error is ~ 2.28% (normalized using the maximum solar generation)
-
-The weather variables are
-- hcc
-- lcc
-- mcc
-- prate
-- sde
-- sr
-- t2m
-- tcc
-- u10
-- v10
-- dlwrf
-- dswrf
-
-### Adjuster
-
-The Adjuster model improves forecast accuracy by learning from recent prediction errors. Here's how it works:
-
-1. For each forecast, it analyzes the Mean Error (ME) from forecasts made at the same hour over the past 7 days
-2. It calculates the average error for each forecast horizon (e.g., 1-hour ahead, 2-hours ahead, etc.)
-3. It then adjusts the current forecast by subtracting these systematic errors
-
-**Real-world example:**
-If our ML model consistently under-predicts solar generation by 50kW during sunny mornings (positive ME), the Adjuster will add 50kW to future morning forecasts. Conversely, if it over-predicts evening wind generation by 30kW (negative ME), the Adjuster will subtract 30kW from future evening forecasts.
-
-**Key features:**
-- Time-specific: Adjustments depend on the time of day and forecast horizon
-- Safety limits: Adjustments are capped at 10% of site capacity to prevent extreme corrections
-- Special handling for solar: Ensures zero generation during nighttime
-
-This approach significantly reduces systematic errors and improves overall forecast accuracy.
-
-| Without Adjuster | With Adjuster |
-|------------------|---------------|
-| Systematic errors persist | Learns from recent patterns |
-| Fixed model behavior | Adapts to changing conditions |
-| Higher overall error | Reduced forecast error |
 
 ## Install dependencies (requires [poetry](https://python-poetry.org/))
 
