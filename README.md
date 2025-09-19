@@ -1,6 +1,6 @@
 <h1 align="center">India-Forecast-App </h1>
 
-⚠️ **WARNING: We are in the process of deprecating this app and moving to the [site-forecast-app](https://github.com/openclimatefix/site-forecast-app)**
+⚠️ **WARNING: We are in the process of deprecating this app and moving to the [site-forecast-app](https://github.com/openclimatefix/site-forecast-app) this repo will be archived soon**
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
