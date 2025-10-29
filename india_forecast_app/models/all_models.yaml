@@ -3,52 +3,52 @@ models:
   # RU client wind
   - name: windnet_india
     type: pvnet
-    id: openclimatefix/windnet_india
+    id: openclimatefix-models/windnet_india
     version: ae07c15de064e1d03cf4bc02618b65c6d5b17e8e
     client: ruvnl
     asset_type: wind
   - name: windnet_india_mo
     type: pvnet
-    id: openclimatefix/windnet_india
+    id: openclimatefix-models/windnet_india
     version: 546baded3d4216736d8ee8d6798d47235bd72b08
     client: ruvnl
     asset_type: wind
   - name: windnet_india_mo_v2
     type: pvnet
-    id: openclimatefix/windnet_india
+    id: openclimatefix-models/windnet_india
     version: 165267d34500cf0c881ed70d9318421f4e0d10f1
     client: ruvnl
     asset_type: wind
   - name: windnet_india_mo_v3
     type: pvnet
-    id: openclimatefix/windnet_india
+    id: openclimatefix-models/windnet_india
     version: 990bed9ad1dbb10515f830c181609b10e72c975e
     client: ruvnl
     asset_type: wind
    # RU client solar
   - name: pvnet_india
     type: pvnet
-    id: openclimatefix/pvnet_india
+    id: openclimatefix-models/pvnet_india
     version: d71104620f0b0bdd3eeb63cafecd2a49032ae0f7
     client: ruvnl
     asset_type: pv
   - name: pvnet_india_ecmwf_mo_gfs
     type: pvnet
-    id: openclimatefix/pvnet_india
+    id: openclimatefix-models/pvnet_india
     version: 7a179d1f8349d99cb2a30a48e5be17d59b6f2b16
     client: ruvnl
     asset_type: pv
 # Ad client wind
   - name: windnet_ad_sites
     type: pvnet
-    id: openclimatefix/windnet_ad_sites
+    id: openclimatefix-models/windnet_ad_sites
     version: 8f1fd4322f6618b74dd718d50ff2d64ffec8e8fb
     client: ad
     asset_type: wind
     adjuster_average_minutes: 15
   - name: windnet_ad_sites_generation_delay
     type: pvnet
-    id: openclimatefix/windnet_ad_sites
+    id: openclimatefix-models/windnet_ad_sites
     version: bced479c5c3ab198bfce7d5cb4e02f8679be3297
     client: ad
     asset_type: wind
