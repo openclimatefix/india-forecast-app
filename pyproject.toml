@@ -30,6 +30,9 @@ torchvision = [
 ]
 sentry-sdk = "^2.1.1"
 pvlib = "^0.12.0"
+betterproto = ">=2.0.0b7"
+grpclib = ">=0.4.7"
+dp-sdk = { url = "https://github.com/openclimatefix/data-platform/releases/download/v0.21.2/dp_sdk-0.21.2-py3-none-any.whl" }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.4"
