@@ -233,7 +233,7 @@ def app_run(timestamp: dt.datetime | None, write_to_db: bool = False, log_level:
                             "site_id": site_id,
                             "version": version,
                             "timestamp": timestamp,
-                            "client_location_name": str(site_id),
+                            "client_location_name": site.client_location_name,
                             "capacity_kw": site.capacity_kw,
                             "latitude": site.latitude,
                             "longitude": site.longitude,
