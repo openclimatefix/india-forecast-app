@@ -16,13 +16,12 @@ from india_forecast_app.app import (
     get_model,
     get_sites,
     run_model,
-    save_forecast,
 )
-from india_forecast_app.save import save_forecast
 from india_forecast_app.data.generation import get_generation_data
 from india_forecast_app.models.dummy import DummyModel
 from india_forecast_app.models.pvnet.model import PVNetModel
 from india_forecast_app.models.pydantic_models import get_all_models
+from india_forecast_app.save import save_forecast
 
 from ._utils import run_click_script
 

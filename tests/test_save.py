@@ -28,7 +28,6 @@ from india_forecast_app.save.utils import (
     limit_adjuster,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -411,7 +410,7 @@ class TestSaveForecast:
         with patch(
             "india_forecast_app.save.save.save_to_dataplatform",
             side_effect=_fake_dp,
-        ) as mock_dp, patch(
+        ), patch(
             "india_forecast_app.save.save.asyncio.run",
         ) as mock_run:
             save_forecast(
