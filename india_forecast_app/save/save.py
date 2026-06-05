@@ -55,6 +55,13 @@ def save_forecast(
         "location_type": forecast["meta"].get("location_type"),
     }
 
+    # Only the fields ForecastSQL accepts — extra keys cause a TypeError via **forecast_meta
+    db_forecast_meta = {
+        "location_uuid": forecast_meta["location_uuid"],
+        "timestamp_utc": forecast_meta["timestamp_utc"],
+        "forecast_version": forecast_meta["forecast_version"],
+    }
+
     forecast_values_df = pd.DataFrame(forecast["values"])
     forecast_values_df["horizon_minutes"] = (
         (forecast_values_df["start_utc"] - forecast_meta["timestamp_utc"]) / pd.Timedelta("60s")
@@ -63,7 +70,7 @@ def save_forecast(
     # Persist base forecast to DB
     write_forecast_to_db(
         db_session,
-        forecast_meta,
+        db_forecast_meta,
         forecast_values_df,
         write_to_db=bool(write_to_db),
         ml_model_name=ml_model_name,
@@ -75,7 +82,7 @@ def save_forecast(
         from india_forecast_app.save.database import adjust_and_save_forecast
         adjust_and_save_forecast(
             db_session,
-            forecast_meta,
+            db_forecast_meta,
             forecast_values_df,
             ml_model_name=ml_model_name,
             ml_model_version=ml_model_version,
