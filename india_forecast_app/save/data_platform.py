@@ -12,9 +12,9 @@ from collections.abc import AsyncIterator  # noqa: TC003
 from datetime import UTC, datetime, timedelta
 from importlib.metadata import version
 
+import ocf.dp as dp
 import pandas as pd
 from betterproto.lib.google.protobuf import Struct, Value
-from dp_sdk.ocf import dp
 from grpclib.client import Channel
 
 from india_forecast_app.save.utils import (

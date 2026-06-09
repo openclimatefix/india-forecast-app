@@ -1,6 +1,6 @@
 """Public API for the save subpackage."""
 
-from dp_sdk.ocf import dp  # noqa: F401
+import ocf.dp as dp  # noqa: F401
 from grpclib.client import Channel  # noqa: F401
 
 from india_forecast_app.save.data_platform import (
