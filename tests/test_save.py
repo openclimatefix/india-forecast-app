@@ -20,6 +20,11 @@ import pandas as pd
 import pytest
 from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, MLModelSQL
 
+from india_forecast_app.save.data_platform import (
+    fetch_dp_location_map,
+    prepare_forecast_values,
+    resolve_target_uuid,
+)
 from india_forecast_app.save.database import adjust_and_save_forecast, write_forecast_to_db
 from india_forecast_app.save.save import save_forecast
 from india_forecast_app.save.utils import (
@@ -451,8 +456,6 @@ class TestPrepareForecastValues:
     """Tests for prepare_forecast_values (pure function, no gRPC)."""
 
     def test_returns_correct_number_of_values(self):
-        from india_forecast_app.save.data_platform import prepare_forecast_values
-
         df = _make_forecast_values_df(n=4)
         init_time = dt.datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
         capacity_watts = 10_000_000  # 10 MW
@@ -461,8 +464,6 @@ class TestPrepareForecastValues:
         assert len(result) == 4
 
     def test_p50_fraction_clamped_between_0_and_1(self):
-        from india_forecast_app.save.data_platform import prepare_forecast_values
-
         # forecast_power_kw much larger than capacity → fraction should be 1.0
         init_time = dt.datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
         starts = [init_time + dt.timedelta(minutes=15 * i) for i in range(3)]
@@ -483,8 +484,6 @@ class TestPrepareForecastValues:
         assert result[2].p50_fraction == pytest.approx(1.0)  # clamped to 1
 
     def test_horizon_mins_computed_from_start_utc_when_no_column(self):
-        from india_forecast_app.save.data_platform import prepare_forecast_values
-
         init_time = dt.datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
         starts = [init_time + dt.timedelta(minutes=15 * i) for i in range(3)]
         ends = [s + dt.timedelta(minutes=15) for s in starts]
@@ -501,8 +500,6 @@ class TestPrepareForecastValues:
         assert [fv.horizon_mins for fv in result] == [0, 15, 30]
 
     def test_horizon_from_existing_column_used(self):
-        from india_forecast_app.save.data_platform import prepare_forecast_values
-
         init_time = dt.datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
         starts = [init_time + dt.timedelta(minutes=15 * i) for i in range(3)]
         ends = [s + dt.timedelta(minutes=15) for s in starts]
@@ -519,8 +516,6 @@ class TestPrepareForecastValues:
         assert [fv.horizon_mins for fv in result] == [0, 15, 30]
 
     def test_probabilistic_values_parsed_when_dict(self):
-        from india_forecast_app.save.data_platform import prepare_forecast_values
-
         init_time = dt.datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
         starts = [init_time + dt.timedelta(minutes=15 * i) for i in range(2)]
         ends = [s + dt.timedelta(minutes=15) for s in starts]
@@ -540,8 +535,6 @@ class TestPrepareForecastValues:
         assert 0.0 <= result[0].other_statistics_fractions["p10"] <= 1.0
 
     def test_empty_dataframe_returns_empty_list(self):
-        from india_forecast_app.save.data_platform import prepare_forecast_values
-
         df = pd.DataFrame(columns=["start_utc", "end_utc", "forecast_power_kw", "horizon_minutes"])
         init_time = dt.datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
         result = prepare_forecast_values(df, init_time, 1_000_000)
@@ -552,8 +545,6 @@ class TestResolveTargetUuid:
     """Tests for resolve_target_uuid (uses mocked gRPC client)."""
 
     def test_returns_uuid_from_prefetched_map(self):
-        from india_forecast_app.save.data_platform import resolve_target_uuid
-
         async def _run():
             mock_client = MagicMock()
             location_map = {"my_location": "abc-123"}
@@ -564,8 +555,6 @@ class TestResolveTargetUuid:
         asyncio.run(_run())
 
     def test_returns_none_when_location_not_in_map(self):
-        from india_forecast_app.save.data_platform import resolve_target_uuid
-
         async def _run():
             mock_client = MagicMock()
             location_map = {"other_location": "xyz-456"}
@@ -576,8 +565,6 @@ class TestResolveTargetUuid:
         asyncio.run(_run())
 
     def test_fetches_map_when_none_provided(self):
-        from india_forecast_app.save.data_platform import resolve_target_uuid
-
         async def _run():
             mock_loc = MagicMock()
             mock_loc.location_name = "my_location"
@@ -593,8 +580,6 @@ class TestResolveTargetUuid:
         asyncio.run(_run())
 
     def test_returns_none_when_not_found_in_fetched_map(self):
-        from india_forecast_app.save.data_platform import resolve_target_uuid
-
         async def _run():
             mock_client = AsyncMock()
             mock_client.list_locations.return_value = MagicMock(locations=[])
@@ -609,8 +594,6 @@ class TestFetchDpLocationMap:
     """Tests for fetch_dp_location_map."""
 
     def test_builds_name_to_uuid_map(self):
-        from india_forecast_app.save.data_platform import fetch_dp_location_map
-
         async def _run():
             locs = []
             for name, uid in [("loc_a", "uuid-a"), ("loc_b", "uuid-b")]:
@@ -628,8 +611,6 @@ class TestFetchDpLocationMap:
         asyncio.run(_run())
 
     def test_empty_locations_returns_empty_map(self):
-        from india_forecast_app.save.data_platform import fetch_dp_location_map
-
         async def _run():
             mock_client = AsyncMock()
             mock_client.list_locations.return_value = MagicMock(locations=[])

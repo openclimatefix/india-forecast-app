@@ -10,7 +10,7 @@ import pandas as pd
 from sqlalchemy.orm import Session  # noqa: TC002
 
 from india_forecast_app.save.data_platform import save_to_dataplatform
-from india_forecast_app.save.database import write_forecast_to_db
+from india_forecast_app.save.database import adjust_and_save_forecast, write_forecast_to_db
 
 log = logging.getLogger(__name__)
 
@@ -79,7 +79,6 @@ def save_forecast(
 
     # Persist adjuster forecast to DB
     if use_adjuster_database and ml_model_name is not None:
-        from india_forecast_app.save.database import adjust_and_save_forecast
         adjust_and_save_forecast(
             db_session,
             db_forecast_meta,
