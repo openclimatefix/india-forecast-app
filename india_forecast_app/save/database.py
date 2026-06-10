@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import traceback
 
 import pandas as pd  # noqa: TC002
 from pvsite_datamodel.write import insert_forecast_values
@@ -47,24 +46,20 @@ def adjust_and_save_forecast(
 ) -> None:
     """Adjust forecast using the adjuster and save to DB."""
     log.info(f"Adjusting forecast for location_id={forecast_meta['location_uuid']}...")
-    try:
-        forecast_values_df_adjust = adjust_forecast_with_adjuster(
-            db_session,
-            forecast_meta,
-            forecast_values_df,
-            ml_model_name=ml_model_name,
-            average_minutes=adjuster_average_minutes,
-        )
-        log.info(f"Adjusted forecast shape: {forecast_values_df_adjust.shape}")
+    forecast_values_df_adjust = adjust_forecast_with_adjuster(
+        db_session,
+        forecast_meta,
+        forecast_values_df,
+        ml_model_name=ml_model_name,
+        average_minutes=adjuster_average_minutes,
+    )
+    log.info(f"Adjusted forecast shape: {forecast_values_df_adjust.shape}")
 
-        write_forecast_to_db(
-            db_session,
-            forecast_meta,
-            forecast_values_df_adjust,
-            write_to_db=write_to_db,
-            ml_model_name=f"{ml_model_name}_adjust",
-            ml_model_version=ml_model_version,
-        )
-    except Exception as e:
-        log.error(f"Failed to adjust/save forecast for {ml_model_name}: {e}")
-        log.error(traceback.format_exc())
+    write_forecast_to_db(
+        db_session,
+        forecast_meta,
+        forecast_values_df_adjust,
+        write_to_db=write_to_db,
+        ml_model_name=f"{ml_model_name}_adjust",
+        ml_model_version=ml_model_version,
+    )
