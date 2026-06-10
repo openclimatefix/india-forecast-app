@@ -15,6 +15,7 @@ import pytest
 from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, MLModelSQL
 
 from india_forecast_app.save.database import adjust_and_save_forecast, write_forecast_to_db
+
 from ._utils import _make_forecast_values_df
 
 

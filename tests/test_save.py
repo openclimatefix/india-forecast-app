@@ -7,15 +7,14 @@ Covers:
 
 from __future__ import annotations
 
-import asyncio
 import datetime as dt
 from datetime import UTC
 from unittest.mock import patch
 
-import pytest
 from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, MLModelSQL
 
 from india_forecast_app.save.save import save_forecast
+
 from ._utils import _make_forecast_dict
 
 
