@@ -15,7 +15,6 @@ import pytest
 from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, MLModelSQL
 
 from india_forecast_app.save.database import adjust_and_save_forecast, write_forecast_to_db
-
 from tests._utils import _make_forecast_values_df
 
 
@@ -126,7 +125,7 @@ class TestAdjustAndSaveForecast:
         assert db_session.query(ForecastSQL).count() == 0
 
     def test_adjust_and_save_raises_on_error(self, db_session, sites):
-        """[13] If the adjuster fails internally (e.g. non-existent site), the function should raise."""
+        """[13] If adjuster fails internally (e.g. non-existent site), it should raise."""
         forecast_meta = {
             "location_uuid": uuid.uuid4(),  # non-existent site → adjuster raises KeyError
             "timestamp_utc": dt.datetime.now(tz=UTC),

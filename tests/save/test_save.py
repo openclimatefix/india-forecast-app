@@ -14,7 +14,6 @@ from unittest.mock import patch
 from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, MLModelSQL
 
 from india_forecast_app.save.save import save_forecast
-
 from tests._utils import _make_forecast_dict
 
 
