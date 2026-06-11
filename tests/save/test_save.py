@@ -15,14 +15,14 @@ from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, MLModelSQL
 
 from india_forecast_app.save.save import save_forecast
 
-from ._utils import _make_forecast_dict
+from tests._utils import _make_forecast_dict
 
 
 class TestSaveForecast:
     """Tests for the top-level save_forecast function."""
 
     def test_save_forecast_no_write(self, db_session, sites):
-        """write_to_db=False → nothing persisted."""
+        """[1] write_to_db=False → nothing persisted."""
         forecast = _make_forecast_dict(sites[0].location_uuid)
         save_forecast(
             db_session,
@@ -35,7 +35,7 @@ class TestSaveForecast:
         assert db_session.query(ForecastSQL).count() == 0
 
     def test_save_forecast_write_to_db(self, db_session, sites):
-        """write_to_db=True → base forecast written to DB."""
+        """[2] write_to_db=True → base forecast written to DB."""
         forecast = _make_forecast_dict(sites[0].location_uuid, n=4)
         save_forecast(
             db_session,
@@ -51,7 +51,7 @@ class TestSaveForecast:
     def test_save_forecast_with_adjuster_writes_both_models(
         self, db_session, sites, forecasts, generation_db_values
     ):
-        """use_adjuster_database=True → both base and _adjust models written."""
+        """[3] use_adjuster_database=True → both base and _adjust models written."""
         forecast = _make_forecast_dict(sites[0].location_uuid, n=5)
         save_forecast(
             db_session,
@@ -69,7 +69,7 @@ class TestSaveForecast:
     def test_save_forecast_adjuster_skipped_when_model_name_none(
         self, db_session, sites
     ):
-        """Skip adjuster when model name is None, even if DB adjuster is true."""
+        """[4] Skip adjuster when model name is None, even if DB adjuster is true."""
         forecast = _make_forecast_dict(sites[0].location_uuid, n=3)
         save_forecast(
             db_session,
@@ -83,7 +83,7 @@ class TestSaveForecast:
         assert db_session.query(ForecastSQL).count() == 1
 
     def test_save_forecast_dp_disabled_by_default(self, db_session, sites):
-        """Data Platform path is NOT triggered when env var is absent/false."""
+        """[5] Data Platform path is NOT triggered when env var is absent/false."""
         forecast = _make_forecast_dict(sites[0].location_uuid, n=2)
         with patch("india_forecast_app.save.save.save_to_dataplatform") as mock_dp:
             save_forecast(
@@ -97,7 +97,7 @@ class TestSaveForecast:
         mock_dp.assert_not_called()
 
     def test_save_forecast_dp_triggered_when_env_set(self, db_session, sites, monkeypatch):
-        """Data Platform path IS triggered when SAVE_TO_DATA_PLATFORM=true."""
+        """[6] Data Platform path IS triggered when SAVE_TO_DATA_PLATFORM=true."""
         monkeypatch.setenv("SAVE_TO_DATA_PLATFORM", "true")
         forecast = _make_forecast_dict(sites[0].location_uuid, n=2)
 
@@ -121,7 +121,7 @@ class TestSaveForecast:
         mock_run.assert_called_once()
 
     def test_save_forecast_horizon_minutes_computed_correctly(self, db_session, sites):
-        """Horizon minutes should equal (start_utc - timestamp) in minutes."""
+        """[7] Horizon minutes should equal (start_utc - timestamp) in minutes."""
         timestamp = dt.datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
         forecast = _make_forecast_dict(sites[0].location_uuid, n=3, timestamp=timestamp)
         # Just check it doesn't raise; we'd need to capture the df to assert values

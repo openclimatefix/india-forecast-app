@@ -7,7 +7,6 @@ import contextlib
 import json
 import logging
 import os
-import traceback
 from collections.abc import AsyncIterator  # noqa: TC003
 from datetime import UTC, datetime, timedelta
 from importlib.metadata import version
@@ -82,11 +81,23 @@ async def save_to_dataplatform(
     location_map: dict[str, str] | None = None,
     use_adjuster: bool = True,
 ) -> None:
-    """Save Forecast to Dataplatform."""
+    """Save forecast to the Data Platform."""
+    app_version = version("india-forecast-app")
+    if forecast_df.empty:
+        log.warning("forecast dataframe is empty")
+        return
+
     client_location_name = forecast_meta.get("client_location_name")
+    if not client_location_name:
+        log.error("client_location_name is None/empty — cannot save")
+        raise ValueError("client_location_name is required to save to the Data Platform")
+
     model_tag = ml_model_name if ml_model_name else "default-model"
-    init_time_utc = forecast_meta["timestamp_utc"]
+    init_time_utc = ensure_timezone_aware(forecast_meta["timestamp_utc"])
     capacity_kw = forecast_meta.get("capacity_kw")
+    latitude = forecast_meta.get("latitude")
+    longitude = forecast_meta.get("longitude")
+    location_type = forecast_meta.get("location_type", dp.LocationType.SITE)
 
     log.info(
         "Starting DP save | "
@@ -96,25 +107,97 @@ async def save_to_dataplatform(
         f"location_map_size={len(location_map) if location_map else None}",
     )
 
-    try:
-        async with get_dataplatform_client() as client:
-            await save_forecast_to_dataplatform(
-                forecast_df=forecast_df,
-                client_location_name=client_location_name,
-                model_tag=model_tag,
-                init_time_utc=init_time_utc,
-                client=client,
-                capacity_kw=capacity_kw,
-                latitude=forecast_meta.get("latitude"),
-                longitude=forecast_meta.get("longitude"),
-                location_type=forecast_meta.get("location_type", dp.LocationType.SITE),
-                location_map=location_map,
-                use_adjuster=use_adjuster,
+    async with get_dataplatform_client() as client:
+        log.info(f"resolving UUID and forecaster for {client_location_name!r}")
+        target_uuid_str, forecaster = await asyncio.gather(
+            resolve_target_uuid(client, client_location_name, location_map),
+            create_forecaster_if_not_exists(client=client, model_tag=model_tag),
+        )
+        log.info(
+            f"uuid={target_uuid_str}  "
+            f"forecaster={forecaster.forecaster_name!r} v{forecaster.forecaster_version}",
+        )
+
+        if target_uuid_str is None:
+            log.warning(
+                f"location {client_location_name!r} not in DP — creating it  "
+                f"(capacity_kw={capacity_kw}, lat={latitude}, lon={longitude})",
             )
-        log.info(f"Save complete for location={client_location_name!r}")
-    except Exception as e:
-        log.error(f"Failed to save forecast to Data Platform: {e}")
-        log.error(traceback.format_exc())
+            target_uuid_str = await create_new_location(
+                client,
+                client_location_name,
+                capacity_kw or 0.0,
+                latitude,
+                longitude,
+                init_time_utc,
+                location_type=location_type,
+            )
+            log.info(f"created location uuid={target_uuid_str}")
+        else:
+            log.info(f"location already exists uuid={target_uuid_str}")
+
+        capacity_watts = await get_location_capacity(client=client, target_uuid_str=target_uuid_str)
+        log.info(
+            f"capacity_watts={capacity_watts:,}  ({capacity_watts / 1000:,.1f} kW)",
+        )
+
+        if capacity_watts == 0:
+            log.error(
+                f"location {target_uuid_str} has 0 W capacity — "
+                "no forecast values can be expressed as fractions; skipping save",
+            )
+            return
+
+        forecast_values = prepare_forecast_values(forecast_df, init_time_utc, capacity_watts)
+        log.info(f"prepared {len(forecast_values)} forecast value(s)")
+
+        if forecast_values:
+            sample = forecast_values[0]
+            log.info(
+                f"sample[0]: horizon_mins={sample.horizon_mins}  "
+                f"p50_fraction={sample.p50_fraction:.6f}  "
+                f"other_stats={dict(sample.other_statistics_fractions)}",
+            )
+            p50s = [fv.p50_fraction for fv in forecast_values]
+            log.info(
+                f"p50 range: min={min(p50s):.6f}  max={max(p50s):.6f}  "
+                f"mean={sum(p50s)/len(p50s):.6f}",
+            )
+        else:
+            log.warning("no forecast values after preparation")
+            return
+
+        base_request = dp.CreateForecastRequest(
+            forecaster=forecaster,
+            location_uuid=target_uuid_str,
+            energy_source=dp.EnergySource.SOLAR,
+            init_time_utc=init_time_utc,
+            values=forecast_values,
+            metadata=Struct(fields={"app_version": Value(string_value=app_version)}),
+        )
+        log.info(
+            f"submitting forecast  "
+            f"forecaster={forecaster.forecaster_name!r}  "
+            f"location={target_uuid_str}  values={len(forecast_values)}",
+        )
+
+        await client.create_forecast(base_request)
+        log.info(f"Forecast submitted for {client_location_name!r}")
+
+        if use_adjuster:
+            log.info(f"Building adjuster forecast for {client_location_name!r}")
+            adjusted_request = await make_forecaster_adjuster(
+                client=client,
+                location_uuid=target_uuid_str,
+                init_time_utc=init_time_utc,
+                forecast_values=forecast_values,
+                model_tag=model_tag,
+                forecaster=forecaster,
+            )
+            await client.create_forecast(adjusted_request)
+            log.info(f"Adjusted forecast submitted for {client_location_name!r}")
+
+    log.info(f"Save complete for location={client_location_name!r}")
 
 
 async def make_forecaster_adjuster(
@@ -373,126 +456,3 @@ def prepare_forecast_values(
     return forecast_values
 
 
-async def save_forecast_to_dataplatform(
-    forecast_df: pd.DataFrame,
-    client_location_name: str | None,
-    model_tag: str,
-    init_time_utc: datetime,
-    client: DataPlatformClient,
-    capacity_kw: float | None = None,
-    latitude: float | None = None,
-    longitude: float | None = None,
-    location_type: dp.LocationType = dp.LocationType.SITE,
-    location_map: dict[str, str] | None = None,
-    use_adjuster: bool = True,
-) -> None:
-    """Save forecast to the Data Platform."""
-    app_version = version("india-forecast-app")
-    if forecast_df.empty:
-        log.warning("forecast dataframe is empty")
-        return
-
-    if not client_location_name:
-        log.error("client_location_name is None/empty — cannot save")
-        raise ValueError("client_location_name is required to save to the Data Platform")
-
-    init_time_utc = ensure_timezone_aware(init_time_utc)
-    log.info(
-        f"location={client_location_name!r}  "
-        f"model={model_tag!r}  init_time={init_time_utc}  rows={len(forecast_df)}",
-    )
-
-    log.info(f"resolving UUID and forecaster for {client_location_name!r}")
-    target_uuid_str, forecaster = await asyncio.gather(
-        resolve_target_uuid(client, client_location_name, location_map),
-        create_forecaster_if_not_exists(client=client, model_tag=model_tag),
-    )
-    log.info(
-        f"uuid={target_uuid_str}  "
-        f"forecaster={forecaster.forecaster_name!r} v{forecaster.forecaster_version}",
-    )
-
-    if target_uuid_str is None:
-        log.warning(
-            f"location {client_location_name!r} not in DP — creating it  "
-            f"(capacity_kw={capacity_kw}, lat={latitude}, lon={longitude})",
-        )
-        target_uuid_str = await create_new_location(
-            client,
-            client_location_name,
-            capacity_kw or 0.0,
-            latitude,
-            longitude,
-            init_time_utc,
-            location_type=location_type,
-        )
-        log.info(f"created location uuid={target_uuid_str}")
-    else:
-        log.info(f"location already exists uuid={target_uuid_str}")
-
-    capacity_watts = await get_location_capacity(client=client, target_uuid_str=target_uuid_str)
-    log.info(
-        f"capacity_watts={capacity_watts:,}  ({capacity_watts / 1000:,.1f} kW)",
-    )
-
-    if capacity_watts == 0:
-        log.error(
-            f"location {target_uuid_str} has 0 W capacity — "
-            "no forecast values can be expressed as fractions; skipping save",
-        )
-        return
-
-    forecast_values = prepare_forecast_values(forecast_df, init_time_utc, capacity_watts)
-    log.info(f"prepared {len(forecast_values)} forecast value(s)")
-
-    if forecast_values:
-        sample = forecast_values[0]
-        log.info(
-            f"sample[0]: horizon_mins={sample.horizon_mins}  "
-            f"p50_fraction={sample.p50_fraction:.6f}  "
-            f"other_stats={dict(sample.other_statistics_fractions)}",
-        )
-        p50s = [fv.p50_fraction for fv in forecast_values]
-        log.info(
-            f"p50 range: min={min(p50s):.6f}  max={max(p50s):.6f}  "
-            f"mean={sum(p50s)/len(p50s):.6f}",
-        )
-    else:
-        log.warning("no forecast values after preparation")
-        return
-
-    base_request = dp.CreateForecastRequest(
-        forecaster=forecaster,
-        location_uuid=target_uuid_str,
-        energy_source=dp.EnergySource.SOLAR,
-        init_time_utc=init_time_utc,
-        values=forecast_values,
-        metadata=Struct(fields={"app_version": Value(string_value=app_version)}),
-    )
-    log.info(
-        f"submitting forecast  "
-        f"forecaster={forecaster.forecaster_name!r}  "
-        f"location={target_uuid_str}  values={len(forecast_values)}",
-    )
-
-    await client.create_forecast(base_request)
-    log.info(f"Forecast submitted for {client_location_name!r}")
-
-    if use_adjuster:
-        log.info(f"Building adjuster forecast for {client_location_name!r}")
-        try:
-            adjusted_request = await make_forecaster_adjuster(
-                client=client,
-                location_uuid=target_uuid_str,
-                init_time_utc=init_time_utc,
-                forecast_values=forecast_values,
-                model_tag=model_tag,
-                forecaster=forecaster,
-            )
-            await client.create_forecast(adjusted_request)
-            log.info(f"Adjusted forecast submitted for {client_location_name!r}")
-        except Exception:
-            log.error(
-                f"Failed to save adjusted forecast to Data Platform for {client_location_name!r}\n"
-                + traceback.format_exc(),
-            )

@@ -162,10 +162,8 @@ def app_run(timestamp: dt.datetime | None, write_to_db: bool = False, log_level:
     location_map = None
     if os.getenv("SAVE_TO_DATA_PLATFORM", "false").lower() == "true":
         log.info("Pre-fetching Data Platform location map...")
-        try:
-            location_map = asyncio.run(build_dp_location_map())
-        except Exception as e:
-            log.warning(f"Could not pre-fetch DP location map: {e}")
+        location_map = asyncio.run(build_dp_location_map())
+    
 
     # 0. Initialise DB connection
     url = os.environ["DB_URL"]

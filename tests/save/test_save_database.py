@@ -16,14 +16,14 @@ from pvsite_datamodel.sqlmodels import ForecastSQL, ForecastValueSQL, MLModelSQL
 
 from india_forecast_app.save.database import adjust_and_save_forecast, write_forecast_to_db
 
-from ._utils import _make_forecast_values_df
+from tests._utils import _make_forecast_values_df
 
 
 class TestWriteForecastToDb:
     """Tests for write_forecast_to_db."""
 
     def test_no_write_when_disabled(self, db_session, sites):
-        """When write_to_db=False, nothing should be inserted."""
+        """[8] When write_to_db=False, nothing should be inserted."""
         forecast_meta = {
             "location_uuid": sites[0].location_uuid,
             "timestamp_utc": dt.datetime.now(tz=UTC),
@@ -42,7 +42,7 @@ class TestWriteForecastToDb:
         assert db_session.query(ForecastValueSQL).count() == 0
 
     def test_writes_to_db_when_enabled(self, db_session, sites):
-        """When write_to_db=True, rows should be inserted."""
+        """[9] When write_to_db=True, rows should be inserted."""
         forecast_meta = {
             "location_uuid": sites[0].location_uuid,
             "timestamp_utc": dt.datetime.now(tz=UTC),
@@ -62,7 +62,7 @@ class TestWriteForecastToDb:
         assert db_session.query(MLModelSQL).count() == 1
 
     def test_ml_model_name_none_does_not_raise(self, db_session, sites):
-        """Passing ml_model_name=None should not crash."""
+        """[10] Passing ml_model_name=None should not crash."""
         forecast_meta = {
             "location_uuid": sites[0].location_uuid,
             "timestamp_utc": dt.datetime.now(tz=UTC),
@@ -87,7 +87,7 @@ class TestAdjustAndSaveForecast:
     def test_adjust_and_save_writes_adjusted_model(
         self, db_session, sites, forecasts, generation_db_values
     ):
-        """After adjust+save, an '_adjust' model entry should appear in DB."""
+        """[11] After adjust+save, an '_adjust' model entry should appear in DB."""
         forecast_meta = {
             "location_uuid": sites[0].location_uuid,
             "timestamp_utc": dt.datetime.now(tz=UTC),
@@ -107,7 +107,7 @@ class TestAdjustAndSaveForecast:
         assert any("adjust" in name for name in model_names)
 
     def test_adjust_and_save_no_write(self, db_session, sites):
-        """When write_to_db=False, no rows should be inserted."""
+        """[12] When write_to_db=False, no rows should be inserted."""
         forecast_meta = {
             "location_uuid": sites[0].location_uuid,
             "timestamp_utc": dt.datetime.now(tz=UTC),
@@ -126,7 +126,7 @@ class TestAdjustAndSaveForecast:
         assert db_session.query(ForecastSQL).count() == 0
 
     def test_adjust_and_save_raises_on_error(self, db_session, sites):
-        """If the adjuster fails internally (e.g. non-existent site), the function should raise."""
+        """[13] If the adjuster fails internally (e.g. non-existent site), the function should raise."""
         forecast_meta = {
             "location_uuid": uuid.uuid4(),  # non-existent site → adjuster raises KeyError
             "timestamp_utc": dt.datetime.now(tz=UTC),

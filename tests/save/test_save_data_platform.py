@@ -21,14 +21,14 @@ from india_forecast_app.save.data_platform import (
     resolve_target_uuid,
 )
 
-from ._utils import _make_forecast_values_df
+from tests._utils import _make_forecast_values_df
 
 
 class TestPrepareForecastValues:
     """Tests for prepare_forecast_values (pure function, no gRPC)."""
 
     def test_returns_correct_number_of_values(self):
-        """Test that the correct number of forecast values is returned."""
+        """[14] Test that the correct number of forecast values is returned."""
         df = _make_forecast_values_df(n=4)
         init_time = dt.datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
         capacity_watts = 10_000_000  # 10 MW
@@ -37,7 +37,7 @@ class TestPrepareForecastValues:
         assert len(result) == 4
 
     def test_p50_fraction_clamped_between_0_and_1(self):
-        """Test that p50 fraction values are clamped to the 0-1 range."""
+        """[15] Test that p50 fraction values are clamped to the 0-1 range."""
         # forecast_power_kw much larger than capacity → fraction should be 1.0
         init_time = dt.datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
         starts = [init_time + dt.timedelta(minutes=15 * i) for i in range(3)]
@@ -58,7 +58,7 @@ class TestPrepareForecastValues:
         assert result[2].p50_fraction == pytest.approx(1.0)  # clamped to 1
 
     def test_horizon_mins_computed_from_start_utc_when_no_column(self):
-        """Test that horizon mins are computed from start_utc if missing."""
+        """[16] Test that horizon mins are computed from start_utc if missing."""
         init_time = dt.datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
         starts = [init_time + dt.timedelta(minutes=15 * i) for i in range(3)]
         ends = [s + dt.timedelta(minutes=15) for s in starts]
@@ -75,7 +75,7 @@ class TestPrepareForecastValues:
         assert [fv.horizon_mins for fv in result] == [0, 15, 30]
 
     def test_horizon_from_existing_column_used(self):
-        """Test that the existing horizon_minutes column is used."""
+        """[17] Test that the existing horizon_minutes column is used."""
         init_time = dt.datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
         starts = [init_time + dt.timedelta(minutes=15 * i) for i in range(3)]
         ends = [s + dt.timedelta(minutes=15) for s in starts]
@@ -92,7 +92,7 @@ class TestPrepareForecastValues:
         assert [fv.horizon_mins for fv in result] == [0, 15, 30]
 
     def test_probabilistic_values_parsed_when_dict(self):
-        """Test parsing probabilistic values when they are a dictionary."""
+        """[18] Test parsing probabilistic values when they are a dictionary."""
         init_time = dt.datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
         starts = [init_time + dt.timedelta(minutes=15 * i) for i in range(2)]
         ends = [s + dt.timedelta(minutes=15) for s in starts]
@@ -115,7 +115,7 @@ class TestPrepareForecastValues:
         assert 0.0 <= result[0].other_statistics_fractions["p10"] <= 1.0
 
     def test_empty_dataframe_returns_empty_list(self):
-        """Test that an empty DataFrame returns an empty list."""
+        """[19] Test that an empty DataFrame returns an empty list."""
         df = pd.DataFrame(columns=["start_utc", "end_utc", "forecast_power_kw", "horizon_minutes"])
         init_time = dt.datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
         result = prepare_forecast_values(df, init_time, 1_000_000)
@@ -126,7 +126,7 @@ class TestResolveTargetUuid:
     """Tests for resolve_target_uuid (uses mocked gRPC client)."""
 
     def test_returns_uuid_from_prefetched_map(self):
-        """Test returning UUID from prefetched map directly."""
+        """[20] Test returning UUID from prefetched map directly."""
         async def _run():
             mock_client = MagicMock()
             location_map = {"my_location": "abc-123"}
@@ -137,7 +137,7 @@ class TestResolveTargetUuid:
         asyncio.run(_run())
 
     def test_returns_none_when_location_not_in_map(self):
-        """Test returning None when location is not in map."""
+        """[21] Test returning None when location is not in map."""
         async def _run():
             mock_client = MagicMock()
             location_map = {"other_location": "xyz-456"}
@@ -148,7 +148,7 @@ class TestResolveTargetUuid:
         asyncio.run(_run())
 
     def test_fetches_map_when_none_provided(self):
-        """Test fetching the location map if not provided."""
+        """[22] Test fetching the location map if not provided."""
         async def _run():
             mock_loc = MagicMock()
             mock_loc.location_name = "my_location"
@@ -164,7 +164,7 @@ class TestResolveTargetUuid:
         asyncio.run(_run())
 
     def test_returns_none_when_not_found_in_fetched_map(self):
-        """Test returning None when location is not found in fetched map."""
+        """[23] Test returning None when location is not found in fetched map."""
         async def _run():
             mock_client = AsyncMock()
             mock_client.list_locations.return_value = MagicMock(locations=[])
@@ -179,7 +179,7 @@ class TestFetchDpLocationMap:
     """Tests for fetch_dp_location_map."""
 
     def test_builds_name_to_uuid_map(self):
-        """Test building location name to UUID map from response."""
+        """[24] Test building location name to UUID map from response."""
         async def _run():
             locs = []
             for name, uid in [("loc_a", "uuid-a"), ("loc_b", "uuid-b")]:
@@ -197,7 +197,7 @@ class TestFetchDpLocationMap:
         asyncio.run(_run())
 
     def test_empty_locations_returns_empty_map(self):
-        """Test returning empty map when no locations exist."""
+        """[25] Test returning empty map when no locations exist."""
         async def _run():
             mock_client = AsyncMock()
             mock_client.list_locations.return_value = MagicMock(locations=[])
