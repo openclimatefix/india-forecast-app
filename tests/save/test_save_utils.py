@@ -123,12 +123,11 @@ class TestLimitAdjuster:
 
     def test_absolute_mw_cap_applies(self):
         """[40] Test that absolute MW cap applies when delta exceeds limit."""
-        # capacity_mw=5, max_absolute=1000/5=200 → won't matter here
-        # But capacity_mw=1 → max_absolute=1000 (above 10% cap in this case)
-        # With capacity_mw=2000 → max_absolute=0.5; value=0.6 → 10% cap=0.06
-        # delta=0.8 → capped first to 0.06 (10% of 0.6), which is below 1000/2000=0.5 — OK
-        result = limit_adjuster(delta_fraction=0.8, value_fraction=0.6, capacity_mw=2000.0)
-        assert result == pytest.approx(0.06)
+        # capacity_mw=20000 -> max_absolute=1000/20000=0.05
+        # value=1.0 -> max_delta=0.1. So the absolute cap is stricter.
+        # delta=0.2 -> capped to 0.1 first, then to 0.05.
+        result = limit_adjuster(delta_fraction=0.2, value_fraction=1.0, capacity_mw=20000.0)
+        assert result == pytest.approx(0.05)
 
     def test_very_small_capacity_mw_absolute_cap(self):
         """[41] Test limit adjuster under very small capacity."""
@@ -138,7 +137,8 @@ class TestLimitAdjuster:
 
     def test_negative_absolute_cap(self):
         """[42] Test limit adjuster with negative delta under absolute cap constraint."""
-        # Small capacity makes absolute cap large; 10% cap dominates
-        result = limit_adjuster(delta_fraction=-0.5, value_fraction=0.4, capacity_mw=5000.0)
-        # max_delta = 0.1 * 0.4 = 0.04 → capped to -0.04
-        assert result == pytest.approx(-0.04)
+        # capacity_mw=20000 -> max_absolute=0.05
+        # value=1.0 -> max_delta=0.1
+        # delta=-0.2 -> capped to -0.1 first, then to -0.05.
+        result = limit_adjuster(delta_fraction=-0.2, value_fraction=1.0, capacity_mw=20000.0)
+        assert result == pytest.approx(-0.05)

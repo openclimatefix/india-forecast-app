@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import datetime as dt
 from datetime import UTC
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pandas as pd
 import pytest
@@ -205,3 +205,122 @@ class TestFetchDpLocationMap:
             assert result == {}
 
         asyncio.run(_run())
+
+
+class TestSaveToDataplatform:
+    """Tests for save_to_dataplatform (end-to-end wrapper)."""
+
+    @pytest.fixture
+    def mock_get_client(self):
+        with patch("india_forecast_app.save.data_platform.get_dataplatform_client") as m:
+            mock_cm = AsyncMock()
+            mock_client = AsyncMock()
+            mock_cm.__aenter__.return_value = mock_client
+            m.return_value = mock_cm
+            
+            # Setup mock client returns
+            mock_client.list_locations.return_value = MagicMock(locations=[])
+            mock_client.create_location.return_value = MagicMock(uuid="new-uuid")
+            mock_client.get_location.return_value = MagicMock(effective_capacity_watts=5000)
+            mock_client.list_forecasters.return_value = MagicMock(forecasters=[])
+            mock_client.create_forecaster.return_value = MagicMock(
+                forecaster_name="test-model", forecaster_version="1.0"
+            )
+            mock_client.create_forecast.return_value = MagicMock()
+            
+            yield m, mock_client
+
+    def test_save_to_dataplatform_success(self, mock_get_client):
+        """[43] Test successful save creates location, forecaster, and forecast."""
+        m_get_client, mock_client = mock_get_client
+        
+        from india_forecast_app.save.data_platform import save_to_dataplatform
+        
+        df = _make_forecast_values_df(n=2)
+        forecast_meta = {
+            "client_location_name": "loc_abc",
+            "timestamp_utc": dt.datetime.now(tz=UTC),
+            "capacity_kw": 5.0,
+        }
+        
+        asyncio.run(
+            save_to_dataplatform(
+                forecast_df=df,
+                forecast_meta=forecast_meta,
+                ml_model_name="test-model",
+                use_adjuster=True,
+            )
+        )
+        
+        # Should have created location, forecaster, and 2 forecasts (base + adjuster)
+        mock_client.create_location.assert_called_once()
+        mock_client.create_forecaster.assert_called()
+        assert mock_client.create_forecast.call_count == 2
+        
+    def test_save_to_dataplatform_empty_df(self, mock_get_client):
+        """[44] Test empty dataframe returns early."""
+        m_get_client, mock_client = mock_get_client
+        
+        from india_forecast_app.save.data_platform import save_to_dataplatform
+        
+        df = pd.DataFrame()
+        forecast_meta = {}
+        
+        asyncio.run(
+            save_to_dataplatform(
+                forecast_df=df,
+                forecast_meta=forecast_meta,
+                ml_model_name="test-model",
+            )
+        )
+        
+        m_get_client.assert_not_called()
+
+    def test_save_to_dataplatform_zero_capacity(self, mock_get_client):
+        """[45] Test zero capacity returns early."""
+        m_get_client, mock_client = mock_get_client
+        
+        # Force get_location to return 0 capacity
+        mock_client.get_location.return_value = MagicMock(effective_capacity_watts=0)
+        
+        from india_forecast_app.save.data_platform import save_to_dataplatform
+        
+        df = _make_forecast_values_df(n=2)
+        forecast_meta = {
+            "client_location_name": "loc_abc",
+            "timestamp_utc": dt.datetime.now(tz=UTC),
+            "capacity_kw": 0.0,
+        }
+        
+        asyncio.run(
+            save_to_dataplatform(
+                forecast_df=df,
+                forecast_meta=forecast_meta,
+                ml_model_name="test-model",
+                use_adjuster=False,
+            )
+        )
+        
+        mock_client.create_forecast.assert_not_called()
+
+    def test_save_to_dataplatform_missing_location_name(self, mock_get_client):
+        """[46] Test missing client_location_name raises ValueError."""
+        m_get_client, mock_client = mock_get_client
+        
+        from india_forecast_app.save.data_platform import save_to_dataplatform
+        
+        df = _make_forecast_values_df(n=2)
+        forecast_meta = {
+            "timestamp_utc": dt.datetime.now(tz=UTC),
+            "capacity_kw": 5.0,
+        }
+        
+        with pytest.raises(ValueError, match="client_location_name is required"):
+            asyncio.run(
+                save_to_dataplatform(
+                    forecast_df=df,
+                    forecast_meta=forecast_meta,
+                    ml_model_name="test-model",
+                )
+            )
+

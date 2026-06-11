@@ -150,6 +150,30 @@ def test_app(
         assert db_session.query(ForecastSQL).count() == init_n_forecasts
         assert db_session.query(ForecastValueSQL).count() == init_n_forecast_values
 
+@pytest.mark.parametrize("write_to_db", [False])
+def test_app_save_to_data_platform_env_true(
+    monkeypatch, write_to_db, db_session, sites, nwp_data, nwp_gfs_data, nwp_mo_global_data, generation_db_values
+):
+    """Test for running app with SAVE_TO_DATA_PLATFORM=true."""
+    monkeypatch.setenv("SAVE_TO_DATA_PLATFORM", "true")
+    
+    from unittest.mock import patch, MagicMock
+    with patch("india_forecast_app.app.get_model") as mock_get_model, \
+         patch("india_forecast_app.app.get_generation_data") as mock_get_gen, \
+         patch("india_forecast_app.app.save_forecast") as mock_save:
+        
+        mock_model = MagicMock()
+        mock_model.predict.return_value = [{"start_utc": dt.datetime.now(tz=dt.UTC), "end_utc": dt.datetime.now(tz=dt.UTC), "forecast_power_kw": 100}]
+        mock_model.name = "mock-model"
+        mock_get_model.return_value = mock_model
+        
+        import pandas as pd
+        mock_get_gen.return_value = {"data": pd.Series([1, 2, 3]), "metadata": {}}
+        
+        args = ["--date", dt.datetime.now(tz=dt.UTC).strftime("%Y-%m-%d-%H-%M")]
+        result = run_click_script(app, args)
+        assert result.exit_code == 0
+
 
 def test_app_no_pv_data(
     db_session, sites, nwp_data, nwp_gfs_data, nwp_mo_global_data, generation_db_values_only_wind
