@@ -325,3 +325,31 @@ class TestSaveToDataplatform:
                 )
             )
 
+    def test_save_to_dataplatform_location_exists(self, mock_get_client):
+        """Test save_to_dataplatform when the location already exists in DP."""
+        m_get_client, mock_client = mock_get_client
+        
+        from india_forecast_app.save.data_platform import save_to_dataplatform
+        
+        df = _make_forecast_values_df(n=2)
+        forecast_meta = {
+            "client_location_name": "loc_abc",
+            "timestamp_utc": dt.datetime.now(tz=UTC),
+            "capacity_kw": 5.0,
+        }
+        location_map = {"loc_abc": "existing-uuid-123"}
+        
+        asyncio.run(
+            save_to_dataplatform(
+                forecast_df=df,
+                forecast_meta=forecast_meta,
+                ml_model_name="test-model",
+                location_map=location_map,
+                use_adjuster=False,
+            )
+        )
+        
+        mock_client.create_location.assert_not_called()
+        mock_client.get_location.assert_called()
+        mock_client.create_forecast.assert_called_once()
+
