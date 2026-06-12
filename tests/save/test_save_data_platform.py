@@ -212,6 +212,7 @@ class TestSaveToDataplatform:
 
     @pytest.fixture
     def mock_get_client(self):
+        """Mock get_dataplatform_client for testing."""
         with patch("india_forecast_app.save.data_platform.get_dataplatform_client") as m:
             mock_cm = AsyncMock()
             mock_client = AsyncMock()
