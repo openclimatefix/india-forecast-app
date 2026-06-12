@@ -6,7 +6,7 @@ import datetime as dt
 import multiprocessing as mp
 import os
 import uuid
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pandas as pd
 import pytest
@@ -168,8 +168,12 @@ def test_app_save_to_data_platform_env_true(
     
     with patch("india_forecast_app.app.get_model") as mock_get_model, \
          patch("india_forecast_app.app.get_generation_data") as mock_get_gen, \
+         patch(
+             "india_forecast_app.app.build_dp_location_map", new_callable=AsyncMock
+         ) as mock_build_dp_map, \
          patch("india_forecast_app.app.save_forecast"):
         
+        mock_build_dp_map.return_value = {"mock-loc": "mock-uuid"}
         mock_model = MagicMock()
         mock_model.predict.return_value = [
             {
