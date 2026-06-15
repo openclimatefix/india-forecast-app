@@ -19,6 +19,7 @@ from india_forecast_app.save.data_platform import (
     fetch_dp_location_map,
     prepare_forecast_values,
     resolve_target_uuid,
+    save_to_dataplatform,
 )
 from tests._utils import _make_forecast_values_df
 
@@ -326,11 +327,8 @@ class TestSaveToDataplatform:
             )
 
     def test_save_to_dataplatform_location_exists(self, mock_get_client):
-        """Test save_to_dataplatform when the location already exists in DP."""
+        """[47] Test save_to_dataplatform when the location already exists in DP."""
         m_get_client, mock_client = mock_get_client
-        
-        from india_forecast_app.save.data_platform import save_to_dataplatform
-        
         df = _make_forecast_values_df(n=2)
         forecast_meta = {
             "client_location_name": "loc_abc",
