@@ -236,7 +236,6 @@ class TestSaveToDataplatform:
         """[43] Test successful save creates location, forecaster, and forecast."""
         m_get_client, mock_client = mock_get_client
         
-        from india_forecast_app.save.data_platform import save_to_dataplatform
         
         df = _make_forecast_values_df(n=2)
         forecast_meta = {
