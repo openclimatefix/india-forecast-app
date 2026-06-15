@@ -1,8 +1,24 @@
 """
 Tests for india_forecast_app.save.data_platform.
 
-Covers:
-  - save/data_platform.py : prepare_forecast_values, resolve_target_uuid, fetch_dp_location_map
+Tests cover:
+1.  prepare_forecast_values: returns correct number of forecast value objects
+2.  prepare_forecast_values: p50 fraction is clamped to [0, 1]
+3.  prepare_forecast_values: horizon_mins computed from start_utc when column absent
+4.  prepare_forecast_values: existing horizon_minutes column is used directly
+5.  prepare_forecast_values: probabilistic dict values are parsed and normalised
+6.  prepare_forecast_values: empty DataFrame returns empty list
+7.  resolve_target_uuid: returns UUID from a pre-fetched location map
+8.  resolve_target_uuid: returns None when location is not in the map
+9.  resolve_target_uuid: fetches map from DP when none is provided
+10. resolve_target_uuid: returns None when location is absent from fetched map
+11. fetch_dp_location_map: builds name-to-UUID dict from list_locations response
+12. fetch_dp_location_map: returns empty dict when no locations exist
+13. save_to_dataplatform: success - creates location, forecaster, and forecast
+14. save_to_dataplatform: empty DataFrame returns early without gRPC calls
+15. save_to_dataplatform: zero capacity returns early without creating forecast
+16. save_to_dataplatform: missing client_location_name raises ValueError
+17. save_to_dataplatform: existing location is reused without calling create_location
 """
 
 from __future__ import annotations

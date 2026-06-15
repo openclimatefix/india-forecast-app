@@ -1,8 +1,14 @@
 """
 Tests for india_forecast_app.save.save (the save_forecast orchestrator).
 
-Covers:
-  - save/save.py          : save_forecast (DB path; DP path mocked)
+Tests cover:
+1. write_to_db=False: nothing is persisted to the database
+2. write_to_db=True: base forecast is written to the database
+3. use_adjuster_database=True: both base and _adjust models are written
+4. ml_model_name=None: adjuster is skipped even when DB adjuster is True
+5. SAVE_TO_DATA_PLATFORM absent/false: Data Platform path is not triggered
+6. SAVE_TO_DATA_PLATFORM=true: Data Platform path is triggered via asyncio.run
+7. horizon_minutes: computed correctly as (start_utc - timestamp) in minutes
 """
 
 from __future__ import annotations

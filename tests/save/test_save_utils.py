@@ -1,8 +1,24 @@
 """
 Tests for india_forecast_app.save.utils.
 
-Covers:
-  - save/utils.py         : add_or_convert_to_utc, ensure_timezone_aware, limit_adjuster
+Tests cover:
+1.  add_or_convert_to_utc: naive datetime is localised to UTC
+2.  add_or_convert_to_utc: timezone-aware UTC datetime is returned unchanged
+3.  add_or_convert_to_utc: non-UTC timezone-aware datetime is converted to UTC
+4.  add_or_convert_to_utc: naive pandas Timestamp is localised to UTC
+5.  add_or_convert_to_utc: result is always a pandas Timestamp
+6.  ensure_timezone_aware: naive datetime gets UTC tzinfo attached
+7.  ensure_timezone_aware: timezone-aware UTC datetime remains unchanged
+8.  ensure_timezone_aware: timezone-aware non-UTC datetime is converted to UTC
+9.  ensure_timezone_aware: naive pandas Timestamp is localised to UTC
+10. ensure_timezone_aware: timezone-aware pandas Timestamp is converted to UTC
+11. limit_adjuster: zero delta results in zero adjustment
+12. limit_adjuster: delta within the 10 % cap is returned unchanged
+13. limit_adjuster: positive delta exceeding 10 % cap is clamped
+14. limit_adjuster: negative delta exceeding 10 % cap is clamped
+15. limit_adjuster: absolute MW cap applies when stricter than the % cap
+16. limit_adjuster: very small capacity makes absolute cap very large (no effect)
+17. limit_adjuster: negative delta under absolute cap constraint is clamped
 """
 
 from __future__ import annotations

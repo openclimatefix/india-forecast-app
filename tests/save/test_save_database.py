@@ -1,8 +1,13 @@
 """
 Tests for india_forecast_app.save.database.
 
-Covers:
-  - save/database.py      : write_forecast_to_db, adjust_and_save_forecast
+Tests cover:
+1. write_to_db=False: nothing is inserted into the database
+2. write_to_db=True: forecast and forecast-value rows are inserted
+3. ml_model_name=None: write_forecast_to_db does not raise
+4. use_adjuster=True: an '_adjust' model entry appears in the database
+5. use_adjuster, write_to_db=False: no rows are inserted
+6. adjust_and_save raises when adjuster fails (non-existent site uuid)
 """
 
 from __future__ import annotations
