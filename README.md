@@ -50,8 +50,14 @@ This example runs the application and writes the results to stdout
 DB_URL={DB_URL} NWP_ZARR_PATH={NWP_ZARR_PATH} poetry run app
 ```
 
-To save batches, you need to set the `SAVE_BATCHES_DIR` environment variable to directory. 
-```
+To save batches, you need to set the `SAVE_BATCHES_DIR` environment variable to directory.
+
+### Saving to OCF Data Platform
+
+To optionally save forecasts to the OCF Data Platform via gRPC, configure the following environment variables:
+* `SAVE_TO_DATA_PLATFORM` (set to `"True"` to enable, defaults to `"False"`)
+* `DATA_PLATFORM_HOST` (defaults to `"localhost"`)
+* `DATA_PLATFORM_PORT` (defaults to `"50051"`)
 
 ### Starting a local database using docker
 
