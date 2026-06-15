@@ -277,9 +277,6 @@ class TestSaveToDataplatform:
     def test_save_to_dataplatform_empty_df(self, mock_get_client):
         """[14] Test empty dataframe returns early."""
         m_get_client, mock_client = mock_get_client
-        
-        from india_forecast_app.save.data_platform import save_to_dataplatform
-        
         df = pd.DataFrame()
         forecast_meta = {}
         
@@ -299,9 +296,6 @@ class TestSaveToDataplatform:
         
         # Force get_location to return 0 capacity
         mock_client.get_location.return_value = MagicMock(effective_capacity_watts=0)
-        
-        from india_forecast_app.save.data_platform import save_to_dataplatform
-        
         df = _make_forecast_values_df(n=2)
         forecast_meta = {
             "client_location_name": "loc_abc",
@@ -323,9 +317,6 @@ class TestSaveToDataplatform:
     def test_save_to_dataplatform_missing_location_name(self, mock_get_client):
         """[16] Test missing client_location_name raises ValueError."""
         m_get_client, mock_client = mock_get_client
-        
-        from india_forecast_app.save.data_platform import save_to_dataplatform
-        
         df = _make_forecast_values_df(n=2)
         forecast_meta = {
             "timestamp_utc": dt.datetime.now(tz=UTC),
