@@ -236,6 +236,7 @@ async def make_forecaster_adjuster(
         forecast_values: Base forecast values to adjust.
         model_tag: Model name used to look up/create the adjuster forecaster.
         forecaster: The base forecaster object (used to fetch deltas).
+        energy_source: Energy source type (e.g. SOLAR or WIND).
 
     Returns:
         A ``CreateForecastRequest`` for the adjusted forecast.
