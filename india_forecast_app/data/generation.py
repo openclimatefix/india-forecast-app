@@ -47,10 +47,10 @@ async def fetch_generation_from_dp(
 
     async with get_dataplatform_client() as client:
         location_map = await fetch_dp_location_map(client)
-        target_uuid = location_map.get(client_location_name)
+        target_uuid = location_map.get(client_location_name.lower())
         if not target_uuid:
             log.warning(
-                f"Location {client_location_name!r} not found in the Data Platform"
+                f"Location {client_location_name.lower()!r} not found in the Data Platform"
             )
             return []
 
@@ -64,14 +64,14 @@ async def fetch_generation_from_dp(
             ),
         )
         log.info(
-            f"Reading generation from Data Platform for {client_location_name!r} "
+            f"Reading generation from Data Platform for {client_location_name.lower()!r} "
             f"(uuid={target_uuid}, observer={observer_name!r}, "
             f"energy_source={energy_source.name}) from {start_utc} to {end_utc}",
         )
         try:
             response = await client.get_observations_as_timeseries(request)
         except Exception as e:
-            log.error(f"Failed to fetch observations for {client_location_name!r}: {e}")
+            log.error(f"Failed to fetch observations for {client_location_name.lower()!r}: {e}")
             return []
 
     if not response.values:
@@ -84,7 +84,7 @@ async def fetch_generation_from_dp(
     ]
     log.info(
         f"Fetched {len(data)} generation value(s) from the Data Platform "
-        f"for {client_location_name!r}",
+        f"for {client_location_name.lower()!r}",
     )
     return data
 
@@ -123,12 +123,12 @@ def get_generation_data(
     if read_from_data_platform:
         asset_type = "pv" if sites[0].asset_type == LocationAssetType.pv else "wind"
         log.info(
-            f"Reading generation from Data Platform for {sites[0].client_location_name!r} "
+            f"Reading generation from Data Platform for {sites[0].client_location_name.lower()!r} "
             f"from {start} to {end}",
         )
         dp_data = asyncio.run(
             fetch_generation_from_dp(
-                client_location_name=sites[0].client_location_name,
+                client_location_name=sites[0].client_location_name.lower(),
                 start=start,
                 end=end,
                 asset_type=asset_type,
