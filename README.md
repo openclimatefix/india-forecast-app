@@ -59,6 +59,13 @@ To optionally save forecasts to the OCF Data Platform via gRPC, configure the fo
 * `DATA_PLATFORM_HOST` (defaults to `"localhost"`)
 * `DATA_PLATFORM_PORT` (defaults to `"50051"`)
 
+To optionally read input generation data from the Data Platform (instead of the
+pvsite database) via gRPC, configure:
+* `READ_FROM_DATA_PLATFORM` (set to `"True"` to enable, defaults to `"False"`)
+* `OBSERVER_NAME` (the DP observer to read observations from, defaults to `"india"`)
+* `DATA_PLATFORM_HOST` (defaults to `"localhost"`)
+* `DATA_PLATFORM_PORT` (defaults to `"50051"`)
+
 ### Starting a local database using docker
 
 ```bash
