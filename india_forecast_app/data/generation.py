@@ -1,7 +1,9 @@
+"""Functions for retrieving and preparing generation data for forecasting."""
+
 import asyncio
 import datetime as dt
-import os
 import logging
+import os
 
 import numpy as np
 import ocf.dp as dp
@@ -17,7 +19,6 @@ from india_forecast_app.save.data_platform import (
     get_dataplatform_client,
 )
 from india_forecast_app.save.utils import ensure_timezone_aware
-
 
 log = logging.getLogger(__name__)
 
