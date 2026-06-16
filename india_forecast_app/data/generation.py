@@ -1,8 +1,10 @@
+import asyncio
 import datetime as dt
 import os
 import logging
 
 import numpy as np
+import ocf.dp as dp
 import pandas as pd
 import pvlib
 from pvsite_datamodel import LocationSQL
@@ -10,8 +12,80 @@ from pvsite_datamodel.read import get_pv_generation_by_sites
 from pvsite_datamodel.sqlmodels import LocationAssetType
 from sqlalchemy.orm import Session
 
+from india_forecast_app.save.data_platform import (
+    fetch_dp_location_map,
+    get_dataplatform_client,
+)
+from india_forecast_app.save.utils import ensure_timezone_aware
+
 
 log = logging.getLogger(__name__)
+
+
+def energy_source_for_asset_type(asset_type: str) -> dp.EnergySource:
+    """Map an asset type ("pv"/"wind") to a Data Platform energy source."""
+    return dp.EnergySource.WIND if asset_type == "wind" else dp.EnergySource.SOLAR
+
+
+async def fetch_generation_from_dp(
+    client_location_name: str,
+    start: dt.datetime,
+    end: dt.datetime,
+    asset_type: str,
+    observer_name: str | None = None,
+) -> list[tuple[dt.datetime, float]]:
+    """Fetch generation (observation) data from the Data Platform."""
+    if not client_location_name:
+        return []
+
+    observer_name = observer_name or os.getenv("OBSERVER_NAME", "india")
+    energy_source = energy_source_for_asset_type(asset_type)
+
+    start_utc = ensure_timezone_aware(start)
+    end_utc = ensure_timezone_aware(end)
+
+    async with get_dataplatform_client() as client:
+        location_map = await fetch_dp_location_map(client)
+        target_uuid = location_map.get(client_location_name)
+        if not target_uuid:
+            log.warning(
+                f"Location {client_location_name!r} not found in the Data Platform"
+            )
+            return []
+
+        request = dp.GetObservationsAsTimeseriesRequest(
+            location_uuid=target_uuid,
+            observer_name=observer_name,
+            energy_source=energy_source,
+            time_window=dp.TimeWindow(
+                start_timestamp_utc=start_utc,
+                end_timestamp_utc=end_utc,
+            ),
+        )
+        log.info(
+            f"Reading generation from Data Platform for {client_location_name!r} "
+            f"(uuid={target_uuid}, observer={observer_name!r}, "
+            f"energy_source={energy_source.name}) from {start_utc} to {end_utc}",
+        )
+        try:
+            response = await client.get_observations_as_timeseries(request)
+        except Exception as e:
+            log.error(f"Failed to fetch observations for {client_location_name!r}: {e}")
+            return []
+
+    if not response.values:
+        return []
+
+    cap_w = response.values[0].effective_capacity_watts
+    data = [
+        (v.timestamp_utc, v.value_fraction * cap_w / 1000.0)
+        for v in response.values
+    ]
+    log.info(
+        f"Fetched {len(data)} generation value(s) from the Data Platform "
+        f"for {client_location_name!r}",
+    )
+    return data
 
 
 def get_generation_data(
@@ -41,23 +115,47 @@ def get_generation_data(
     # pad by 1 second to ensure get_pv_generation_by_sites returns correct data
     end = timestamp + dt.timedelta(seconds=1)
 
-    log.info(f"Getting generation data for sites: {site_uuids}, from {start=} to {end=}")
-    generation_data = get_pv_generation_by_sites(
-        session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
-    )
     # get the ml id, this only works for one site right now
     system_id = sites[0].ml_id
 
-    if len(generation_data) == 0:
+    read_from_data_platform = os.getenv("READ_FROM_DATA_PLATFORM", "false").lower() == "true"
+    if read_from_data_platform:
+        asset_type = "pv" if sites[0].asset_type == LocationAssetType.pv else "wind"
+        log.info(
+            f"Reading generation from Data Platform for {sites[0].client_location_name!r} "
+            f"from {start} to {end}",
+        )
+        dp_data = asyncio.run(
+            fetch_generation_from_dp(
+                client_location_name=sites[0].client_location_name,
+                start=start,
+                end=end,
+                asset_type=asset_type,
+            ),
+        )
+        formatted_data = [(t, p, system_id) for t, p in dp_data]
+    else:
+        log.info(f"Getting generation data for sites: {site_uuids}, from {start=} to {end=}")
+        generation_data = get_pv_generation_by_sites(
+            session=db_session, site_uuids=site_uuids, start_utc=start, end_utc=end
+        )
+        formatted_data = [
+            (g.start_utc, g.generation_power_kw, system_id) for g in generation_data
+        ]
+
+    if len(formatted_data) == 0:
         log.warning("No generation found for the specified sites/period")
         generation_df = pd.DataFrame(columns=[str(system_id)])
 
     else:
         # Convert to dataframe
         generation_df = pd.DataFrame(
-            [(g.start_utc, g.generation_power_kw, system_id) for g in generation_data],
+            formatted_data,
             columns=["time_utc", "power_kw", "ml_id"],
         ).pivot(index="time_utc", columns="ml_id", values="power_kw")
+
+        if generation_df.index.tz is not None:
+            generation_df.index = generation_df.index.tz_convert("UTC").tz_localize(None)
 
         log.info(generation_df)
 

@@ -137,5 +137,5 @@ dmypy.json
 .idea/
 
 # App specific
-data/
+/data/
 scripts/notebooks
