@@ -7,6 +7,7 @@ import contextlib
 import json
 import logging
 import os
+import re
 from collections.abc import AsyncIterator  # noqa: TC003
 from datetime import UTC, datetime, timedelta
 from importlib.metadata import version
@@ -91,13 +92,18 @@ async def save_to_dataplatform(
     if not client_location_name:
         log.error("client_location_name is None/empty — cannot save")
         raise ValueError("client_location_name is required to save to the Data Platform")
+    # DP requires: lowercase, alphanumeric and underscores only (2-100 chars)
+    # Lowercase first, then replace any invalid character with '_'
+    client_location_name = re.sub(r"[^a-z0-9_]", "_", client_location_name.lower())
 
     model_tag = ml_model_name if ml_model_name else "default-model"
     init_time_utc = ensure_timezone_aware(forecast_meta["timestamp_utc"])
     capacity_kw = forecast_meta.get("capacity_kw")
     latitude = forecast_meta.get("latitude")
     longitude = forecast_meta.get("longitude")
-    location_type = forecast_meta.get("location_type", dp.LocationType.SITE)
+    location_type = forecast_meta.get("location_type") or dp.LocationType.SITE
+    # Derive energy source from model name: windnet_* models → WIND, everything else → SOLAR
+    energy_source = dp.EnergySource.WIND if "wind" in model_tag.lower() else dp.EnergySource.SOLAR
 
     log.info(
         "Starting DP save | "
@@ -131,12 +137,19 @@ async def save_to_dataplatform(
                 longitude,
                 init_time_utc,
                 location_type=location_type,
+                energy_source=energy_source,
             )
             log.info(f"created location uuid={target_uuid_str}")
+            # Keep the shared map fresh so subsequent sites in this run don't retry creation
+            location_map[client_location_name] = target_uuid_str
         else:
             log.info(f"location already exists uuid={target_uuid_str}")
 
-        capacity_watts = await get_location_capacity(client=client, target_uuid_str=target_uuid_str)
+        capacity_watts = await get_location_capacity(
+            client=client,
+            target_uuid_str=target_uuid_str,
+            energy_source=energy_source,
+        )
         log.info(
             f"capacity_watts={capacity_watts:,}  ({capacity_watts / 1000:,.1f} kW)",
         )
@@ -170,7 +183,7 @@ async def save_to_dataplatform(
         base_request = dp.CreateForecastRequest(
             forecaster=forecaster,
             location_uuid=target_uuid_str,
-            energy_source=dp.EnergySource.SOLAR,
+            energy_source=energy_source,
             init_time_utc=init_time_utc,
             values=forecast_values,
             metadata=Struct(fields={"app_version": Value(string_value=app_version)}),
@@ -193,6 +206,7 @@ async def save_to_dataplatform(
                 forecast_values=forecast_values,
                 model_tag=model_tag,
                 forecaster=forecaster,
+                energy_source=energy_source,
             )
             await client.create_forecast(adjusted_request)
             log.info(f"Adjusted forecast submitted for {client_location_name!r}")
@@ -207,6 +221,7 @@ async def make_forecaster_adjuster(
     forecast_values: list[dp.CreateForecastRequestForecastValue],
     model_tag: str,
     forecaster: dp.Forecaster,
+    energy_source: dp.EnergySource = dp.EnergySource.SOLAR,
 ) -> dp.CreateForecastRequest:
     """Build an adjusted forecast request using week-average deltas from the Data Platform.
 
@@ -221,13 +236,14 @@ async def make_forecaster_adjuster(
         forecast_values: Base forecast values to adjust.
         model_tag: Model name used to look up/create the adjuster forecaster.
         forecaster: The base forecaster object (used to fetch deltas).
+        energy_source: Energy source type (e.g. SOLAR or WIND).
 
     Returns:
         A ``CreateForecastRequest`` for the adjusted forecast.
     """
     deltas_request = dp.GetWeekAverageDeltasRequest(
         location_uuid=location_uuid,
-        energy_source=dp.EnergySource.SOLAR,
+        energy_source=energy_source,
         pivot_timestamp_utc=init_time_utc.replace(tzinfo=UTC),
         forecaster=forecaster,
         observer_name=os.getenv("OBSERVER_NAME", "india"),
@@ -242,7 +258,7 @@ async def make_forecaster_adjuster(
     location = await client.get_location(
         dp.GetLocationRequest(
             location_uuid=location_uuid,
-            energy_source=dp.EnergySource.SOLAR,
+            energy_source=energy_source,
             include_geometry=False,
         ),
     )
@@ -279,7 +295,7 @@ async def make_forecaster_adjuster(
     return dp.CreateForecastRequest(
         forecaster=adjuster_forecaster,
         location_uuid=location_uuid,
-        energy_source=dp.EnergySource.SOLAR,
+        energy_source=energy_source,
         init_time_utc=init_time_utc.replace(tzinfo=UTC),
         values=adjusted_values,
     )
@@ -315,12 +331,13 @@ async def resolve_target_uuid(
 async def get_location_capacity(
     client: DataPlatformClient,
     target_uuid_str: str,
+    energy_source: dp.EnergySource = dp.EnergySource.SOLAR,
 ) -> int:
     """Fetch effective capacity (watts) for an existing DP location."""
     location = await client.get_location(
         dp.GetLocationRequest(
             location_uuid=target_uuid_str,
-            energy_source=dp.EnergySource.SOLAR,
+            energy_source=energy_source,
             include_geometry=False,
         ),
     )
@@ -335,6 +352,7 @@ async def create_new_location(
     longitude: float | None,
     init_time_utc: datetime,
     location_type: dp.LocationType = dp.LocationType.SITE,
+    energy_source: dp.EnergySource = dp.EnergySource.SOLAR,
 ) -> str:
     """Create a new location in the Data Platform and return its UUID."""
     log.warning(
@@ -349,7 +367,7 @@ async def create_new_location(
     try:
         create_req = dp.CreateLocationRequest(
             location_name=client_location_name,
-            energy_source=dp.EnergySource.SOLAR,
+            energy_source=energy_source,
             geometry_wkt=wkt,
             effective_capacity_watts=capacity_watts,
             location_type=location_type,
