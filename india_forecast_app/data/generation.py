@@ -28,6 +28,11 @@ def energy_source_for_asset_type(asset_type: str) -> dp.EnergySource:
     return dp.EnergySource.WIND if asset_type == "wind" else dp.EnergySource.SOLAR
 
 
+def normalize_location_name(name: str) -> str:
+    """Normalise a client location name to Data Platform conventions (lowercase, underscores)."""
+    return name.replace("-", "_").lower()
+
+
 async def fetch_generation_from_dp(
     client_location_name: str,
     start: dt.datetime,
@@ -39,7 +44,7 @@ async def fetch_generation_from_dp(
     if not client_location_name:
         return []
 
-    client_location_name = client_location_name.lower()
+    client_location_name = normalize_location_name(client_location_name)
     observer_name = observer_name or os.getenv("OBSERVER_NAME", "india")
     energy_source = energy_source_for_asset_type(asset_type)
 
@@ -123,7 +128,7 @@ def get_generation_data(
     read_from_data_platform = os.getenv("READ_FROM_DATA_PLATFORM", "false").lower() == "true"
     if read_from_data_platform:
         asset_type = "pv" if sites[0].asset_type == LocationAssetType.pv else "wind"
-        client_location_name = sites[0].client_location_name.lower()
+        client_location_name = normalize_location_name(sites[0].client_location_name)
         log.info(
             f"Reading generation from Data Platform for {client_location_name!r} "
             f"from {start} to {end}",
