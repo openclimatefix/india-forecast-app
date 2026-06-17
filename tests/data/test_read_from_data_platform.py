@@ -165,7 +165,7 @@ class TestGetGenerationDataReadFromDp:
 
         # The DP fetch was used with the correct location name and asset type.
         kwargs = mock_fetch.call_args.kwargs
-        assert kwargs["client_location_name"] == wind_site.client_location_name
+        assert kwargs["client_location_name"] == wind_site.client_location_name.lower()
         assert kwargs["asset_type"] == "wind"
 
         # Index is tz-naive after normalisation and covers the expected window.
