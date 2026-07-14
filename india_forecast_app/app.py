@@ -235,6 +235,9 @@ def app_run(timestamp: dt.datetime | None, write_to_db: bool = False, log_level:
                             "capacity_kw": site.capacity_kw,
                             "latitude": site.latitude,
                             "longitude": site.longitude,
+                            "asset_type": model_config.asset_type,
+                            "location_type": model_config.location_type,
+                            "dp_location_name": model_config.dp_location_name,
                         },
                         "values": forecast_values,
                     }

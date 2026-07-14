@@ -25,6 +25,21 @@ from india_forecast_app.save.utils import (
 
 log = logging.getLogger(__name__)
 
+_DP_LOCATION_TYPES = {
+    "site": dp.LocationType.SITE,
+    "state": dp.LocationType.STATE,
+    "nation": dp.LocationType.NATION,
+}
+
+
+def to_dp_location_type(location_type: dp.LocationType | str | None) -> dp.LocationType:
+    """Convert a model-config location type ("site"/"state"/"nation") to the DP enum."""
+    if location_type is None or location_type == "":
+        return dp.LocationType.SITE
+    if isinstance(location_type, dp.LocationType):
+        return location_type
+    return _DP_LOCATION_TYPES[str(location_type).lower()]
+
 # -- Version --
 # we need to keep this static so that the adjust and api works,
 # even if we change version
@@ -88,7 +103,11 @@ async def save_to_dataplatform(
         log.warning("forecast dataframe is empty")
         return
 
-    client_location_name = forecast_meta.get("client_location_name")
+    # The model config can pin the DP location to save to (e.g. the ruvnl_solar state
+    # location); otherwise the site's client_location_name is used
+    client_location_name = (
+        forecast_meta.get("dp_location_name") or forecast_meta.get("client_location_name")
+    )
     if not client_location_name:
         log.error("client_location_name is None/empty — cannot save")
         raise ValueError("client_location_name is required to save to the Data Platform")
@@ -101,9 +120,18 @@ async def save_to_dataplatform(
     capacity_kw = forecast_meta.get("capacity_kw")
     latitude = forecast_meta.get("latitude")
     longitude = forecast_meta.get("longitude")
-    location_type = forecast_meta.get("location_type") or dp.LocationType.SITE
-    # Derive energy source from model name: windnet_* models → WIND, everything else → SOLAR
-    energy_source = dp.EnergySource.WIND if "wind" in model_tag.lower() else dp.EnergySource.SOLAR
+    location_type = to_dp_location_type(forecast_meta.get("location_type"))
+    # Prefer the site's asset type; fall back to deriving from the model name
+    # (windnet_* models → WIND, everything else → SOLAR)
+    asset_type = forecast_meta.get("asset_type")
+    if asset_type:
+        energy_source = (
+            dp.EnergySource.WIND if str(asset_type).lower() == "wind" else dp.EnergySource.SOLAR
+        )
+    else:
+        energy_source = (
+            dp.EnergySource.WIND if "wind" in model_tag.lower() else dp.EnergySource.SOLAR
+        )
 
     log.info(
         "Starting DP save | "

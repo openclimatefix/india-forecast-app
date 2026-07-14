@@ -53,6 +53,8 @@ def save_forecast(
         "latitude": forecast["meta"].get("latitude"),
         "longitude": forecast["meta"].get("longitude"),
         "location_type": forecast["meta"].get("location_type"),
+        "asset_type": forecast["meta"].get("asset_type"),
+        "dp_location_name": forecast["meta"].get("dp_location_name"),
     }
 
     # Only the fields ForecastSQL accepts — extra keys cause a TypeError via **forecast_meta

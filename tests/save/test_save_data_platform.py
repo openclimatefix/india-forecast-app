@@ -26,6 +26,9 @@ Tests cover:
 22. save_to_dataplatform: pvnet model tag routes to EnergySource.SOLAR
 23. save_to_dataplatform: location_map is updated in-place after new location is created
 24. create_new_location: gRPC error propagates immediately without retry
+25. save_to_dataplatform: dp_location_name in meta overrides client_location_name
+26. save_to_dataplatform: location_type "state" string maps to LocationType.STATE
+27. save_to_dataplatform: asset_type in meta takes precedence over the model tag
 """
 
 from __future__ import annotations
@@ -556,3 +559,81 @@ class TestCreateNewLocationFailure:
                     init_time_utc=dt.datetime(2024, 6, 1, tzinfo=UTC),
                 )
             )
+
+class TestModelConfigTargeting:
+    """[25-27] Model-config driven targeting: dp_location_name, location_type, asset_type."""
+
+    @pytest.fixture
+    def mock_get_client(self):
+        """Mock get_dataplatform_client for model-config targeting tests."""
+        with patch("india_forecast_app.save.data_platform.get_dataplatform_client") as m:
+            mock_cm = AsyncMock()
+            mock_client = AsyncMock()
+            mock_cm.__aenter__.return_value = mock_client
+            m.return_value = mock_cm
+            mock_client.list_locations.return_value = MagicMock(locations=[])
+            mock_client.create_location.return_value = MagicMock(location_uuid="uuid-x")
+            mock_client.get_location.return_value = MagicMock(effective_capacity_watts=5_000_000)
+            mock_client.list_forecasters.return_value = MagicMock(forecasters=[])
+            mock_client.create_forecaster.return_value = MagicMock(
+                forecaster=MagicMock(forecaster_name="model", forecaster_version="1.4.0")
+            )
+            mock_client.create_forecast.return_value = MagicMock()
+            yield mock_client
+
+    def _run_save(self, forecast_meta: dict, location_map: dict, model_name: str = "pvnet_india"):
+        """Helper to invoke save_to_dataplatform with a given forecast_meta."""
+        asyncio.run(
+            save_to_dataplatform(
+                forecast_df=_make_forecast_values_df(n=2),
+                forecast_meta={
+                    "timestamp_utc": dt.datetime(2024, 6, 1, 12, tzinfo=UTC),
+                    "capacity_kw": 5.0,
+                    **forecast_meta,
+                },
+                ml_model_name=model_name,
+                location_map=location_map,
+                use_adjuster=False,
+            )
+        )
+
+    def test_dp_location_name_overrides_client_location_name(self, mock_get_client):
+        """[25] dp_location_name resolves to the existing DP location, not the site name."""
+        self._run_save(
+            forecast_meta={
+                "client_location_name": "ruvnl_solar_site",
+                "dp_location_name": "ruvnl_solar",
+            },
+            location_map={"ruvnl_solar": "uuid-solar-state"},
+        )
+
+        mock_get_client.create_location.assert_not_called()
+        req = mock_get_client.create_forecast.call_args[0][0]
+        assert req.location_uuid == "uuid-solar-state"
+
+    def test_location_type_state_string_converted(self, mock_get_client):
+        """[26] location_type "state" from the model config maps to LocationType.STATE."""
+        self._run_save(
+            forecast_meta={
+                "client_location_name": "ruvnl_solar",
+                "location_type": "state",
+            },
+            location_map={},
+        )
+
+        req = mock_get_client.create_location.call_args[0][0]
+        assert req.location_type == dp_mod.LocationType.STATE
+
+    def test_asset_type_takes_precedence_over_model_tag(self, mock_get_client):
+        """[27] asset_type "wind" gives EnergySource.WIND even for a non-windnet model tag."""
+        self._run_save(
+            forecast_meta={
+                "client_location_name": "test_loc",
+                "asset_type": "wind",
+            },
+            location_map={},
+            model_name="pvnet_india",
+        )
+
+        req = mock_get_client.create_location.call_args[0][0]
+        assert req.energy_source == dp_mod.EnergySource.WIND

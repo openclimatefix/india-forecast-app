@@ -1,6 +1,6 @@
 """ A pydantic model for the ML models"""
 
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 import fsspec
 from pyaml_env import parse_config
@@ -35,6 +35,19 @@ class Model(BaseModel):
                     "calculating adjuster values. "
                     "For solar site with regular data, 15 should be used. "
                     "For wind sites, 60 minutes should be used.",
+    )
+    location_type: Literal["site", "state", "nation"] = Field(
+        "site",
+        title="Location Type",
+        description="The Data Platform location type that forecasts are saved to. "
+                    "Regional aggregate forecasts (e.g. RUVNL) should use 'state', "
+                    "individual plants should use 'site'.",
+    )
+    dp_location_name: Optional[str] = Field(
+        None,
+        title="Data Platform Location Name",
+        description="The Data Platform location that forecasts are saved to. "
+                    "When unset, the site's client_location_name is used.",
     )
 
 
