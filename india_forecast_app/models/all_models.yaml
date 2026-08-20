@@ -8,7 +8,7 @@ models:
     client: ruvnl
     asset_type: wind
     location_type: state
-    dp_location_name: ruvnl_wind
+    dp_location_name: ruvnl
   - name: windnet_india_mo
     type: pvnet
     id: openclimatefix-models/windnet_india
@@ -16,7 +16,7 @@ models:
     client: ruvnl
     asset_type: wind
     location_type: state
-    dp_location_name: ruvnl_wind
+    dp_location_name: ruvnl
   - name: windnet_india_mo_v2
     type: pvnet
     id: openclimatefix-models/windnet_india
@@ -24,7 +24,7 @@ models:
     client: ruvnl
     asset_type: wind
     location_type: state
-    dp_location_name: ruvnl_wind
+    dp_location_name: ruvnl
   - name: windnet_india_mo_v3
     type: pvnet
     id: openclimatefix-models/windnet_india
@@ -32,7 +32,7 @@ models:
     client: ruvnl
     asset_type: wind
     location_type: state
-    dp_location_name: ruvnl_wind
+    dp_location_name: ruvnl
    # RU client solar
   - name: pvnet_india
     type: pvnet
@@ -41,7 +41,7 @@ models:
     client: ruvnl
     asset_type: pv
     location_type: state
-    dp_location_name: ruvnl_solar
+    dp_location_name: ruvnl
   - name: pvnet_india_ecmwf_mo_gfs
     type: pvnet
     id: openclimatefix-models/pvnet_india
@@ -49,7 +49,7 @@ models:
     client: ruvnl
     asset_type: pv
     location_type: state
-    dp_location_name: ruvnl_solar
+    dp_location_name: ruvnl
 # Ad client wind
   - name: windnet_ad_sites
     type: pvnet

@@ -103,7 +103,7 @@ async def save_to_dataplatform(
         log.warning("forecast dataframe is empty")
         return
 
-    # The model config can pin the DP location to save to (e.g. the ruvnl_solar state
+    # The model config can pin the DP location to save to (e.g. the ruvnl state
     # location); otherwise the site's client_location_name is used
     client_location_name = (
         forecast_meta.get("dp_location_name") or forecast_meta.get("client_location_name")

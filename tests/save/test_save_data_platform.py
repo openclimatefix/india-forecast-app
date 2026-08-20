@@ -29,6 +29,7 @@ Tests cover:
 25. save_to_dataplatform: dp_location_name in meta overrides client_location_name
 26. save_to_dataplatform: location_type "state" string maps to LocationType.STATE
 27. save_to_dataplatform: asset_type in meta takes precedence over the model tag
+28. save_to_dataplatform: wind and solar share one location, split by energy source
 """
 
 from __future__ import annotations
@@ -561,7 +562,7 @@ class TestCreateNewLocationFailure:
             )
 
 class TestModelConfigTargeting:
-    """[25-27] Model-config driven targeting: dp_location_name, location_type, asset_type."""
+    """[25-28] Model-config driven targeting: dp_location_name, location_type, asset_type."""
 
     @pytest.fixture
     def mock_get_client(self):
@@ -602,20 +603,20 @@ class TestModelConfigTargeting:
         self._run_save(
             forecast_meta={
                 "client_location_name": "ruvnl_solar_site",
-                "dp_location_name": "ruvnl_solar",
+                "dp_location_name": "ruvnl",
             },
-            location_map={"ruvnl_solar": "uuid-solar-state"},
+            location_map={"ruvnl": "uuid-ruvnl-state"},
         )
 
         mock_get_client.create_location.assert_not_called()
         req = mock_get_client.create_forecast.call_args[0][0]
-        assert req.location_uuid == "uuid-solar-state"
+        assert req.location_uuid == "uuid-ruvnl-state"
 
     def test_location_type_state_string_converted(self, mock_get_client):
         """[26] location_type "state" from the model config maps to LocationType.STATE."""
         self._run_save(
             forecast_meta={
-                "client_location_name": "ruvnl_solar",
+                "client_location_name": "ruvnl",
                 "location_type": "state",
             },
             location_map={},
@@ -637,3 +638,28 @@ class TestModelConfigTargeting:
 
         req = mock_get_client.create_location.call_args[0][0]
         assert req.energy_source == dp_mod.EnergySource.WIND
+
+    def test_wind_and_solar_share_one_location(self, mock_get_client):
+        """[28] RUVNL wind and solar save to the same location, split by energy source."""
+        location_map = {"ruvnl": "uuid-ruvnl-state"}
+        for site_name, asset_type, model_name in (
+            ("ruvnl_solar_site", "pv", "pvnet_india"),
+            ("ruvnl_wind_site", "wind", "windnet_india"),
+        ):
+            self._run_save(
+                forecast_meta={
+                    "client_location_name": site_name,
+                    "dp_location_name": "ruvnl",
+                    "asset_type": asset_type,
+                },
+                location_map=location_map,
+                model_name=model_name,
+            )
+
+        mock_get_client.create_location.assert_not_called()
+        requests = [call[0][0] for call in mock_get_client.create_forecast.call_args_list]
+        assert [req.location_uuid for req in requests] == ["uuid-ruvnl-state"] * 2
+        assert [req.energy_source for req in requests] == [
+            dp_mod.EnergySource.SOLAR,
+            dp_mod.EnergySource.WIND,
+        ]
