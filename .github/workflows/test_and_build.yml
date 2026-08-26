@@ -1,0 +1,21 @@
+name: Branch Test and Build
+
+on:
+  push:
+    branches-ignore: ['main']
+    paths-ignore: ['README.md']
+  pull_request:
+    types: [opened, reopened, synchronize]  
+    paths-ignore: ['README.md']
+
+jobs:
+
+  branch-ci:
+    uses: openclimatefix/.github/.github/workflows/branch_ci.yml@e15e8144ccd731f8e0771c42dce9c48c133dcf85
+    secrets: inherit
+    with:
+      enable_linting: true
+      enable_formatting: true
+      enable_typechecking: false
+      tests_folder: tests
+      tests_conda_deps: "esmpy hdf5=1.14.4"
