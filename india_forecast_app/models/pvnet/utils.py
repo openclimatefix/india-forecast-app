@@ -1,4 +1,5 @@
 """Useful functions for setting up PVNet model"""
+
 import logging
 import os
 from typing import Optional
@@ -133,7 +134,6 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
             ds[v].encoding.clear()
 
     if nwp_config.source == "ecmwf":
-
         if "hres-ifs_india" in ds.data_vars:
             # rename from hres-ifs_india to ECMWF_INDIA
             ds = ds.rename({"hres-ifs_india": "ECMWF_INDIA"})
@@ -143,24 +143,26 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
             # This change happened in the new nwp-consumer>=1.0.0
             # Ideally we won't need this step in the future
             variable_coords = ds.variable.values
-            rename = {'cloud_cover_high': 'hcc',
-                      'cloud_cover_low': 'lcc',
-                      'cloud_cover_medium': 'mcc',
-                      'cloud_cover_total': 'tcc',
-                      'snow_depth_gl': 'sde',
-                      'direct_shortwave_radiation_flux_gl': 'sr',
-                      'downward_longwave_radiation_flux_gl': 'dlwrf',
-                      'downward_shortwave_radiation_flux_gl': 'dswrf',
-                      'downward_ultraviolet_radiation_flux_gl': 'duvrs',
-                      'temperature_sl': 't',
-                      'total_precipitation_rate_gl': 'prate',
-                      'visibility_sl': 'vis',
-                      'wind_u_component_100m': 'u100',
-                      'wind_u_component_10m': 'u10',
-                      'wind_u_component_200m': 'u200',
-                      'wind_v_component_100m': 'v100',
-                      'wind_v_component_10m': 'v10',
-                      'wind_v_component_200m': 'v200'}
+            rename = {
+                "cloud_cover_high": "hcc",
+                "cloud_cover_low": "lcc",
+                "cloud_cover_medium": "mcc",
+                "cloud_cover_total": "tcc",
+                "snow_depth_gl": "sde",
+                "direct_shortwave_radiation_flux_gl": "sr",
+                "downward_longwave_radiation_flux_gl": "dlwrf",
+                "downward_shortwave_radiation_flux_gl": "dswrf",
+                "downward_ultraviolet_radiation_flux_gl": "duvrs",
+                "temperature_sl": "t",
+                "total_precipitation_rate_gl": "prate",
+                "visibility_sl": "vis",
+                "wind_u_component_100m": "u100",
+                "wind_u_component_10m": "u10",
+                "wind_u_component_200m": "u200",
+                "wind_v_component_100m": "v100",
+                "wind_v_component_10m": "v10",
+                "wind_v_component_200m": "v200",
+            }
 
             for k, v in rename.items():
                 variable_coords[variable_coords == k] = v
@@ -184,9 +186,7 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
 
     # Hack to resolve some NWP data format differences between providers
     elif nwp_config.source == "gfs":
-
         if "ncep-gfs" in ds.data_vars:
-
             ds = ds.rename({"ncep-gfs": "NOAA_GLOBAL"})
 
             # rename variable names in the variable coordinate
@@ -194,25 +194,27 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
             # This change happened in the new nwp-consumer>=1.0.0
             # Ideally we won't need this step in the future
             variable_coords = ds.variable.values
-            rename = {'cloud_cover_high': 'hcc',
-                      'cloud_cover_low': 'lcc',
-                      'cloud_cover_medium': 'mcc',
-                      'cloud_cover_total': 'tcc',
-                      'snow_depth_gl': 'sde',
-                      'direct_shortwave_radiation_flux_gl': 'sr',
-                      'downward_longwave_radiation_flux_gl': 'dlwrf',
-                      'downward_shortwave_radiation_flux_gl': 'dswrf',
-                      'downward_ultraviolet_radiation_flux_gl': 'duvrs',
-                      'temperature_sl': 't',
-                      'total_precipitation_rate_gl': 'prate',
-                      "relative_humidity_sl": "r",
-                      'visibility_sl': 'vis',
-                      'wind_u_component_100m': 'u100',
-                      'wind_u_component_10m': 'u10',
-                      'wind_u_component_200m': 'u200',
-                      'wind_v_component_100m': 'v100',
-                      'wind_v_component_10m': 'v10',
-                      'wind_v_component_200m': 'v200'}
+            rename = {
+                "cloud_cover_high": "hcc",
+                "cloud_cover_low": "lcc",
+                "cloud_cover_medium": "mcc",
+                "cloud_cover_total": "tcc",
+                "snow_depth_gl": "sde",
+                "direct_shortwave_radiation_flux_gl": "sr",
+                "downward_longwave_radiation_flux_gl": "dlwrf",
+                "downward_shortwave_radiation_flux_gl": "dswrf",
+                "downward_ultraviolet_radiation_flux_gl": "duvrs",
+                "temperature_sl": "t",
+                "total_precipitation_rate_gl": "prate",
+                "relative_humidity_sl": "r",
+                "visibility_sl": "vis",
+                "wind_u_component_100m": "u100",
+                "wind_u_component_10m": "u10",
+                "wind_u_component_200m": "u200",
+                "wind_v_component_100m": "v100",
+                "wind_v_component_10m": "v10",
+                "wind_v_component_200m": "v200",
+            }
 
             for k, v in rename.items():
                 variable_coords[variable_coords == k] = v
@@ -230,7 +232,6 @@ def process_and_cache_nwp(nwp_config: NWPProcessAndCacheConfig):
             ds = ds.rename({"t2m": "t"})
 
     if nwp_config.source == "mo_global":
-
         # COMMENTED this out for the moment, as different models use different mo global variables
         # only select the variables we need
         # nwp_channels = list(nwp_config.config.nwp_channels)
@@ -255,8 +256,7 @@ def download_satellite_data(satellite_source_file_path: str) -> None:
     fs = fsspec.open(satellite_source_file_path).fs
     if fs.exists(satellite_source_file_path):
         log.info(
-            f"Downloading satellite data from {satellite_source_file_path} "
-            f"to sat_15_min.zarr.zip"
+            f"Downloading satellite data from {satellite_source_file_path} to sat_15_min.zarr.zip"
         )
         fs.get(satellite_source_file_path, "sat_15_min.zarr.zip")
         log.info(f"Unzipping sat_15_min.zarr.zip to {satellite_path}")
@@ -284,8 +284,7 @@ def set_night_time_zeros(batch, preds, sun_elevation_limit=0.0):
         t0_key = BatchKey.pv_t0_idx
     else:
         log.warning(
-            f'Could not find "wind_solar_elevation" or "pv_solar_elevation" '
-            f"key in {batch.keys()}"
+            f'Could not find "wind_solar_elevation" or "pv_solar_elevation" key in {batch.keys()}'
         )
         raise Exception('Could not find "wind_solar_elevation" or "pv_solar_elevation" ')
 

@@ -1,63 +1,82 @@
-[tool.poetry]
+[build-system]
+requires = ["setuptools>=67", "wheel", "setuptools-git-versioning>=2.0,<3"]
+build-backend = "setuptools.build_meta"
+
+[project]
 name = "india_forecast_app"
-version = "1.2.8"
+dynamic = ["version"]
 description = "Runs wind and PV forecasts for India and saves to database"
-authors = ["Chris Briggs <confusedmatrix@gmail.com>"]
-readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.11"
-click = "^8.1.7"
-pvsite-datamodel = "1.2.0"
-pandas = "2.2.3"
-pvnet = "3.0.64"
-pytz = "^2024.1"
-numpy = "^1.26.4"
-huggingface-hub = "0.20.3"
-ocf-datapipes = "3.3.55"
-pyogrio = "0.8.0" # 0.9.0 seems to cause an error at the moment
-torch = [
-     {url="https://download.pytorch.org/whl/cpu/torch-2.2.1%2Bcpu-cp311-cp311-linux_x86_64.whl", markers="platform_system == \"Linux\" and platform_machine == \"x86_64\""},
-     {url="https://download.pytorch.org/whl/cpu/torch-2.2.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", markers="platform_system == \"Linux\" and platform_machine == \"aarch64\""},
-     {url="https://download.pytorch.org/whl/cpu/torch-2.2.1-cp311-none-macosx_10_9_x86_64.whl", markers="platform_system == \"Darwin\" and platform_machine == \"x86_64\""},
-     {url="https://download.pytorch.org/whl/cpu/torch-2.2.1-cp311-none-macosx_11_0_arm64.whl", markers="platform_system == \"Darwin\" and platform_machine == \"arm64\""}
- ]
-torchvision = [
-    {url="https://download.pytorch.org/whl/cpu/torchvision-0.17.1%2Bcpu-cp311-cp311-linux_x86_64.whl", markers="platform_system == \"Linux\" and platform_machine == \"x86_64\""},
-    {url="https://download.pytorch.org/whl/cpu/torchvision-0.17.1-cp311-cp311-linux_aarch64.whl", markers="platform_system == \"Linux\" and platform_machine == \"aarch64\""},
-    {url="https://download.pytorch.org/whl/cpu/torchvision-0.17.1-cp311-cp311-macosx_10_13_x86_64.whl", markers="platform_system == \"Darwin\" and platform_machine == \"x86_64\""},
-    {url="https://download.pytorch.org/whl/cpu/torchvision-0.17.1-cp311-cp311-macosx_11_0_arm64.whl", markers="platform_system == \"Darwin\" and platform_machine == \"arm64\""}
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.12.0,<3.13"
+license = {text = "MIT License"}
+authors = [
+    { name = "Open Climate Fix Team", email = "info@openclimatefix.org"},
+    { name = "Mohit", email = "mohit@openclimatefix.org" },
 ]
-sentry-sdk = "^2.1.1"
-pvlib = "^0.12.0"
-betterproto = ">=2.0.0b7"
-grpclib = ">=0.4.7"
-dp-sdk = { url = "https://github.com/openclimatefix/data-platform/releases/download/v0.31.1/dp_sdk-0.31.1-py3-none-any.whl" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.4.4"
-pytest-cov = "^4.1.0"
-ruff = "^0.1.11"
-testcontainers = "^3.7.1"
+dependencies = [
+    "click>=8.1.7",
+    "pvsite-datamodel==1.2.0",
+    "pandas==2.2.3",
+    "pvnet==3.0.64",
+    "pytz>=2024.1",
+    "pvlib>=0.12.0",
+    "numpy>=1.26.4",
+    "sentry-sdk==2.21.0",
+    "huggingface-hub==0.20.3",
+    "ocf-datapipes==3.3.55",
+    "pyogrio<0.9.0",
+    "xarray==2024.3.0",
+    "zarr==2.18.2",
+    "numcodecs==0.13.0",
+    "torch @ https://download.pytorch.org/whl/cpu/torch-2.3.1-cp312-none-macosx_11_0_arm64.whl ; platform_system == 'Darwin' and platform_machine == 'arm64'",
+    "torchvision @ https://download.pytorch.org/whl/cpu/torchvision-0.18.1-cp312-cp312-macosx_11_0_arm64.whl ; platform_system == 'Darwin' and platform_machine == 'arm64'",
+    "torch @ https://download.pytorch.org/whl/cpu/torch-2.3.1%2Bcpu-cp312-cp312-linux_x86_64.whl ; platform_system == 'Linux' and platform_machine == 'x86_64'",
+    "torchvision @ https://download.pytorch.org/whl/cpu/torchvision-0.18.1%2Bcpu-cp312-cp312-linux_x86_64.whl ; platform_system == 'Linux' and platform_machine == 'x86_64'",
+    "dp-sdk",
+]
 
-[tool.poetry.group.notebook.dependencies]
-jupyter = "^1.0.0"
+[dependency-groups]
+dev = [
+    "pytest>=7.4.4",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.11",
+    "testcontainers>=3.7.1",
+    "ty>=0.0.74",
+]
 
-[tool.poetry.scripts]
+[tool.uv.sources]
+dp-sdk = { url = "https://github.com/openclimatefix/data-platform/releases/download/v0.37.0/dp_sdk-0.37.0-py3-none-any.whl" }
+
+[project.urls]
+repository = "https://github.com/openclimatefix/india-forecast-app"
+
+[projects.scripts]
 app = "india_forecast_app.app:app"
 seeder = "scripts.seed_local_db:seed_db"
 inspect = "tests.test_data.inspect:run"
 
+
+[tool.setuptools.packages.find]
+where = ["india_forecast_app"]
+exclude = ["test*"]
+
+[tool.setuptools.package-data]
+"*" = ["py.typed", "*.conf"]
+
+[tool.setuptools-git-versioning]
+enabled = true
+
+[tool.pytest]
+markers = ["requires_hf_token: marks tests that require a Hugging Face token to run"]
+
 [tool.ruff]
-# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
-select = ["B", "E", "F", "D", "I"]
-ignore = ["D200","D202","D210","D212","D415","D105"]
-
-# Allow autofix for all enabled rules (when `--fix`) is provided.
-fixable = ["A", "B", "C", "D", "E", "F", "I"]
-unfixable = []
-
-# Exclude a variety of commonly ignored directories.
+line-length = 100
+output-format = "github"
 exclude = [
     ".bzr",
     ".direnv",
@@ -82,34 +101,27 @@ exclude = [
     "tests",
 ]
 
-# Same as Black.
-line-length = 100
+[tool.ruff.lint]
+# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
+select = ["B", "E", "F", "D", "I"]
+ignore = ["D200","D202","D210","D212","D415","D105"]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["A", "B", "C", "D", "E", "F", "I"]
+unfixable = []
 
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-# Assume Python 3.11.
-target-version = "py311"
-fix = false
 
-# Group violations by containing file.
-output-format = "github"
-ignore-init-module-imports = true
-
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 10
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 # Use Google-style docstrings.
 convention = "google"
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "E402"]
 
-[tool.coverage.run]
-omit = ["tests/*", "scripts/*"]
-
-[build-system]
-requires = ["poetry-core==1.7.1"]
-build-backend = "poetry.core.masonry.api"

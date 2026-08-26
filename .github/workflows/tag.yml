@@ -1,0 +1,12 @@
+name: Bump Tag
+
+on:
+  pull_request:
+    types: [ "closed" ]
+    branches: [ "main" ]
+
+jobs:
+  merged-ci:
+    if: github.event.pull_request.merged == true
+    uses: openclimatefix/.github/.github/workflows/bump_tag.yml@main
+    secrets: inherit

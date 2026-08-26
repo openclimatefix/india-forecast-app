@@ -1,44 +1,43 @@
-FROM python:3.11-slim as base
+# --- Use conda to install required binaries into venv --- #
+FROM quay.io/condaforge/miniforge3:latest AS build-venv
 
-RUN apt-get update
-RUN apt-get install -y git
-RUN apt-get install unzip
+RUN apt-get update && \
+    echo "Creating virtualenv at /app/.venv" && \
+    conda create --quiet --yes -p /app/.venv python=3.12 "esmf=*=nompi_*" esmpy
 
-ENV PYTHONFAULTHANDLER=1 \
-	PYTHONHASHSEED=random \
-	PYTHONUNBUFFERED=1
+
+# --- Build dependencies --- #
+FROM python:3.12 AS build-deps
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=build-venv /app/.venv /app/.venv
 
 WORKDIR /app
 
-FROM base as builder
+COPY pyproject.toml /app/pyproject.toml
 
-RUN apt-get update
-RUN apt-get install -y gdal-bin libgdal-dev g++
+# Install only requirements
+RUN mkdir india_forecast_app && uv sync --no-dev --no-install-project --compile-bytecode --inexact
 
-# add unzip
-RUN apt-get install unzip
+# --- Build the package --- #
+FROM build-deps AS build-app
 
-ENV PIP_DEFAULT_TIMEOUT=100 \
-	PIP_DISABLE_PIP_VERSION_CHECK=1 \
-	PIP_NO_CACHE_DIR=1 \
-	POETRY_VERSION=1.8.1
+# Install the app
+# * The .git folder is needed here for setuptools-git-versioning
+COPY india_forecast_app /app/india_forecast_app
+COPY .git /app/.git
+RUN uv sync --no-editable --no-dev --compile-bytecode --inexact
 
-RUN pip install "poetry==$POETRY_VERSION"
+# --- Runtime image --- #
+FROM python:3.12-slim
 
-RUN python -m venv /venv
+# Copy required elements of the builder image
+# * This app uses the git binary within the source code, hence coopying it over
+COPY --from=build-app /app/.venv /app/.venv
+COPY --from=build-app /usr/bin/git /usr/bin/git
+COPY --from=build-app /app/india_forecast_app /app/india_forecast_app
 
-COPY pyproject.toml poetry.lock README.md .
-RUN . /venv/bin/activate && poetry install --only main --no-root
+# This is just a check to make sure it works, we've had problems with this in the past
+ENV PATH="/app/.venv/bin:${PATH}"
 
-COPY india_forecast_app ./india_forecast_app
-RUN . /venv/bin/activate && poetry build
-
-FROM base as final
-
-ENV PATH="/venv/bin:$PATH"
-
-COPY --from=builder /venv /venv
-COPY --from=builder /app/dist .
-RUN . /venv/bin/activate && pip install *.whl
-
-ENTRYPOINT ["app", "--write-to-db"]
+ENTRYPOINT ["python","app/india_forecast_app/app.py"]
