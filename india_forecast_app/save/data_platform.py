@@ -40,6 +40,7 @@ def to_dp_location_type(location_type: dp.LocationType | str | None) -> dp.Locat
         return location_type
     return _DP_LOCATION_TYPES[str(location_type).lower()]
 
+
 # -- Version --
 # we need to keep this static so that the adjust and api works,
 # even if we change version
@@ -105,8 +106,8 @@ async def save_to_dataplatform(
 
     # The model config can pin the DP location to save to (e.g. the ruvnl state
     # location); otherwise the site's client_location_name is used
-    client_location_name = (
-        forecast_meta.get("dp_location_name") or forecast_meta.get("client_location_name")
+    client_location_name = forecast_meta.get("dp_location_name") or forecast_meta.get(
+        "client_location_name"
     )
     if not client_location_name:
         log.error("client_location_name is None/empty — cannot save")
@@ -202,7 +203,7 @@ async def save_to_dataplatform(
             p50s = [fv.p50_fraction for fv in forecast_values]
             log.info(
                 f"p50 range: min={min(p50s):.6f}  max={max(p50s):.6f}  "
-                f"mean={sum(p50s)/len(p50s):.6f}",
+                f"mean={sum(p50s) / len(p50s):.6f}",
             )
         else:
             log.warning("no forecast values after preparation")
@@ -430,9 +431,7 @@ async def create_forecaster_if_not_exists(
 
     if len(existing_forecasters) > 0:
         filtered_forecasters = [
-            f
-            for f in existing_forecasters
-            if f.forecaster_version == dp_forecaster_version
+            f for f in existing_forecasters if f.forecaster_version == dp_forecaster_version
         ]
         if len(filtered_forecasters) == 1:
             return filtered_forecasters[0]
@@ -500,5 +499,3 @@ def prepare_forecast_values(
         )
 
     return forecast_values
-
-

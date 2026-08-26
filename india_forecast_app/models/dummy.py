@@ -21,13 +21,13 @@ class DummyModel:
         return "0.0.0"
 
     def __init__(
-            self,
-            asset_type: str,
-            timestamp: dt.datetime,
-            generation_data: dict[str, pd.DataFrame] = None,
-            hf_version: str = None,
-            hf_repo: str = None,
-            name: str = None,
+        self,
+        asset_type: str,
+        timestamp: dt.datetime,
+        generation_data: dict[str, pd.DataFrame] = None,
+        hf_version: str = None,
+        hf_repo: str = None,
+        name: str = None,
     ):
         """Initializer for the model"""
         self.asset_type = asset_type
@@ -110,7 +110,7 @@ def _basic_solar_yield_fn(time_unix: int, scale_factor_kw: int = 4e6) -> float:
     # Remove negative values
     basefunc = max(0.0, basefunc)
     # Steepen the curve. The divisor is based on the max value
-    basefunc = basefunc ** 4 / 1.01 ** 4
+    basefunc = basefunc**4 / 1.01**4
 
     # Instead of completely random noise, apply based on the following process:
     # * A base noise function which is the product of long and short sines

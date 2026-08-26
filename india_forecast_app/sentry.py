@@ -1,4 +1,5 @@
-""" Sentry tracer function """
+"""Sentry tracer function"""
+
 import os
 
 

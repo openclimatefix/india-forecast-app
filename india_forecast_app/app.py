@@ -110,8 +110,6 @@ def run_model(model, site_id: str, timestamp: dt.datetime):
     return forecast
 
 
-
-
 @click.command()
 @click.option(
     "--date",
@@ -163,14 +161,12 @@ def app_run(timestamp: dt.datetime | None, write_to_db: bool = False, log_level:
     if os.getenv("SAVE_TO_DATA_PLATFORM", "false").lower() == "true":
         log.info("Pre-fetching Data Platform location map...")
         location_map = asyncio.run(build_dp_location_map())
-    
 
     # 0. Initialise DB connection
     url = os.environ["DB_URL"]
     db_conn = DatabaseConnection(url, echo=False)
 
     with db_conn.get_session() as session:
-
         # 1. Get sites
         log.info("Getting sites...")
         sites = get_sites(session)
@@ -185,7 +181,6 @@ def app_run(timestamp: dt.datetime | None, write_to_db: bool = False, log_level:
         successful_runs = 0
         runs = 0
         for model_config in all_model_configs.models:
-
             asset_sites = pv_sites if model_config.asset_type == "pv" else wind_sites
             asset_type = model_config.asset_type
 

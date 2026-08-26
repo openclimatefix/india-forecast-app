@@ -42,7 +42,6 @@ def seed_db():
     Base.metadata.create_all(engine)
 
     with db_conn.get_session() as session:
-
         print("Seeding database")
         site, _ = create_site(
             session,

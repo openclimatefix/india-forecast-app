@@ -143,7 +143,6 @@ class PVNetModel:
         )
 
         if self.asset_type == "wind" and self.client == "ruvnl":
-
             log.info("Feathering the forecast to the lastest value of generation")
 
             # Feather in the last generation, if it exists
@@ -165,8 +164,7 @@ class PVNetModel:
                         break
                     final_gen_index += 1
                 log.info(
-                    f"The final generation values is {final_gen_points}"
-                    f" at index {final_gen_index}"
+                    f"The final generation values is {final_gen_points} at index {final_gen_index}"
                 )
 
                 # Feather in the difference between this value and the next forecasted values
@@ -226,7 +224,6 @@ class PVNetModel:
         nwp_configs = []
         nwp_keys = self.config["input_data"]["nwp"].keys()
         if "ecmwf" in nwp_keys:
-
             nwp_configs.append(
                 NWPProcessAndCacheConfig(
                     source_nwp_path=os.environ["NWP_ECMWF_ZARR_PATH"],
@@ -236,7 +233,6 @@ class PVNetModel:
             )
 
         if "gfs" in nwp_keys:
-
             nwp_configs.append(
                 NWPProcessAndCacheConfig(
                     source_nwp_path=os.environ["NWP_GFS_ZARR_PATH"],
@@ -283,7 +279,7 @@ class PVNetModel:
             # and 48 hours into the future, means a total length of 3 days.
             # (plus 0.5 for buffer)
             forecast_timesteps = pd.date_range(
-                start=min_timestamp, periods=len(generation_da.index) + 96*3.5, freq="15min"
+                start=min_timestamp, periods=len(generation_da.index) + 96 * 3.5, freq="15min"
             )
 
             generation_da = generation_da.reindex(index=forecast_timesteps, fill_value=0.00001)
@@ -383,13 +379,12 @@ class PVNetModel:
             )
 
         else:
-
             # This is a bit of a hack, for ocf datapipes.
             # The normalisation constants are different for the
             # ruvnl pv 1st model and the ruvnl pv 2nd model
             # and ad models
             # When moving to ocf-data-sampler, we should think carefully how this is done
-            if self.name == 'pvnet_india_ecmwf_mo_gfs':
+            if self.name == "pvnet_india_ecmwf_mo_gfs":
                 new_normalisation_constants = True
             else:
                 new_normalisation_constants = False
