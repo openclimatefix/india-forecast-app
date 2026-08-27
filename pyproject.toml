@@ -3,7 +3,7 @@ requires = ["setuptools>=67", "wheel", "setuptools-git-versioning>=2.0,<3"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "india_forecast_app"
+name = "india-forecast-app"
 dynamic = ["version"]
 description = "Runs wind and PV forecasts for India and saves to database"
 readme = {file = "README.md", content-type = "text/markdown"}
@@ -55,14 +55,14 @@ dp-sdk = { url = "https://github.com/openclimatefix/data-platform/releases/downl
 [project.urls]
 repository = "https://github.com/openclimatefix/india-forecast-app"
 
-[projects.scripts]
+[project.scripts]
 app = "india_forecast_app.app:app"
 seeder = "scripts.seed_local_db:seed_db"
 inspect = "tests.test_data.inspect:run"
 
 
 [tool.setuptools.packages.find]
-where = ["india_forecast_app"]
+where = ["src"]
 exclude = ["test*"]
 
 [tool.setuptools.package-data]

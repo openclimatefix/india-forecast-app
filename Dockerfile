@@ -1,43 +1,54 @@
-# --- Use conda to install required binaries into venv --- #
-FROM quay.io/condaforge/miniforge3:latest AS build-venv
+# --- Dep builder image (can use python-3.12 if need gcc etc) --- #
+FROM python:3.12-slim-bookworm AS build-deps
 
-RUN apt-get update && \
-    echo "Creating virtualenv at /app/.venv" && \
-    conda create --quiet --yes -p /app/.venv python=3.12 "esmf=*=nompi_*" esmpy
+# Install build requirements into build image
+# * UV for python packaging
+# * git for setuptools-git-versioning
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+RUN apt-get update && apt-get install -y git build-essential
 
+# Add only files required for dependencies
+# * pyproject.toml: Project configuration
+WORKDIR /opt/app
+COPY pyproject.toml /opt/app/pyproject.toml
+COPY uv.lock /opt/app/uv.lock
 
-# --- Build dependencies --- #
-FROM python:3.12 AS build-deps
+# Make UV behave in a container-orientated way
+# * Compile bytecode to reduce startup time
+# * Disable cache to reduce image size
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_NO_CACHE=1 \
+    UV_LINK_MODE=copy
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-COPY --from=build-venv /app/.venv /app/.venv
+# Install dependecies
+# * --no-dev: Do not install development dependencies
+# * --no-install-project: Only install dependencies
+# * --no-editable: Copy the source code into site-packages
+RUN mkdir src && \
+    uv sync --no-dev --no-install-project --no-editable
 
-WORKDIR /app
+# Remove tests (Pandas ship loads, for instance)
+# * Remove this line if causing problems
+RUN rm -rf /opt/app/.venv/lib/python3.12/site-packages/**/tests
 
-COPY pyproject.toml /app/pyproject.toml
-
-# Install only requirements
-RUN mkdir india_forecast_app && uv sync --no-dev --no-install-project --compile-bytecode --inexact
-
-# --- Build the package --- #
+# --- App builder image --- #
 FROM build-deps AS build-app
 
-# Install the app
-# * The .git folder is needed here for setuptools-git-versioning
-COPY india_forecast_app /app/india_forecast_app
-COPY .git /app/.git
-RUN uv sync --no-editable --no-dev --compile-bytecode --inexact
+# Install the project
+# * .git: Required for setuptools-git-versioning
+COPY src /opt/app/src
+COPY .git /opt/app/.git
+RUN uv sync --no-dev --no-editable
 
-# --- Runtime image --- #
-FROM python:3.12-slim
+# --- Runtime image (use distroless if feasible for 100MB saving) --- #
+FROM python:3.12-slim-bookworm AS runtime
 
-# Copy required elements of the builder image
-# * This app uses the git binary within the source code, hence coopying it over
-COPY --from=build-app /app/.venv /app/.venv
-COPY --from=build-app /usr/bin/git /usr/bin/git
-COPY --from=build-app /app/india_forecast_app /app/india_forecast_app
+WORKDIR /opt/app
+# Copy just the virtual environment into a runtime image
+COPY --from=build-app --chown=app:app /opt/app/.venv /opt/app/.venv
 
-# This is just a check to make sure it works, we've had problems with this in the past
-ENV PATH="/app/.venv/bin:${PATH}"
+RUN ls -l /opt/app/.venv/bin
+RUN ls -l /opt/app/.venv/bin
 
-ENTRYPOINT ["python","app/india_forecast_app/app.py"]
+ENTRYPOINT ["/opt/app/.venv/bin/app"]
+

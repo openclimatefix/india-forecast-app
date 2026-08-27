@@ -15,15 +15,20 @@ from pvsite_datamodel import DatabaseConnection
 from pvsite_datamodel.read import get_sites_by_country
 from pvsite_datamodel.sqlmodels import LocationAssetType, LocationSQL
 from sqlalchemy.orm import Session
+from importlib.metadata import version, PackageNotFoundError
 
-import india_forecast_app
 from india_forecast_app.data.generation import get_generation_data
 from india_forecast_app.models import PVNetModel, get_all_models
 from india_forecast_app.save import build_dp_location_map, save_forecast
 from india_forecast_app.sentry import traces_sampler
 
 log = logging.getLogger(__name__)
-version = india_forecast_app.__version__
+
+try:
+    __version__ = version("india-forecast-app")
+except PackageNotFoundError:
+    __version__ = "v?"
+
 
 
 sentry_sdk.init(
