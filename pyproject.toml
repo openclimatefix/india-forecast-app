@@ -38,6 +38,8 @@ dependencies = [
     "torch @ https://download.pytorch.org/whl/cpu/torch-2.3.1%2Bcpu-cp312-cp312-linux_x86_64.whl ; platform_system == 'Linux' and platform_machine == 'x86_64'",
     "torchvision @ https://download.pytorch.org/whl/cpu/torchvision-0.18.1%2Bcpu-cp312-cp312-linux_x86_64.whl ; platform_system == 'Linux' and platform_machine == 'x86_64'",
     "dp-sdk",
+    "betterproto>=2.0.0b7",
+    "grpclib>=0.4.7",
 ]
 
 [dependency-groups]
@@ -55,23 +57,24 @@ dp-sdk = { url = "https://github.com/openclimatefix/data-platform/releases/downl
 [project.urls]
 repository = "https://github.com/openclimatefix/india-forecast-app"
 
-[projects.scripts]
+[project.scripts]
 app = "india_forecast_app.app:app"
 seeder = "scripts.seed_local_db:seed_db"
 inspect = "tests.test_data.inspect:run"
 
 
 [tool.setuptools.packages.find]
-where = ["india_forecast_app"]
-exclude = ["test*"]
+where = ["."]
+exclude = ["test*", "data*"]
 
 [tool.setuptools.package-data]
-"*" = ["py.typed", "*.conf"]
+"*" = ["*.csv", "*.yaml", "*.nc"]
 
 [tool.setuptools-git-versioning]
 enabled = true
+dirty_template = "{tag}"
 
-[tool.pytest]
+[tool.pytest.ini_options]
 markers = ["requires_hf_token: marks tests that require a Hugging Face token to run"]
 
 [tool.ruff]

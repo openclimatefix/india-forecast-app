@@ -1,3 +1,8 @@
 """India Forecast App"""
 
-__version__ = "1.2.8"
+from importlib.metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("india-forecast-app")
+except PackageNotFoundError:
+    __version__ = "v?"
