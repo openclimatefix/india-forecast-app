@@ -10,10 +10,10 @@
 
 Runs wind and PV forecasts for India and saves to database
 
-## Install dependencies (requires [poetry](https://python-poetry.org/))
+## Install dependencies (requires [uv](https://docs.astral.sh/uv/))
 
 ```
-poetry install
+uv sync
 ```
 
 ## Linting and formatting
@@ -41,13 +41,13 @@ Replace `{DB_URL}` with a postgres DB connection string (see below for setting u
 
 If testing on a local DB, you may use the following script to seed the the DB with a dummy user, site and site_group. 
 ```
-DB_URL={DB_URL} poetry run seeder
+DB_URL={DB_URL} uv run seeder
 ```
 ⚠️ Note this is a destructive script and will drop all tables before recreating them to ensure a clean slate. DO NOT RUN IN PRODUCTION ENVIRONMENTS
 
 This example runs the application and writes the results to stdout
 ```
-DB_URL={DB_URL} NWP_ZARR_PATH={NWP_ZARR_PATH} poetry run app
+DB_URL={DB_URL} NWP_ZARR_PATH={NWP_ZARR_PATH} uv run app
 ```
 
 To save batches, you need to set the `SAVE_BATCHES_DIR` environment variable to directory.
@@ -97,7 +97,7 @@ docker run -it --rm -e DB_URL={DB_URL} -e NWP_ZARR_PATH={NWP_ZARR_PATH} ocf/indi
 
 ## Notes
 
-This repo makes use of PyTorch (`torch` and `torchvision` packages) CPU-only version. In order to support installing PyTorch via poetry for various environments, we specify the exact wheels for each environment in the pyproject.toml file. Some background reading on why this is required can be found here: https://santiagovelez.substack.com/p/how-to-install-torch-cpu-in-poetry?utm_campaign=post&utm_medium=web&triedRedirect=true 
+This repo makes use of PyTorch (`torch` and `torchvision` packages) CPU-only version. In order to install the CPU-only build across environments, we point at the exact wheel for each platform in the `dependencies` list in pyproject.toml, guarded by environment markers. 
 
 ## Contributors ✨
 
@@ -126,13 +126,13 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 
 ## Troubleshooting
 
-### Poetry Installation Issues
+### Dependency Installation Issues
 
-**Problem**: `poetry install` fails with dependency conflicts
-**Solution**: Try updating Poetry first with `pip install --upgrade poetry`, then run `poetry update` followed by `poetry install`
+**Problem**: `uv sync` fails with dependency conflicts
+**Solution**: Try updating uv first with `uv self update`, then re-resolve with `uv lock --upgrade` followed by `uv sync`
 
 **Problem**: Package installation errors
-**Solution**: Check your Python version matches the one specified in `pyproject.toml`. You can use `poetry env use python3.x` to set the correct version.
+**Solution**: Check your Python version matches the one specified in `pyproject.toml`. `uv python install` will fetch the right interpreter, and `uv sync` builds the environment against it.
 
 ### Docker Database Connection Issues
 
