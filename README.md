@@ -56,6 +56,7 @@ To save batches, you need to set the `SAVE_BATCHES_DIR` environment variable to 
 
 To optionally save forecasts to the OCF Data Platform via gRPC, configure the following environment variables:
 * `SAVE_TO_DATA_PLATFORM` (set to `"True"` to enable, defaults to `"False"`)
+* `WRITE_TO_DB` (whether to save forecasts to the site database, defaults to `"True"`)
 * `DATA_PLATFORM_HOST` (defaults to `"localhost"`)
 * `DATA_PLATFORM_PORT` (defaults to `"50051"`)
 
@@ -65,6 +66,10 @@ pvsite database) via gRPC, configure:
 * `OBSERVER_NAME` (the DP observer to read observations from, defaults to `"india"`)
 * `DATA_PLATFORM_HOST` (defaults to `"localhost"`)
 * `DATA_PLATFORM_PORT` (defaults to `"50051"`)
+
+To optionally load the sites to forecast from the Data Platform (instead of the
+site-db), configure:
+* `LOAD_SITES_FROM_DATA_PLATFORM` (set to `"True"` to enable, defaults to `"False"`)
 
 ### Starting a local database using docker
 

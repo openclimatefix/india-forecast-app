@@ -41,4 +41,4 @@ COPY --from=build-app /app/india_forecast_app /app/india_forecast_app
 # This is just a check to make sure it works, we've had problems with this in the past
 ENV PATH="/app/.venv/bin:${PATH}"
 
-ENTRYPOINT ["app", "--write-to-db"]
+ENTRYPOINT ["app"]

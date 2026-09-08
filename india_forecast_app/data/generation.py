@@ -18,14 +18,9 @@ from india_forecast_app.save.data_platform import (
     fetch_dp_location_map,
     get_dataplatform_client,
 )
-from india_forecast_app.save.utils import ensure_timezone_aware
+from india_forecast_app.save.utils import energy_source_for_asset_type, ensure_timezone_aware
 
 log = logging.getLogger(__name__)
-
-
-def energy_source_for_asset_type(asset_type: str) -> dp.EnergySource:
-    """Map an asset type ("pv"/"wind") to a Data Platform energy source."""
-    return dp.EnergySource.WIND if asset_type == "wind" else dp.EnergySource.SOLAR
 
 
 def normalize_location_name(name: str) -> str:

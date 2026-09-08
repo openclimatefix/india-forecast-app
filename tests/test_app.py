@@ -136,8 +136,7 @@ def test_app(
     init_n_forecast_values = db_session.query(ForecastValueSQL).count()
 
     args = ["--date", dt.datetime.now(tz=dt.UTC).strftime("%Y-%m-%d-%H-%M")]
-    if write_to_db:
-        args.append("--write-to-db")
+    args.append("--write-to-db" if write_to_db else "--no-write-to-db")
 
     result = run_click_script(app, args)
     assert result.exit_code == 0
