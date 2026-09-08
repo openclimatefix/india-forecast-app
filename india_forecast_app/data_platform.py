@@ -109,7 +109,6 @@ def ml_id_for_location(location: dp.ListLocationsResponseLocationSummary) -> int
         if ml_id is not None:
             return ml_id
 
-    # Adani and RUVNL have no id in the Data Platform yet, so they need one adding.
     log.warning(
         f"Location {location.location_name} has no region_id or ml_id in its Data Platform "
         "metadata, falling back to ml_id 1",
