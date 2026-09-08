@@ -1,4 +1,20 @@
-"""Tests for loading the sites to forecast from the Data Platform."""
+"""
+Tests for loading the sites to forecast from the Data Platform.
+
+Tests:
+ 1. test_loads_the_pinned_location_for_the_asset_type                  - pinned location, one asset
+ 2. test_loads_the_client_sites_sorted_by_name                         - client sites, sorted
+ 3. test_matches_on_client_prefix                                      - matched on client prefix
+ 4. test_matches_on_dp_location_name                                   - exact dp_location_name
+ 5. test_is_zero_for_the_national_location                             - national location is 0
+ 6. test_comes_from_region_id_before_ml_id                             - region_id beats ml_id
+ 7. test_falls_back_to_ml_id_metadata                                  - ml_id without region_id
+ 8. test_reads_a_metadata_value_written_as_a_string                    - string metadata is read
+ 9. test_metadata_of_zero_is_used                                      - 0 is a real id
+10. test_defaults_to_one_without_metadata                              - no metadata means 1
+11. test_defaults_to_one_when_the_metadata_is_not_a_number             - unparsable id means 1
+12. test_get_sites_needs_a_model_config_to_load_from_the_data_platform - needs a model config
+"""
 
 import asyncio
 import contextlib
