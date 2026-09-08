@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+import ocf.dp as dp
 import pandas as pd
+
+
+def energy_source_for_asset_type(asset_type: str) -> dp.EnergySource:
+    """Map an asset type ("pv"/"wind") to a Data Platform energy source."""
+    return dp.EnergySource.WIND if str(asset_type).lower() == "wind" else dp.EnergySource.SOLAR
 
 
 def add_or_convert_to_utc(timestamp: object) -> pd.Timestamp:
