@@ -34,8 +34,7 @@ async def get_sites_from_data_platform(model_config: Model) -> list[LocationSQL]
         locations = await list_dp_locations(client, model_config)
 
     return [
-        dp_location_to_site(location, ml_id=ml_id_for_location(location))
-        for location in locations
+        dp_location_to_site(location, ml_id=ml_id_for_location(location)) for location in locations
     ]
 
 
